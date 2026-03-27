@@ -13,7 +13,7 @@
 set -e
 
 # --- CONFIGURATION VARIABLES (Update these!) ---
-export TARGET_USER="ubuntu"                         # The non-root user that owns the project files
+export TARGET_USER="leadflow"                         # The non-root user that owns the project files
 export PROJECT_DIR="/home/$TARGET_USER/saas-project" # Path to the cloned repository
 export DOMAIN_NAME="yourdomain.com"                  # Domain name or VM IP
 export DB_NAME="leadflow_db"
@@ -52,6 +52,14 @@ if ! command -v pm2 &> /dev/null; then
     npm install -g pm2
 fi
 
+# 1.5. Clone the project if it doesn't exist
+echo "--> Cloning Repository..."
+if [ ! -d "$PROJECT_DIR" ]; then
+    sudo -u $TARGET_USER git clone https://github.com/code4degree-oss/leadflow.git "$PROJECT_DIR"
+else
+    echo "Directory $PROJECT_DIR already exists, skipping clone."
+fi
+
 # 2. PostgreSQL Setup
 echo "--> Configuring PostgreSQL..."
 # Run postgres commands as the postgres user
@@ -69,7 +77,7 @@ cd $PROJECT_DIR/SAAS
 
 # Create venv and install dependencies as the target user
 sudo -u $TARGET_USER python3 -m venv venv
-sudo -u $TARGET_USER -H bash -c "source venv/bin/activate && pip install wheel gunicorn && pip install -r requirements.txt"
+sudo -u $TARGET_USER -H bash -c "source venv/bin/activate && pip install wheel gunicorn && pip install -r requirements/prod.txt"
 
 # Create .env for Django
 echo "--> Creating Backend .env..."

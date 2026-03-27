@@ -62,7 +62,7 @@ We assume you are deploying as a non-root user (e.g., `ubuntu` or `your_user`).
 ```bash
 cd ~
 # If using git:
-git clone <your-repository-url> saas-project
+git clone https://github.com/code4degree-oss/leadflow.git saas-project
 cd saas-project
 ```
 
