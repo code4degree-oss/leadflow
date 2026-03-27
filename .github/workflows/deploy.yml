@@ -8,11 +8,11 @@ on:
 
 jobs:
   auto-sync:
-    name: Sync Code & Restart Gunicorn/PM2
+    name: Sync Code & Restart Services
     runs-on: ubuntu-latest
-    
+
     steps:
-      - name: 🚀 Ping Azure VM to Start Fast Sync
+      - name: 🚀 Deploy to Azure VM
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -20,6 +20,6 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-              cd /home/${{ secrets.SERVER_USER }}/saas-project
-              chmod +x deploy-update.sh
-              ./deploy-update.sh
+            cd /home/${{ secrets.SERVER_USER }}/saas-project
+            chmod +x deploy/auto-sync.sh
+            ./deploy/auto-sync.sh
