@@ -1,0 +1,89 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #F8FAFC;
+  --bg2: #F1F5F9;
+  --bg3: #E2E8F0;
+  --card: #FFFFFF;
+  --card2: #F8FAFC;
+  --border: #E2E8F0;
+  --border2: #CBD5E1;
+  --accent: #250099;      /* Primary Blue */
+  --accent2: #ef0379;     /* Secondary Pink */
+  --amber: #F59E0B;
+  --danger: #EF4444;
+  --hot: #F97316;
+  --purple: #6D28D9;
+  --txt: #0F172A;
+  --txt2: #334155;
+  --txt3: #64748B;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--txt);
+  font-family: 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+
+}
+
+/* scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 10px; }
+
+@layer components {
+  .card { @apply bg-card border border-border rounded-[16px] shadow-[0_4px_20px_rgba(0,0,0,0.04)]; }
+  .card2 { @apply bg-card2 border border-border2 rounded-[16px]; }
+  .btn-primary { @apply bg-accent text-white px-4 py-2 rounded-lg font-medium text-sm hover:opacity-90 transition-all duration-200 flex items-center gap-2; }
+  .btn-ghost { @apply text-txt2 px-3 py-2 rounded-lg text-sm hover:bg-card2 hover:text-txt transition-all duration-200 flex items-center gap-2; }
+  .btn-danger { @apply bg-danger/10 text-danger border border-danger/20 px-3 py-1.5 rounded-lg text-sm hover:bg-danger/20 transition-all flex items-center gap-1.5; }
+  .badge { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium font-mono; }
+  .badge-pink { @apply badge bg-accent2/10 text-accent2; }
+  .badge-green { @apply badge bg-[#10B981]/10 text-[#10B981]; }
+  .badge-blue { @apply badge bg-accent/10 text-accent; }
+  .badge-amber { @apply badge bg-amber/10 text-amber; }
+  .badge-red { @apply badge bg-danger/10 text-danger; }
+  .badge-hot { @apply badge bg-hot/15 text-hot; }
+  .badge-purple { @apply badge bg-purple/10 text-purple; }
+  .badge-gray { @apply badge bg-border2 text-txt2; }
+  .input { @apply bg-bg3 border border-border2 rounded-lg px-3 py-2 text-sm text-txt placeholder-txt3 focus:outline-none focus:border-accent2 transition-colors w-full; }
+  .stat-card { @apply card p-5 flex flex-col gap-1; }
+  .section-title { @apply font-display font-bold text-base text-txt tracking-tight; }
+  .label { @apply text-xs font-medium text-txt2 uppercase tracking-wider; }
+  .table-row { @apply border-b border-border hover:bg-bg2/60 even:bg-bg2/30 transition-colors; }
+  .th { @apply text-xs font-bold text-txt3 bg-bg2/50 uppercase tracking-wider px-4 py-3 text-left whitespace-nowrap; }
+  .td { @apply px-4 py-3 text-sm whitespace-nowrap; }
+  .sidenav-item { @apply flex items-center gap-3 px-3 py-2.5 mx-3 mb-1 rounded-lg text-sm font-medium text-txt3 hover:text-txt hover:bg-card2 transition-colors; }
+  .sidenav-item.active { @apply bg-accent text-white border-l-4 border-accent2 font-semibold md:rounded-l-none; }
+  
+  /* Mobile-first Layout Classes */
+  .sidebar { @apply fixed top-0 left-0 h-screen w-64 bg-card border-r border-border flex flex-col z-40 transform -translate-x-full md:translate-x-0 transition-transform duration-300; }
+  .sidebar.open { @apply translate-x-0; }
+  .page { @apply md:ml-64 pt-14 min-h-screen bg-bg transition-all duration-300; }
+  .topbar { @apply fixed top-0 left-0 md:left-64 right-0 h-14 bg-card/90 backdrop-blur border-b border-border flex items-center px-4 md:px-6 gap-3 z-30 transition-all duration-300; }
+}
+
+/* animations */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-dot {
+  0%,100% { opacity: 1; } 50% { opacity: 0.4; }
+}
+.fade-up { animation: fadeUp 0.3s ease forwards; }
+.pulse-dot { animation: pulse-dot 2s infinite; }
+
+/* hot lead glow */
+.hot-glow { box-shadow: 0 0 0 1px rgba(255,107,53,0.3), 0 2px 8px rgba(255,107,53,0.1); }
+
+/* progress bar */
+.progress-track { @apply bg-border2 rounded-full overflow-hidden; }
+.progress-fill { @apply h-full rounded-full transition-all duration-500 bg-gradient-to-r from-accent to-accent2; }

@@ -1,0 +1,72 @@
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from apps.api.mixins import TenantQuerySetMixin
+from apps.api.permissions import IsClientAdmin
+from apps.accounts.models import User
+from apps.accounts.api.serializers import UserSerializer
+from apps.clients.models import ClientLocation
+from apps.clients.api.serializers import ClientLocationSerializer
+import string
+import random
+
+
+class UserViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
+    """
+    API endpoint for Client Admins to manage their employees.
+    Uses TenantQuerySetMixin to ensure data isolation.
+    """
+    serializer_class = UserSerializer
+    permission_classes = [IsClientAdmin]
+    queryset = User.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        client = request.user.client
+        if not client:
+            return Response(
+                {"detail": "You are not associated with any client account."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Enforce max_users limit
+        current_count = User.objects.filter(client=client).count()
+        if current_count >= client.max_users:
+            return Response(
+                {"detail": f"User limit reached. Your plan allows a maximum of "
+                           f"{client.max_users} users. You currently have {current_count}."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Generate random 12-char password
+        chars = string.ascii_letters + string.digits + "!@#$%^&*"
+        generated_password = ''.join(random.choice(chars) for _ in range(12))
+
+        # Override password in request data
+        data = request.data.copy()
+        data['password'] = generated_password
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save(client=client)
+
+        # Return response with generated credentials
+        response_data = serializer.data
+        response_data['generated_password'] = generated_password
+        response_data['email'] = user.email
+
+        return Response(response_data, status=status.HTTP_201_CREATED)
+
+    def perform_create(self, serializer):
+        # Fallback for any other creation path
+        client = self.request.user.client
+        serializer.save(client=client)
+
+class ClientLocationViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
+    """
+    API endpoint for Client Admins to manage their authorized Geolocation bounds.
+    """
+    serializer_class = ClientLocationSerializer
+    permission_classes = [IsClientAdmin]
+    queryset = ClientLocation.objects.all()
+
+    def perform_create(self, serializer):
+        serializer.save(client=self.request.user.client)

@@ -1,0 +1,8 @@
+-r base.txt
+
+# Monitoring
+sentry-sdk[django]==2.19.2
+
+# AWS / Storage
+boto3==1.35.81
+django-storages==1.14.4

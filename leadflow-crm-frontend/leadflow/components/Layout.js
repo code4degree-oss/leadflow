@@ -1,0 +1,222 @@
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/router'
+import {
+  LayoutDashboard, Users, Upload, BarChart2, Settings,
+  Bell, Search, ChevronDown, LogOut, Building2,
+  Phone, MapPin, ShieldCheck, Database, CreditCard,
+  Briefcase, Calendar, Activity, FileText, Flame, Globe,
+  Menu, X, Ban, Mail
+} from 'lucide-react'
+import clsx from 'clsx'
+
+
+const navConfig = {
+  superadmin: {
+    label: 'Super Admin',
+    color: '#8B6CF7',
+    items: [
+      { icon: LayoutDashboard, label: 'Platform Overview', href: '/superadmin' },
+      { icon: Building2,       label: 'Client Accounts',  href: '/superadmin/clients' },
+      { icon: CreditCard,      label: 'Billing & Plans',  href: '/superadmin/billing' },
+      { icon: Database,        label: 'Storage & Quotas', href: '/superadmin/storage' },
+      { icon: Globe,           label: 'Feature Flags',    href: '/superadmin/features' },
+      { icon: BarChart2,       label: 'Analytics',        href: '/superadmin/analytics' },
+      { icon: ShieldCheck,     label: 'Security & Audit', href: '/superadmin/security' },
+      { icon: FileText,        label: 'Data Exports',     href: '/superadmin/exports' },
+      { icon: Settings,        label: 'System Config',    href: '/superadmin/system-config' },
+    ]
+  },
+  admin: {
+    label: 'Client Admin',
+    color: '#4F8EF7',
+    items: [
+      { icon: LayoutDashboard, label: 'Dashboard',        href: '/admin' },
+      { icon: Upload,          label: 'Lead Upload',      href: '/admin/upload' },
+      { icon: Users,           label: 'Lead Management',  href: '/admin/leads' },
+      { icon: Flame,           label: 'Hot Leads',        href: '/admin/hot' },
+      { icon: Users,           label: 'Employees',        href: '/admin/employees' },
+      { icon: Briefcase,       label: 'Projects',         href: '/admin/projects' },
+      { icon: BarChart2,       label: 'Performance',      href: '/admin/performance' },
+      { icon: Activity,        label: 'Audit Trail',      href: '/admin/audit' },
+      { icon: Settings,        label: 'Settings',         href: '/admin/settings' },
+    ]
+  },
+  telecaller: {
+    label: 'Telecaller',
+    color: '#00D4AA',
+    items: [
+      { icon: LayoutDashboard, label: 'My Dashboard',     href: '/telecaller' },
+      { icon: Phone,           label: 'My Leads',         href: '/telecaller/leads' },
+      { icon: Flame,           label: 'Hot Leads',        href: '/telecaller/hot' },
+      { icon: Calendar,        label: 'Reminders',        href: '/telecaller/reminders' },
+      { icon: Briefcase,       label: 'Projects',         href: '/telecaller/projects' },
+      { icon: BarChart2,       label: 'My Performance',   href: '/telecaller/performance' },
+    ]
+  },
+  fieldagent: {
+    label: 'Field Agent',
+    color: '#F5A623',
+    items: [
+      { icon: LayoutDashboard, label: 'Dashboard',        href: '/fieldagent' },
+      { icon: Calendar,        label: 'Site Visits',      href: '/fieldagent/visits' },
+      { icon: MapPin,          label: 'Completed Visits', href: '/fieldagent/completed' },
+      { icon: BarChart2,       label: 'My Stats',         href: '/fieldagent/stats' },
+    ]
+  }
+}
+
+export default function Layout({ children, role = 'admin', pageTitle = '', actions }) {
+  const router = useRouter()
+  const config = navConfig[role]
+  const [notifOpen, setNotifOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isInactive, setIsInactive] = useState(false)
+  const [userName, setUserName] = useState('')
+  const [userEmail, setUserEmail] = useState('')
+
+  useEffect(() => {
+    // Load user info from localStorage
+    const firstName = localStorage.getItem('user_first_name') || ''
+    const lastName = localStorage.getItem('user_last_name') || ''
+    const email = localStorage.getItem('user_email') || ''
+    setUserName(firstName && lastName ? `${firstName} ${lastName}` : (firstName || email.split('@')[0]))
+    setUserEmail(email)
+
+    if (role !== 'superadmin') {
+      const subActive = localStorage.getItem('subscription_active')
+      setIsInactive(subActive === 'false')
+    }
+  }, [role])
+
+  const handleLogout = () => {
+    localStorage.clear()
+    router.push('/')
+  }
+
+  const roleColors = {
+    superadmin: 'bg-purple/10 text-purple border-purple/20',
+    admin: 'bg-accent/10 text-accent border-accent/20',
+    telecaller: 'bg-accent2/10 text-accent2 border-accent2/20',
+    fieldagent: 'bg-amber/10 text-amber border-amber/20',
+  }
+
+  return (
+    <div className="min-h-screen bg-bg">
+      {/* Inactive Account Overlay */}
+      {isInactive && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-md">
+          <div className="bg-card max-w-md w-full mx-4 rounded-3xl border border-border shadow-2xl p-10 text-center animate-in zoom-in-95 duration-300">
+            <div className="w-20 h-20 rounded-full bg-danger/10 flex items-center justify-center mx-auto mb-6">
+              <Ban size={40} className="text-danger" />
+            </div>
+            <h2 className="font-display font-bold text-2xl text-txt mb-2">Account Suspended</h2>
+            <p className="text-sm text-txt2 leading-relaxed mb-6">
+              Your organization&apos;s account is currently <strong className="text-danger">inactive</strong>. 
+              All access has been temporarily restricted. Please contact your administrator 
+              or our support team to restore access.
+            </p>
+            
+            <div className="p-4 bg-bg3 rounded-2xl border border-border mb-6">
+              <div className="flex items-center gap-3 justify-center text-txt2">
+                <Mail size={16} className="text-primary" />
+                <span className="text-sm font-medium">support@leadflow.in</span>
+              </div>
+            </div>
+
+            <button 
+              onClick={handleLogout} 
+              className="btn-primary w-full py-3 justify-center text-sm shadow-lg shadow-primary/20"
+            >
+              <LogOut size={14} /> Sign Out
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Backdrop */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-txt/20 backdrop-blur-sm z-30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={clsx('sidebar', sidebarOpen && 'open')}>
+        <div className="px-4 py-4 border-b border-border flex items-center justify-between">
+          <div>
+            <div className="font-display font-extrabold text-xl text-txt tracking-tight">
+              Lead<span className="text-accent">Flow</span>
+            </div>
+            <div className={clsx('badge mt-2 border text-xs', roleColors[role])}>
+              {config.label}
+            </div>
+          </div>
+          <button className="md:hidden text-txt2 p-1 rounded hover:bg-card2" onClick={() => setSidebarOpen(false)}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <nav className="flex-1 py-3 overflow-y-auto">
+          {config.items.map((item) => {
+            const active = router.pathname === item.href
+            return (
+              <Link key={item.href} href={item.href}>
+                <div className={clsx('sidenav-item', active && 'active')}>
+                  <item.icon size={16} />
+                  <span>{item.label}</span>
+                </div>
+              </Link>
+            )
+          })}
+        </nav>
+
+        <div className="border-t border-border p-3">
+          <div onClick={handleLogout} className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-card cursor-pointer group">
+            <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center text-accent text-xs font-bold">
+              {userName ? userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'U'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-medium text-txt truncate">
+                {userName || 'User'}
+              </div>
+              <div className="text-xs text-txt3 truncate">{userEmail}</div>
+            </div>
+            <LogOut size={13} className="text-txt3 group-hover:text-danger transition-colors" />
+          </div>
+        </div>
+      </aside>
+
+      {/* Topbar */}
+      <header className="topbar">
+        <button 
+          className="md:hidden p-1.5 -ml-2 text-txt2 hover:text-txt rounded-lg hover:bg-border transition-colors focus:outline-none"
+          onClick={() => setSidebarOpen(true)}
+        >
+          <Menu size={22} />
+        </button>
+        <div className="flex-1 flex items-center gap-3 min-w-0">
+          <h1 className="font-display font-bold text-base md:text-lg text-txt truncate">{pageTitle}</h1>
+        </div>
+        <div className="relative hidden md:block">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-txt3" />
+          <input className="input pl-8 w-52 h-8 text-xs" placeholder="Search leads, employees…" />
+        </div>
+        <button
+          onClick={() => setNotifOpen(!notifOpen)}
+          className="relative w-8 h-8 flex items-center justify-center rounded-lg hover:bg-card2 transition-colors text-txt2"
+        >
+          <Bell size={16} />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-accent2 rounded-full pulse-dot" />
+        </button>
+        {actions && <div className="flex items-center gap-2">{actions}</div>}
+      </header>
+
+      {/* Page content */}
+      <main className="page">
+        <div className="p-6 fade-up">{children}</div>
+      </main>
+    </div>
+  )
+}

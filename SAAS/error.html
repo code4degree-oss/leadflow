@@ -1,0 +1,3521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="robots" content="NONE,NOARCHIVE">
+  <title>NoReverseMatch
+          at /api/v1/auth/login/</title>
+  <style>
+    html * { padding:0; margin:0; }
+    body * { padding:10px 20px; }
+    body * * { padding:0; }
+    body { font-family: sans-serif; background-color:#fff; color:#000; }
+    body > :where(header, main, footer) { border-bottom:1px solid #ddd; }
+    h1 { font-weight:normal; }
+    h2 { margin-bottom:.8em; }
+    h3 { margin:1em 0 .5em 0; }
+    h4 { margin:0 0 .5em 0; font-weight: normal; }
+    code, pre { font-size: 100%; white-space: pre-wrap; word-break: break-word; }
+    summary { cursor: pointer; }
+    table { border:1px solid #ccc; border-collapse: collapse; width:100%; background:white; }
+    tbody td, tbody th { vertical-align:top; padding:2px 3px; }
+    thead th {
+      padding:1px 6px 1px 3px; background:#fefefe; text-align:left;
+      font-weight:normal; font-size: 0.6875rem; border:1px solid #ddd;
+    }
+    tbody th { width:12em; text-align:right; color:#666; padding-right:.5em; }
+    table.vars { margin:5px 10px 2px 40px; width: auto; }
+    table.vars td, table.req td { font-family:monospace; }
+    table td.code { width:100%; }
+    table td.code pre { overflow:hidden; }
+    table.source th { color:#666; }
+    table.source td { font-family:monospace; white-space:pre; border-bottom:1px solid #eee; }
+    ul.traceback { list-style-type:none; color: #222; }
+    ul.traceback li.cause { word-break: break-word; }
+    ul.traceback li.frame { padding-bottom:1em; color:#4f4f4f; }
+    ul.traceback li.user { background-color:#e0e0e0; color:#000 }
+    div.context { padding:10px 0; overflow:hidden; }
+    div.context ol { padding-left:30px; margin:0 10px; list-style-position: inside; }
+    div.context ol li { font-family:monospace; white-space:pre; color:#777; cursor:pointer; padding-left: 2px; }
+    div.context ol li pre { display:inline; }
+    div.context ol.context-line li { color:#464646; background-color:#dfdfdf; padding: 3px 2px; }
+    div.context ol.context-line li span { position:absolute; right:32px; }
+    .user div.context ol.context-line li { background-color:#bbb; color:#000; }
+    .user div.context ol li { color:#666; }
+    div.commands, summary.commands { margin-left: 40px; }
+    div.commands a, summary.commands { color:#555; text-decoration:none; }
+    .user div.commands a { color: black; }
+    #summary { background: #ffc; }
+    #summary h2 { font-weight: normal; color: #666; }
+    #info { padding: 0; }
+    #info > * { padding:10px 20px; }
+    #explanation { background:#eee; }
+    #template, #template-not-exist { background:#f6f6f6; }
+    #template-not-exist ul { margin: 0 0 10px 20px; }
+    #template-not-exist .postmortem-section { margin-bottom: 3px; }
+    #unicode-hint { background:#eee; }
+    #traceback { background:#eee; }
+    #requestinfo { background:#f6f6f6; padding-left:120px; }
+    #summary table { border:none; background:transparent; }
+    #requestinfo h2, #requestinfo h3 { position:relative; margin-left:-100px; }
+    #requestinfo h3 { margin-bottom:-1em; }
+    .error { background: #ffc; }
+    .specific { color:#cc3300; font-weight:bold; }
+    h2 span.commands { font-size: 0.7rem; font-weight:normal; }
+    span.commands a:link {color:#5E5694;}
+    pre.exception_value { font-family: sans-serif; color: #575757; font-size: 1.5rem; margin: 10px 0 10px 0; }
+    .append-bottom { margin-bottom: 10px; }
+    .fname { user-select: all; }
+  </style>
+  
+  <script>
+    function hideAll(elems) {
+      for (var e = 0; e < elems.length; e++) {
+        elems[e].style.display = 'none';
+      }
+    }
+    window.onload = function() {
+      hideAll(document.querySelectorAll('ol.pre-context'));
+      hideAll(document.querySelectorAll('ol.post-context'));
+      hideAll(document.querySelectorAll('div.pastebin'));
+    }
+    function toggle() {
+      for (var i = 0; i < arguments.length; i++) {
+        var e = document.getElementById(arguments[i]);
+        if (e) {
+          e.style.display = e.style.display == 'none' ? 'block': 'none';
+        }
+      }
+      return false;
+    }
+    function switchPastebinFriendly(link) {
+      s1 = "Switch to copy-and-paste view";
+      s2 = "Switch back to interactive view";
+      link.textContent = link.textContent.trim() == s1 ? s2: s1;
+      toggle('browserTraceback', 'pastebinTraceback');
+      return false;
+    }
+  </script>
+  
+</head>
+<body>
+<header id="summary">
+  <h1>NoReverseMatch
+       at /api/v1/auth/login/</h1>
+  <pre class="exception_value">&#x27;djdt&#x27; is not a registered namespace</pre>
+  <table class="meta">
+
+    <tr>
+      <th scope="row">Request Method:</th>
+      <td>POST</td>
+    </tr>
+    <tr>
+      <th scope="row">Request URL:</th>
+      <td>http://127.0.0.1:8000/api/v1/auth/login/</td>
+    </tr>
+
+    <tr>
+      <th scope="row">Django Version:</th>
+      <td>5.1.4</td>
+    </tr>
+
+    <tr>
+      <th scope="row">Exception Type:</th>
+      <td>NoReverseMatch</td>
+    </tr>
+
+
+    <tr>
+      <th scope="row">Exception Value:</th>
+      <td><pre>&#x27;djdt&#x27; is not a registered namespace</pre></td>
+    </tr>
+
+
+    <tr>
+      <th scope="row">Exception Location:</th>
+      <td><span class="fname">C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\urls\base.py</span>, line 82, in reverse</td>
+    </tr>
+
+
+    <tr>
+      <th scope="row">Raised during:</th>
+      <td>apps.api.views.auth.CustomTokenObtainPairView</td>
+    </tr>
+
+    <tr>
+      <th scope="row">Python Executable:</th>
+      <td>C:\Users\prath\OneDrive\Desktop\SAAS\venv\Scripts\python.exe</td>
+    </tr>
+    <tr>
+      <th scope="row">Python Version:</th>
+      <td>3.13.7</td>
+    </tr>
+    <tr>
+      <th scope="row">Python Path:</th>
+      <td><pre><code>[&#x27;C:\\Users\\prath\\OneDrive\\Desktop\\SAAS&#x27;,
+ &#x27;C:\\Users\\prath\\OneDrive\\Desktop\\SAAS&#x27;,
+ &#x27;C:\\Users\\prath\\AppData\\Local\\Programs\\Python\\Python313\\python313.zip&#x27;,
+ &#x27;C:\\Users\\prath\\AppData\\Local\\Programs\\Python\\Python313\\DLLs&#x27;,
+ &#x27;C:\\Users\\prath\\AppData\\Local\\Programs\\Python\\Python313\\Lib&#x27;,
+ &#x27;C:\\Users\\prath\\AppData\\Local\\Programs\\Python\\Python313&#x27;,
+ &#x27;C:\\Users\\prath\\OneDrive\\Desktop\\SAAS\\venv&#x27;,
+ &#x27;C:\\Users\\prath\\OneDrive\\Desktop\\SAAS\\venv\\Lib\\site-packages&#x27;]</code></pre></td>
+    </tr>
+    <tr>
+      <th scope="row">Server time:</th>
+      <td>Tue, 17 Mar 2026 22:13:27 +0530</td>
+    </tr>
+  </table>
+</header>
+
+<main id="info">
+
+
+
+<div id="template">
+   <h2>Error during template rendering</h2>
+   <p>In template <code>C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\debug_toolbar\templates\debug_toolbar\base.html</code>, error at line <strong>12</strong></p>
+   <h3>&#x27;djdt&#x27; is not a registered namespace</h3>
+   <table class="source cut-top
+       cut-bottom">
+   
+   
+      <tr><th scope="row">2</th>
+      <td>{% block css %}
+</td></tr>
+   
+   
+   
+      <tr><th scope="row">3</th>
+      <td>&lt;link rel=&quot;stylesheet&quot; href=&quot;{% static &#x27;debug_toolbar/css/print.css&#x27; %}&quot; media=&quot;print&quot;&gt;
+</td></tr>
+   
+   
+   
+      <tr><th scope="row">4</th>
+      <td>&lt;link rel=&quot;stylesheet&quot; href=&quot;{% static &#x27;debug_toolbar/css/toolbar.css&#x27; %}&quot;&gt;
+</td></tr>
+   
+   
+   
+      <tr><th scope="row">5</th>
+      <td>{% endblock %}
+</td></tr>
+   
+   
+   
+      <tr><th scope="row">6</th>
+      <td>{% block js %}
+</td></tr>
+   
+   
+   
+      <tr><th scope="row">7</th>
+      <td>&lt;script type=&quot;module&quot; src=&quot;{% static &#x27;debug_toolbar/js/toolbar.js&#x27; %}&quot; async&gt;&lt;/script&gt;
+</td></tr>
+   
+   
+   
+      <tr><th scope="row">8</th>
+      <td>{% endblock %}
+</td></tr>
+   
+   
+   
+      <tr><th scope="row">9</th>
+      <td>&lt;div id=&quot;djDebug&quot; class=&quot;djdt-hidden&quot; dir=&quot;ltr&quot;
+</td></tr>
+   
+   
+   
+      <tr><th scope="row">10</th>
+      <td>     {% if not toolbar.should_render_panels %}
+</td></tr>
+   
+   
+   
+      <tr><th scope="row">11</th>
+      <td>     data-store-id=&quot;{{ toolbar.store_id }}&quot;
+</td></tr>
+   
+   
+   
+   <tr class="error"><th scope="row">12</th>
+     <td>     data-render-panel-url=&quot;<span class="specific">{% url &#x27;djdt:render_panel&#x27; %}</span>&quot;
+</td>
+   </tr>
+   
+   
+   
+      <tr><th scope="row">13</th>
+      <td>     {% endif %}
+</td></tr>
+   
+   
+   
+      <tr><th scope="row">14</th>
+      <td>     {% url &#x27;djdt:history_sidebar&#x27; as history_url %}
+</td></tr>
+   
+   
+   
+      <tr><th scope="row">15</th>
+      <td>     {% if history_url %}
+</td></tr>
+   
+   
+   
+      <tr><th scope="row">16</th>
+      <td>     data-sidebar-url=&quot;{{ history_url }}&quot;
+</td></tr>
+   
+   
+   
+      <tr><th scope="row">17</th>
+      <td>     {% endif %}
+</td></tr>
+   
+   
+   
+      <tr><th scope="row">18</th>
+      <td>     data-default-show=&quot;{% if toolbar.config.SHOW_COLLAPSED %}false{% else %}true{% endif %}&quot;
+</td></tr>
+   
+   
+   
+      <tr><th scope="row">19</th>
+      <td>     {{ toolbar.config.ROOT_TAG_EXTRA_ATTRS|safe }}  data-update-on-fetch=&quot;{{ toolbar.config.UPDATE_ON_FETCH }}&quot;
+</td></tr>
+   
+   
+   
+      <tr><th scope="row">20</th>
+      <td>     data-theme=&quot;{{ toolbar.config.DEFAULT_THEME }}&quot;&gt;
+</td></tr>
+   
+   
+   
+      <tr><th scope="row">21</th>
+      <td>  &lt;div class=&quot;djdt-hidden&quot; id=&quot;djDebugToolbar&quot;&gt;
+</td></tr>
+   
+   
+   
+      <tr><th scope="row">22</th>
+      <td>    &lt;ul id=&quot;djDebugPanelList&quot;&gt;
+</td></tr>
+   
+   
+   </table>
+</div>
+
+
+<div id="traceback">
+  <h2>Traceback <span class="commands"><a href="#" onclick="return switchPastebinFriendly(this);">
+    Switch to copy-and-paste view</a></span>
+  </h2>
+  <div id="browserTraceback">
+    <ul class="traceback">
+      
+        
+        <li class="frame django">
+          
+            <code class="fname">C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\urls\base.py</code>, line 71, in reverse
+          
+
+          
+            <div class="context" id="c2106100843904">
+              
+                <ol start="64" class="pre-context" id="pre2106100843904">
+                
+                  <li onclick="toggle('pre2106100843904', 'post2106100843904')"><pre>            except KeyError:</pre></li>
+                
+                  <li onclick="toggle('pre2106100843904', 'post2106100843904')"><pre>                pass</pre></li>
+                
+                  <li onclick="toggle('pre2106100843904', 'post2106100843904')"><pre></pre></li>
+                
+                  <li onclick="toggle('pre2106100843904', 'post2106100843904')"><pre>            if ns != current_ns:</pre></li>
+                
+                  <li onclick="toggle('pre2106100843904', 'post2106100843904')"><pre>                current_path = None</pre></li>
+                
+                  <li onclick="toggle('pre2106100843904', 'post2106100843904')"><pre></pre></li>
+                
+                  <li onclick="toggle('pre2106100843904', 'post2106100843904')"><pre>            try:</pre></li>
+                
+                </ol>
+              
+              <ol start="71" class="context-line">
+                <li onclick="toggle('pre2106100843904', 'post2106100843904')"><pre>                extra, resolver = resolver.namespace_dict[ns]
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^</pre> <span>…</span></li>
+              </ol>
+              
+                <ol start='72' class="post-context" id="post2106100843904">
+                  
+                  <li onclick="toggle('pre2106100843904', 'post2106100843904')"><pre>                resolved_path.append(ns)</pre></li>
+                  
+                  <li onclick="toggle('pre2106100843904', 'post2106100843904')"><pre>                ns_pattern += extra</pre></li>
+                  
+                  <li onclick="toggle('pre2106100843904', 'post2106100843904')"><pre>                ns_converters.update(resolver.pattern.converters)</pre></li>
+                  
+                  <li onclick="toggle('pre2106100843904', 'post2106100843904')"><pre>            except KeyError as key:</pre></li>
+                  
+                  <li onclick="toggle('pre2106100843904', 'post2106100843904')"><pre>                if resolved_path:</pre></li>
+                  
+                  <li onclick="toggle('pre2106100843904', 'post2106100843904')"><pre>                    raise NoReverseMatch(</pre></li>
+                  
+              </ol>
+              
+            </div>
+          
+
+          
+            
+              <details>
+                <summary class="commands">Local vars</summary>
+            
+            <table class="vars" id="v2106100843904">
+              <thead>
+                <tr>
+                  <th scope="col">Variable</th>
+                  <th scope="col">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                
+                  <tr>
+                    <td>args</td>
+                    <td class="code"><pre>[]</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>current_app</td>
+                    <td class="code"><pre>None</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>current_ns</td>
+                    <td class="code"><pre>None</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>current_path</td>
+                    <td class="code"><pre>None</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>kwargs</td>
+                    <td class="code"><pre>{}</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>ns</td>
+                    <td class="code"><pre>&#x27;djdt&#x27;</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>ns_converters</td>
+                    <td class="code"><pre>{}</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>ns_pattern</td>
+                    <td class="code"><pre>&#x27;&#x27;</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>path</td>
+                    <td class="code"><pre>[&#x27;djdt&#x27;]</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>prefix</td>
+                    <td class="code"><pre>&#x27;/&#x27;</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>resolved_path</td>
+                    <td class="code"><pre>[]</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>resolver</td>
+                    <td class="code"><pre>&lt;URLResolver &#x27;config.urls&#x27; (None:None) &#x27;^/&#x27;&gt;</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>urlconf</td>
+                    <td class="code"><pre>&#x27;config.urls&#x27;</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>view</td>
+                    <td class="code"><pre>&#x27;render_panel&#x27;</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>viewname</td>
+                    <td class="code"><pre>&#x27;djdt:render_panel&#x27;</pre></td>
+                  </tr>
+                
+              </tbody>
+            </table>
+            </details>
+          
+        </li>
+      
+        
+          <li class="cause"><h3>
+          
+            During handling of the above exception (&#x27;djdt&#x27;), another exception occurred:
+          
+        </h3></li>
+        
+        <li class="frame django">
+          
+            <code class="fname">C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\core\handlers\exception.py</code>, line 55, in inner
+          
+
+          
+            <div class="context" id="c2106100850880">
+              
+                <ol start="48" class="pre-context" id="pre2106100850880">
+                
+                  <li onclick="toggle('pre2106100850880', 'post2106100850880')"><pre></pre></li>
+                
+                  <li onclick="toggle('pre2106100850880', 'post2106100850880')"><pre>        return inner</pre></li>
+                
+                  <li onclick="toggle('pre2106100850880', 'post2106100850880')"><pre>    else:</pre></li>
+                
+                  <li onclick="toggle('pre2106100850880', 'post2106100850880')"><pre></pre></li>
+                
+                  <li onclick="toggle('pre2106100850880', 'post2106100850880')"><pre>        @wraps(get_response)</pre></li>
+                
+                  <li onclick="toggle('pre2106100850880', 'post2106100850880')"><pre>        def inner(request):</pre></li>
+                
+                  <li onclick="toggle('pre2106100850880', 'post2106100850880')"><pre>            try:</pre></li>
+                
+                </ol>
+              
+              <ol start="55" class="context-line">
+                <li onclick="toggle('pre2106100850880', 'post2106100850880')"><pre>                response = get_response(request)
+                               ^^^^^^^^^^^^^^^^^^^^^</pre> <span>…</span></li>
+              </ol>
+              
+                <ol start='56' class="post-context" id="post2106100850880">
+                  
+                  <li onclick="toggle('pre2106100850880', 'post2106100850880')"><pre>            except Exception as exc:</pre></li>
+                  
+                  <li onclick="toggle('pre2106100850880', 'post2106100850880')"><pre>                response = response_for_exception(request, exc)</pre></li>
+                  
+                  <li onclick="toggle('pre2106100850880', 'post2106100850880')"><pre>            return response</pre></li>
+                  
+                  <li onclick="toggle('pre2106100850880', 'post2106100850880')"><pre></pre></li>
+                  
+                  <li onclick="toggle('pre2106100850880', 'post2106100850880')"><pre>        return inner</pre></li>
+                  
+                  <li onclick="toggle('pre2106100850880', 'post2106100850880')"><pre></pre></li>
+                  
+              </ol>
+              
+            </div>
+          
+
+          
+            
+              <details>
+                <summary class="commands">Local vars</summary>
+            
+            <table class="vars" id="v2106100850880">
+              <thead>
+                <tr>
+                  <th scope="col">Variable</th>
+                  <th scope="col">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                
+                  <tr>
+                    <td>exc</td>
+                    <td class="code"><pre>NoReverseMatch(&quot;&#x27;djdt&#x27; is not a registered namespace&quot;)</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>get_response</td>
+                    <td class="code"><pre>&lt;debug_toolbar.middleware.DebugToolbarMiddleware object at 0x000001EA5C2E3230&gt;</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>request</td>
+                    <td class="code"><pre>&lt;WSGIRequest: POST &#x27;/api/v1/auth/login/&#x27;&gt;</pre></td>
+                  </tr>
+                
+              </tbody>
+            </table>
+            </details>
+          
+        </li>
+      
+        
+        <li class="frame user">
+          
+            <code class="fname">C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\debug_toolbar\middleware.py</code>, line 97, in __call__
+          
+
+          
+            <div class="context" id="c2106100850688">
+              
+                <ol start="90" class="pre-context" id="pre2106100850688">
+                
+                  <li onclick="toggle('pre2106100850688', 'post2106100850688')"><pre>        # but not necessarily inserted.</pre></li>
+                
+                  <li onclick="toggle('pre2106100850688', 'post2106100850688')"><pre>        for panel in reversed(toolbar.enabled_panels):</pre></li>
+                
+                  <li onclick="toggle('pre2106100850688', 'post2106100850688')"><pre>            panel.generate_stats(request, response)</pre></li>
+                
+                  <li onclick="toggle('pre2106100850688', 'post2106100850688')"><pre>            panel.generate_server_timing(request, response)</pre></li>
+                
+                  <li onclick="toggle('pre2106100850688', 'post2106100850688')"><pre></pre></li>
+                
+                  <li onclick="toggle('pre2106100850688', 'post2106100850688')"><pre>        # Always render the toolbar for the history panel, even if it is not</pre></li>
+                
+                  <li onclick="toggle('pre2106100850688', 'post2106100850688')"><pre>        # included in the response.</pre></li>
+                
+                </ol>
+              
+              <ol start="97" class="context-line">
+                <li onclick="toggle('pre2106100850688', 'post2106100850688')"><pre>        rendered = toolbar.render_toolbar()
+                       ^^^^^^^^^^^^^^^^^^^^^^^^</pre> <span>…</span></li>
+              </ol>
+              
+                <ol start='98' class="post-context" id="post2106100850688">
+                  
+                  <li onclick="toggle('pre2106100850688', 'post2106100850688')"><pre></pre></li>
+                  
+                  <li onclick="toggle('pre2106100850688', 'post2106100850688')"><pre>        for header, value in self.get_headers(request, toolbar.enabled_panels).items():</pre></li>
+                  
+                  <li onclick="toggle('pre2106100850688', 'post2106100850688')"><pre>            response.headers[header] = value</pre></li>
+                  
+                  <li onclick="toggle('pre2106100850688', 'post2106100850688')"><pre></pre></li>
+                  
+                  <li onclick="toggle('pre2106100850688', 'post2106100850688')"><pre>        # Check for responses where the toolbar can&#x27;t be inserted.</pre></li>
+                  
+                  <li onclick="toggle('pre2106100850688', 'post2106100850688')"><pre>        if not is_processable_html_response(response):</pre></li>
+                  
+              </ol>
+              
+            </div>
+          
+
+          
+            
+              <details>
+                <summary class="commands">Local vars</summary>
+            
+            <table class="vars" id="v2106100850688">
+              <thead>
+                <tr>
+                  <th scope="col">Variable</th>
+                  <th scope="col">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                
+                  <tr>
+                    <td>panel</td>
+                    <td class="code"><pre>&lt;debug_toolbar.panels.history.panel.HistoryPanel object at 0x000001EA5D716490&gt;</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>request</td>
+                    <td class="code"><pre>&lt;WSGIRequest: POST &#x27;/api/v1/auth/login/&#x27;&gt;</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>response</td>
+                    <td class="code"><pre>&lt;Response status_code=200, &quot;application/json&quot;&gt;</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>self</td>
+                    <td class="code"><pre>&lt;debug_toolbar.middleware.DebugToolbarMiddleware object at 0x000001EA5C2E3230&gt;</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>show_toolbar</td>
+                    <td class="code"><pre>&lt;function show_toolbar at 0x000001EA5C295080&gt;</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>toolbar</td>
+                    <td class="code"><pre>&lt;debug_toolbar.toolbar.DebugToolbar object at 0x000001EA5D716FD0&gt;</pre></td>
+                  </tr>
+                
+              </tbody>
+            </table>
+            </details>
+          
+        </li>
+      
+        
+        <li class="frame user">
+          
+            <code class="fname">C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\debug_toolbar\toolbar.py</code>, line 84, in render_toolbar
+          
+
+          
+            <div class="context" id="c2106100846656">
+              
+                <ol start="77" class="pre-context" id="pre2106100846656">
+                
+                  <li onclick="toggle('pre2106100846656', 'post2106100846656')"><pre>        &quot;&quot;&quot;</pre></li>
+                
+                  <li onclick="toggle('pre2106100846656', 'post2106100846656')"><pre>        if not self.should_render_panels():</pre></li>
+                
+                  <li onclick="toggle('pre2106100846656', 'post2106100846656')"><pre>            self.store()</pre></li>
+                
+                  <li onclick="toggle('pre2106100846656', 'post2106100846656')"><pre>        try:</pre></li>
+                
+                  <li onclick="toggle('pre2106100846656', 'post2106100846656')"><pre>            context = {&quot;toolbar&quot;: self}</pre></li>
+                
+                  <li onclick="toggle('pre2106100846656', 'post2106100846656')"><pre>            lang = self.config[&quot;TOOLBAR_LANGUAGE&quot;] or get_language()</pre></li>
+                
+                  <li onclick="toggle('pre2106100846656', 'post2106100846656')"><pre>            with lang_override(lang):</pre></li>
+                
+                </ol>
+              
+              <ol start="84" class="context-line">
+                <li onclick="toggle('pre2106100846656', 'post2106100846656')"><pre>                return render_to_string(&quot;debug_toolbar/base.html&quot;, context)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</pre> <span>…</span></li>
+              </ol>
+              
+                <ol start='85' class="post-context" id="post2106100846656">
+                  
+                  <li onclick="toggle('pre2106100846656', 'post2106100846656')"><pre>        except TemplateSyntaxError:</pre></li>
+                  
+                  <li onclick="toggle('pre2106100846656', 'post2106100846656')"><pre>            if not apps.is_installed(&quot;django.contrib.staticfiles&quot;):</pre></li>
+                  
+                  <li onclick="toggle('pre2106100846656', 'post2106100846656')"><pre>                raise ImproperlyConfigured(</pre></li>
+                  
+                  <li onclick="toggle('pre2106100846656', 'post2106100846656')"><pre>                    &quot;The debug toolbar requires the staticfiles contrib app. &quot;</pre></li>
+                  
+                  <li onclick="toggle('pre2106100846656', 'post2106100846656')"><pre>                    &quot;Add &#x27;django.contrib.staticfiles&#x27; to INSTALLED_APPS and &quot;</pre></li>
+                  
+                  <li onclick="toggle('pre2106100846656', 'post2106100846656')"><pre>                    &quot;define STATIC_URL in your settings.&quot;</pre></li>
+                  
+              </ol>
+              
+            </div>
+          
+
+          
+            
+              <details>
+                <summary class="commands">Local vars</summary>
+            
+            <table class="vars" id="v2106100846656">
+              <thead>
+                <tr>
+                  <th scope="col">Variable</th>
+                  <th scope="col">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                
+                  <tr>
+                    <td>context</td>
+                    <td class="code"><pre>{&#x27;toolbar&#x27;: &lt;debug_toolbar.toolbar.DebugToolbar object at 0x000001EA5D716FD0&gt;}</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>lang</td>
+                    <td class="code"><pre>&#x27;en-us&#x27;</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>self</td>
+                    <td class="code"><pre>&lt;debug_toolbar.toolbar.DebugToolbar object at 0x000001EA5D716FD0&gt;</pre></td>
+                  </tr>
+                
+              </tbody>
+            </table>
+            </details>
+          
+        </li>
+      
+        
+        <li class="frame django">
+          
+            <code class="fname">C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\template\loader.py</code>, line 62, in render_to_string
+          
+
+          
+            <div class="context" id="c2106100846400">
+              
+                <ol start="55" class="pre-context" id="pre2106100846400">
+                
+                  <li onclick="toggle('pre2106100846400', 'post2106100846400')"><pre></pre></li>
+                
+                  <li onclick="toggle('pre2106100846400', 'post2106100846400')"><pre>    template_name may be a string or a list of strings.</pre></li>
+                
+                  <li onclick="toggle('pre2106100846400', 'post2106100846400')"><pre>    &quot;&quot;&quot;</pre></li>
+                
+                  <li onclick="toggle('pre2106100846400', 'post2106100846400')"><pre>    if isinstance(template_name, (list, tuple)):</pre></li>
+                
+                  <li onclick="toggle('pre2106100846400', 'post2106100846400')"><pre>        template = select_template(template_name, using=using)</pre></li>
+                
+                  <li onclick="toggle('pre2106100846400', 'post2106100846400')"><pre>    else:</pre></li>
+                
+                  <li onclick="toggle('pre2106100846400', 'post2106100846400')"><pre>        template = get_template(template_name, using=using)</pre></li>
+                
+                </ol>
+              
+              <ol start="62" class="context-line">
+                <li onclick="toggle('pre2106100846400', 'post2106100846400')"><pre>    return template.render(context, request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</pre> <span>…</span></li>
+              </ol>
+              
+                <ol start='63' class="post-context" id="post2106100846400">
+                  
+                  <li onclick="toggle('pre2106100846400', 'post2106100846400')"><pre></pre></li>
+                  
+                  <li onclick="toggle('pre2106100846400', 'post2106100846400')"><pre></pre></li>
+                  
+                  <li onclick="toggle('pre2106100846400', 'post2106100846400')"><pre>def _engine_list(using=None):</pre></li>
+                  
+                  <li onclick="toggle('pre2106100846400', 'post2106100846400')"><pre>    return engines.all() if using is None else [engines[using]]</pre></li>
+                  
+              </ol>
+              
+            </div>
+          
+
+          
+            
+              <details>
+                <summary class="commands">Local vars</summary>
+            
+            <table class="vars" id="v2106100846400">
+              <thead>
+                <tr>
+                  <th scope="col">Variable</th>
+                  <th scope="col">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                
+                  <tr>
+                    <td>context</td>
+                    <td class="code"><pre>{&#x27;toolbar&#x27;: &lt;debug_toolbar.toolbar.DebugToolbar object at 0x000001EA5D716FD0&gt;}</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>request</td>
+                    <td class="code"><pre>None</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>template</td>
+                    <td class="code"><pre>&lt;django.template.backends.django.Template object at 0x000001EA5D65D450&gt;</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>template_name</td>
+                    <td class="code"><pre>&#x27;debug_toolbar/base.html&#x27;</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>using</td>
+                    <td class="code"><pre>None</pre></td>
+                  </tr>
+                
+              </tbody>
+            </table>
+            </details>
+          
+        </li>
+      
+        
+        <li class="frame django">
+          
+            <code class="fname">C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\template\backends\django.py</code>, line 107, in render
+          
+
+          
+            <div class="context" id="c2106100849536">
+              
+                <ol start="100" class="pre-context" id="pre2106100849536">
+                
+                  <li onclick="toggle('pre2106100849536', 'post2106100849536')"><pre>        return self.template.origin</pre></li>
+                
+                  <li onclick="toggle('pre2106100849536', 'post2106100849536')"><pre></pre></li>
+                
+                  <li onclick="toggle('pre2106100849536', 'post2106100849536')"><pre>    def render(self, context=None, request=None):</pre></li>
+                
+                  <li onclick="toggle('pre2106100849536', 'post2106100849536')"><pre>        context = make_context(</pre></li>
+                
+                  <li onclick="toggle('pre2106100849536', 'post2106100849536')"><pre>            context, request, autoescape=self.backend.engine.autoescape</pre></li>
+                
+                  <li onclick="toggle('pre2106100849536', 'post2106100849536')"><pre>        )</pre></li>
+                
+                  <li onclick="toggle('pre2106100849536', 'post2106100849536')"><pre>        try:</pre></li>
+                
+                </ol>
+              
+              <ol start="107" class="context-line">
+                <li onclick="toggle('pre2106100849536', 'post2106100849536')"><pre>            return self.template.render(context)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</pre> <span>…</span></li>
+              </ol>
+              
+                <ol start='108' class="post-context" id="post2106100849536">
+                  
+                  <li onclick="toggle('pre2106100849536', 'post2106100849536')"><pre>        except TemplateDoesNotExist as exc:</pre></li>
+                  
+                  <li onclick="toggle('pre2106100849536', 'post2106100849536')"><pre>            reraise(exc, self.backend)</pre></li>
+                  
+                  <li onclick="toggle('pre2106100849536', 'post2106100849536')"><pre></pre></li>
+                  
+                  <li onclick="toggle('pre2106100849536', 'post2106100849536')"><pre></pre></li>
+                  
+                  <li onclick="toggle('pre2106100849536', 'post2106100849536')"><pre>def copy_exception(exc, backend=None):</pre></li>
+                  
+                  <li onclick="toggle('pre2106100849536', 'post2106100849536')"><pre>    &quot;&quot;&quot;</pre></li>
+                  
+              </ol>
+              
+            </div>
+          
+
+          
+            
+              <details>
+                <summary class="commands">Local vars</summary>
+            
+            <table class="vars" id="v2106100849536">
+              <thead>
+                <tr>
+                  <th scope="col">Variable</th>
+                  <th scope="col">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                
+                  <tr>
+                    <td>context</td>
+                    <td class="code"><pre>[{&#x27;True&#x27;: True, &#x27;False&#x27;: False, &#x27;None&#x27;: None}, {&#x27;toolbar&#x27;: &lt;debug_toolbar.toolbar.DebugToolbar object at 0x000001EA5D716FD0&gt;}]</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>request</td>
+                    <td class="code"><pre>None</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>self</td>
+                    <td class="code"><pre>&lt;django.template.backends.django.Template object at 0x000001EA5D65D450&gt;</pre></td>
+                  </tr>
+                
+              </tbody>
+            </table>
+            </details>
+          
+        </li>
+      
+        
+        <li class="frame django">
+          
+            <code class="fname">C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\template\base.py</code>, line 171, in render
+          
+
+          
+            <div class="context" id="c2106100843200">
+              
+                <ol start="164" class="pre-context" id="pre2106100843200">
+                
+                  <li onclick="toggle('pre2106100843200', 'post2106100843200')"><pre></pre></li>
+                
+                  <li onclick="toggle('pre2106100843200', 'post2106100843200')"><pre>    def render(self, context):</pre></li>
+                
+                  <li onclick="toggle('pre2106100843200', 'post2106100843200')"><pre>        &quot;Display stage -- can be called many times&quot;</pre></li>
+                
+                  <li onclick="toggle('pre2106100843200', 'post2106100843200')"><pre>        with context.render_context.push_state(self):</pre></li>
+                
+                  <li onclick="toggle('pre2106100843200', 'post2106100843200')"><pre>            if context.template is None:</pre></li>
+                
+                  <li onclick="toggle('pre2106100843200', 'post2106100843200')"><pre>                with context.bind_template(self):</pre></li>
+                
+                  <li onclick="toggle('pre2106100843200', 'post2106100843200')"><pre>                    context.template_name = self.name</pre></li>
+                
+                </ol>
+              
+              <ol start="171" class="context-line">
+                <li onclick="toggle('pre2106100843200', 'post2106100843200')"><pre>                    return self._render(context)
+                                ^^^^^^^^^^^^^^^^^^^^^</pre> <span>…</span></li>
+              </ol>
+              
+                <ol start='172' class="post-context" id="post2106100843200">
+                  
+                  <li onclick="toggle('pre2106100843200', 'post2106100843200')"><pre>            else:</pre></li>
+                  
+                  <li onclick="toggle('pre2106100843200', 'post2106100843200')"><pre>                return self._render(context)</pre></li>
+                  
+                  <li onclick="toggle('pre2106100843200', 'post2106100843200')"><pre></pre></li>
+                  
+                  <li onclick="toggle('pre2106100843200', 'post2106100843200')"><pre>    def compile_nodelist(self):</pre></li>
+                  
+                  <li onclick="toggle('pre2106100843200', 'post2106100843200')"><pre>        &quot;&quot;&quot;</pre></li>
+                  
+                  <li onclick="toggle('pre2106100843200', 'post2106100843200')"><pre>        Parse and compile the template source into a nodelist. If debug</pre></li>
+                  
+              </ol>
+              
+            </div>
+          
+
+          
+            
+              <details>
+                <summary class="commands">Local vars</summary>
+            
+            <table class="vars" id="v2106100843200">
+              <thead>
+                <tr>
+                  <th scope="col">Variable</th>
+                  <th scope="col">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                
+                  <tr>
+                    <td>context</td>
+                    <td class="code"><pre>[{&#x27;True&#x27;: True, &#x27;False&#x27;: False, &#x27;None&#x27;: None}, {&#x27;toolbar&#x27;: &lt;debug_toolbar.toolbar.DebugToolbar object at 0x000001EA5D716FD0&gt;}]</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>self</td>
+                    <td class="code"><pre>&lt;Template template_string=&quot;{% load i18n static ...&quot;&gt;</pre></td>
+                  </tr>
+                
+              </tbody>
+            </table>
+            </details>
+          
+        </li>
+      
+        
+        <li class="frame django">
+          
+            <code class="fname">C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\test\utils.py</code>, line 114, in instrumented_test_render
+          
+
+          
+            <div class="context" id="c2106100844800">
+              
+                <ol start="107" class="pre-context" id="pre2106100844800">
+                
+                  <li onclick="toggle('pre2106100844800', 'post2106100844800')"><pre></pre></li>
+                
+                  <li onclick="toggle('pre2106100844800', 'post2106100844800')"><pre>def instrumented_test_render(self, context):</pre></li>
+                
+                  <li onclick="toggle('pre2106100844800', 'post2106100844800')"><pre>    &quot;&quot;&quot;</pre></li>
+                
+                  <li onclick="toggle('pre2106100844800', 'post2106100844800')"><pre>    An instrumented Template render method, providing a signal that can be</pre></li>
+                
+                  <li onclick="toggle('pre2106100844800', 'post2106100844800')"><pre>    intercepted by the test Client.</pre></li>
+                
+                  <li onclick="toggle('pre2106100844800', 'post2106100844800')"><pre>    &quot;&quot;&quot;</pre></li>
+                
+                  <li onclick="toggle('pre2106100844800', 'post2106100844800')"><pre>    template_rendered.send(sender=self, template=self, context=context)</pre></li>
+                
+                </ol>
+              
+              <ol start="114" class="context-line">
+                <li onclick="toggle('pre2106100844800', 'post2106100844800')"><pre>    return self.nodelist.render(context)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</pre> <span>…</span></li>
+              </ol>
+              
+                <ol start='115' class="post-context" id="post2106100844800">
+                  
+                  <li onclick="toggle('pre2106100844800', 'post2106100844800')"><pre></pre></li>
+                  
+                  <li onclick="toggle('pre2106100844800', 'post2106100844800')"><pre></pre></li>
+                  
+                  <li onclick="toggle('pre2106100844800', 'post2106100844800')"><pre>class _TestState:</pre></li>
+                  
+                  <li onclick="toggle('pre2106100844800', 'post2106100844800')"><pre>    pass</pre></li>
+                  
+                  <li onclick="toggle('pre2106100844800', 'post2106100844800')"><pre></pre></li>
+                  
+                  <li onclick="toggle('pre2106100844800', 'post2106100844800')"><pre></pre></li>
+                  
+              </ol>
+              
+            </div>
+          
+
+          
+            
+              <details>
+                <summary class="commands">Local vars</summary>
+            
+            <table class="vars" id="v2106100844800">
+              <thead>
+                <tr>
+                  <th scope="col">Variable</th>
+                  <th scope="col">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                
+                  <tr>
+                    <td>context</td>
+                    <td class="code"><pre>[{&#x27;True&#x27;: True, &#x27;False&#x27;: False, &#x27;None&#x27;: None}, {&#x27;toolbar&#x27;: &lt;debug_toolbar.toolbar.DebugToolbar object at 0x000001EA5D716FD0&gt;}]</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>self</td>
+                    <td class="code"><pre>&lt;Template template_string=&quot;{% load i18n static ...&quot;&gt;</pre></td>
+                  </tr>
+                
+              </tbody>
+            </table>
+            </details>
+          
+        </li>
+      
+        
+        <li class="frame django">
+          
+            <code class="fname">C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\template\base.py</code>, line 1008, in render
+          
+
+          
+            <div class="context" id="c2106100857664">
+              
+                <ol start="1001" class="pre-context" id="pre2106100857664">
+                
+                  <li onclick="toggle('pre2106100857664', 'post2106100857664')"><pre></pre></li>
+                
+                  <li onclick="toggle('pre2106100857664', 'post2106100857664')"><pre>class NodeList(list):</pre></li>
+                
+                  <li onclick="toggle('pre2106100857664', 'post2106100857664')"><pre>    # Set to True the first time a non-TextNode is inserted by</pre></li>
+                
+                  <li onclick="toggle('pre2106100857664', 'post2106100857664')"><pre>    # extend_nodelist().</pre></li>
+                
+                  <li onclick="toggle('pre2106100857664', 'post2106100857664')"><pre>    contains_nontext = False</pre></li>
+                
+                  <li onclick="toggle('pre2106100857664', 'post2106100857664')"><pre></pre></li>
+                
+                  <li onclick="toggle('pre2106100857664', 'post2106100857664')"><pre>    def render(self, context):</pre></li>
+                
+                </ol>
+              
+              <ol start="1008" class="context-line">
+                <li onclick="toggle('pre2106100857664', 'post2106100857664')"><pre>        return SafeString(&quot;&quot;.join([node.render_annotated(context) for node in self]))
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</pre> <span>…</span></li>
+              </ol>
+              
+                <ol start='1009' class="post-context" id="post2106100857664">
+                  
+                  <li onclick="toggle('pre2106100857664', 'post2106100857664')"><pre></pre></li>
+                  
+                  <li onclick="toggle('pre2106100857664', 'post2106100857664')"><pre>    def get_nodes_by_type(self, nodetype):</pre></li>
+                  
+                  <li onclick="toggle('pre2106100857664', 'post2106100857664')"><pre>        &quot;Return a list of all nodes of the given type&quot;</pre></li>
+                  
+                  <li onclick="toggle('pre2106100857664', 'post2106100857664')"><pre>        nodes = []</pre></li>
+                  
+                  <li onclick="toggle('pre2106100857664', 'post2106100857664')"><pre>        for node in self:</pre></li>
+                  
+                  <li onclick="toggle('pre2106100857664', 'post2106100857664')"><pre>            nodes.extend(node.get_nodes_by_type(nodetype))</pre></li>
+                  
+              </ol>
+              
+            </div>
+          
+
+          
+            
+              <details>
+                <summary class="commands">Local vars</summary>
+            
+            <table class="vars" id="v2106100857664">
+              <thead>
+                <tr>
+                  <th scope="col">Variable</th>
+                  <th scope="col">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                
+                  <tr>
+                    <td>context</td>
+                    <td class="code"><pre>[{&#x27;True&#x27;: True, &#x27;False&#x27;: False, &#x27;None&#x27;: None}, {&#x27;toolbar&#x27;: &lt;debug_toolbar.toolbar.DebugToolbar object at 0x000001EA5D716FD0&gt;}]</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>self</td>
+                    <td class="code"><pre>[&lt;django.template.defaulttags.LoadNode object at 0x000001EA5D4F6270&gt;,
+ &lt;TextNode: &#x27;\n&#x27;&gt;,
+ &lt;Block Node: css. Contents: [&lt;TextNode: &#x27;\n&lt;link rel=&quot;stylesheet&quot; h&#x27;&gt;, StaticNode(varname=None, path=&lt;FilterExpression &quot;&#x27;debug_toolbar/css/print.css&#x27;&quot;&gt;), &lt;TextNode: &#x27;&quot; media=&quot;print&quot;&gt;\n&lt;link re&#x27;&gt;, StaticNode(varname=None, path=&lt;FilterExpression &quot;&#x27;debug_toolbar/css/toolbar.css&#x27;&quot;&gt;), &lt;TextNode: &#x27;&quot;&gt;\n&#x27;&gt;]&gt;,
+ &lt;TextNode: &#x27;\n&#x27;&gt;,
+ &lt;Block Node: js. Contents: [&lt;TextNode: &#x27;\n&lt;script type=&quot;module&quot; sr&#x27;&gt;, StaticNode(varname=None, path=&lt;FilterExpression &quot;&#x27;debug_toolbar/js/toolbar.js&#x27;&quot;&gt;), &lt;TextNode: &#x27;&quot; async&gt;&lt;/script&gt;\n&#x27;&gt;]&gt;,
+ &lt;TextNode: &#x27;\n&lt;div id=&quot;djDebug&quot; class=&#x27;&gt;,
+ &lt;IfNode&gt;,
+ &lt;TextNode: &#x27;\n     &#x27;&gt;,
+ &lt;URLNode view_name=&#x27;&#x27;djdt:history_sidebar&#x27;&#x27; args=[] kwargs={} as=&#x27;history_url&#x27;&gt;,
+ &lt;TextNode: &#x27;\n     &#x27;&gt;,
+ &lt;IfNode&gt;,
+ &lt;TextNode: &#x27;\n     data-default-show=&quot;&#x27;&gt;,
+ &lt;IfNode&gt;,
+ &lt;TextNode: &#x27;&quot;\n     &#x27;&gt;,
+ &lt;Variable Node: toolbar.config.ROOT_TAG_EXTRA_ATTRS|safe&gt;,
+ &lt;TextNode: &#x27;  data-update-on-fetch=&quot;&#x27;&gt;,
+ &lt;Variable Node: toolbar.config.UPDATE_ON_FETCH&gt;,
+ &lt;TextNode: &#x27;&quot;\n     data-theme=&quot;&#x27;&gt;,
+ &lt;Variable Node: toolbar.config.DEFAULT_THEME&gt;,
+ &lt;TextNode: &#x27;&quot;&gt;\n  &lt;div class=&quot;djdt-hid&#x27;&gt;,
+ &lt;django.templatetags.i18n.TranslateNode object at 0x000001EA5D4F6E40&gt;,
+ &lt;TextNode: &#x27;&quot;&gt;&#x27;&gt;,
+ &lt;django.templatetags.i18n.TranslateNode object at 0x000001EA5D583390&gt;,
+ &lt;TextNode: &#x27; »&lt;/a&gt;&lt;/li&gt;\n      &lt;li&gt;\n  &#x27;&gt;,
+ &lt;django.templatetags.i18n.TranslateNode object at 0x000001EA5D5834D0&gt;,
+ &lt;TextNode: &#x27;&quot;&gt;\n          &#x27;&gt;,
+ &lt;django.templatetags.i18n.TranslateNode object at 0x000001EA5D5A10F0&gt;,
+ &lt;TextNode: &#x27; &#x27;&gt;,
+ &lt;IncludeNode: template=&lt;FilterExpression &#x27;&quot;debug_toolbar/includes/theme_selector.html&quot;&#x27;&gt;&gt;,
+ &lt;TextNode: &#x27;\n        &lt;/a&gt;\n      &lt;/li&gt;&#x27;&gt;,
+ &lt;ForNode: for panel in toolbar.panels, tail_len: 3&gt;,
+ &lt;TextNode: &#x27;\n    &lt;/ul&gt;\n  &lt;/div&gt;\n  &lt;di&#x27;&gt;,
+ &lt;django.templatetags.i18n.TranslateNode object at 0x000001EA5D5A1220&gt;,
+ &lt;TextNode: &#x27;&quot; id=&quot;djShowToolBarButton&#x27;&gt;,
+ &lt;ForNode: for panel in toolbar.panels, tail_len: 3&gt;,
+ &lt;TextNode: &#x27;\n  &lt;div id=&quot;djDebugWindow&#x27;&gt;]</pre></td>
+                  </tr>
+                
+              </tbody>
+            </table>
+            </details>
+          
+        </li>
+      
+        
+        <li class="frame django">
+          
+            <code class="fname">C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\template\base.py</code>, line 969, in render_annotated
+          
+
+          
+            <div class="context" id="c2106100847936">
+              
+                <ol start="962" class="pre-context" id="pre2106100847936">
+                
+                  <li onclick="toggle('pre2106100847936', 'post2106100847936')"><pre>        &quot;&quot;&quot;</pre></li>
+                
+                  <li onclick="toggle('pre2106100847936', 'post2106100847936')"><pre>        Render the node. If debug is True and an exception occurs during</pre></li>
+                
+                  <li onclick="toggle('pre2106100847936', 'post2106100847936')"><pre>        rendering, the exception is annotated with contextual line information</pre></li>
+                
+                  <li onclick="toggle('pre2106100847936', 'post2106100847936')"><pre>        where it occurred in the template. For internal usage this method is</pre></li>
+                
+                  <li onclick="toggle('pre2106100847936', 'post2106100847936')"><pre>        preferred over using the render method directly.</pre></li>
+                
+                  <li onclick="toggle('pre2106100847936', 'post2106100847936')"><pre>        &quot;&quot;&quot;</pre></li>
+                
+                  <li onclick="toggle('pre2106100847936', 'post2106100847936')"><pre>        try:</pre></li>
+                
+                </ol>
+              
+              <ol start="969" class="context-line">
+                <li onclick="toggle('pre2106100847936', 'post2106100847936')"><pre>            return self.render(context)
+                        ^^^^^^^^^^^^^^^^^^^^</pre> <span>…</span></li>
+              </ol>
+              
+                <ol start='970' class="post-context" id="post2106100847936">
+                  
+                  <li onclick="toggle('pre2106100847936', 'post2106100847936')"><pre>        except Exception as e:</pre></li>
+                  
+                  <li onclick="toggle('pre2106100847936', 'post2106100847936')"><pre>            if context.template.engine.debug:</pre></li>
+                  
+                  <li onclick="toggle('pre2106100847936', 'post2106100847936')"><pre>                # Store the actual node that caused the exception.</pre></li>
+                  
+                  <li onclick="toggle('pre2106100847936', 'post2106100847936')"><pre>                if not hasattr(e, &quot;_culprit_node&quot;):</pre></li>
+                  
+                  <li onclick="toggle('pre2106100847936', 'post2106100847936')"><pre>                    e._culprit_node = self</pre></li>
+                  
+                  <li onclick="toggle('pre2106100847936', 'post2106100847936')"><pre>                if (</pre></li>
+                  
+              </ol>
+              
+            </div>
+          
+
+          
+            
+              <details>
+                <summary class="commands">Local vars</summary>
+            
+            <table class="vars" id="v2106100847936">
+              <thead>
+                <tr>
+                  <th scope="col">Variable</th>
+                  <th scope="col">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                
+                  <tr>
+                    <td>context</td>
+                    <td class="code"><pre>[{&#x27;True&#x27;: True, &#x27;False&#x27;: False, &#x27;None&#x27;: None}, {&#x27;toolbar&#x27;: &lt;debug_toolbar.toolbar.DebugToolbar object at 0x000001EA5D716FD0&gt;}]</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>self</td>
+                    <td class="code"><pre>&lt;IfNode&gt;</pre></td>
+                  </tr>
+                
+              </tbody>
+            </table>
+            </details>
+          
+        </li>
+      
+        
+        <li class="frame django">
+          
+            <code class="fname">C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\template\defaulttags.py</code>, line 327, in render
+          
+
+          
+            <div class="context" id="c2106100854720">
+              
+                <ol start="320" class="pre-context" id="pre2106100854720">
+                
+                  <li onclick="toggle('pre2106100854720', 'post2106100854720')"><pre>                    match = condition.eval(context)</pre></li>
+                
+                  <li onclick="toggle('pre2106100854720', 'post2106100854720')"><pre>                except VariableDoesNotExist:</pre></li>
+                
+                  <li onclick="toggle('pre2106100854720', 'post2106100854720')"><pre>                    match = None</pre></li>
+                
+                  <li onclick="toggle('pre2106100854720', 'post2106100854720')"><pre>            else:  # else clause</pre></li>
+                
+                  <li onclick="toggle('pre2106100854720', 'post2106100854720')"><pre>                match = True</pre></li>
+                
+                  <li onclick="toggle('pre2106100854720', 'post2106100854720')"><pre></pre></li>
+                
+                  <li onclick="toggle('pre2106100854720', 'post2106100854720')"><pre>            if match:</pre></li>
+                
+                </ol>
+              
+              <ol start="327" class="context-line">
+                <li onclick="toggle('pre2106100854720', 'post2106100854720')"><pre>                return nodelist.render(context)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^</pre> <span>…</span></li>
+              </ol>
+              
+                <ol start='328' class="post-context" id="post2106100854720">
+                  
+                  <li onclick="toggle('pre2106100854720', 'post2106100854720')"><pre></pre></li>
+                  
+                  <li onclick="toggle('pre2106100854720', 'post2106100854720')"><pre>        return &quot;&quot;</pre></li>
+                  
+                  <li onclick="toggle('pre2106100854720', 'post2106100854720')"><pre></pre></li>
+                  
+                  <li onclick="toggle('pre2106100854720', 'post2106100854720')"><pre></pre></li>
+                  
+                  <li onclick="toggle('pre2106100854720', 'post2106100854720')"><pre>class LoremNode(Node):</pre></li>
+                  
+                  <li onclick="toggle('pre2106100854720', 'post2106100854720')"><pre>    def __init__(self, count, method, common):</pre></li>
+                  
+              </ol>
+              
+            </div>
+          
+
+          
+            
+              <details>
+                <summary class="commands">Local vars</summary>
+            
+            <table class="vars" id="v2106100854720">
+              <thead>
+                <tr>
+                  <th scope="col">Variable</th>
+                  <th scope="col">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                
+                  <tr>
+                    <td>condition</td>
+                    <td class="code"><pre>(not (literal &lt;FilterExpression &#x27;toolbar.should_render_panels&#x27;&gt;))</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>context</td>
+                    <td class="code"><pre>[{&#x27;True&#x27;: True, &#x27;False&#x27;: False, &#x27;None&#x27;: None}, {&#x27;toolbar&#x27;: &lt;debug_toolbar.toolbar.DebugToolbar object at 0x000001EA5D716FD0&gt;}]</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>match</td>
+                    <td class="code"><pre>True</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>nodelist</td>
+                    <td class="code"><pre>[&lt;TextNode: &#x27;\n     data-store-id=&quot;&#x27;&gt;,
+ &lt;Variable Node: toolbar.store_id&gt;,
+ &lt;TextNode: &#x27;&quot;\n     data-render-panel-&#x27;&gt;,
+ &lt;URLNode view_name=&#x27;&#x27;djdt:render_panel&#x27;&#x27; args=[] kwargs={} as=None&gt;,
+ &lt;TextNode: &#x27;&quot;\n     &#x27;&gt;]</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>self</td>
+                    <td class="code"><pre>&lt;IfNode&gt;</pre></td>
+                  </tr>
+                
+              </tbody>
+            </table>
+            </details>
+          
+        </li>
+      
+        
+        <li class="frame django">
+          
+            <code class="fname">C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\template\base.py</code>, line 1008, in render
+          
+
+          
+            <div class="context" id="c2106100844736">
+              
+                <ol start="1001" class="pre-context" id="pre2106100844736">
+                
+                  <li onclick="toggle('pre2106100844736', 'post2106100844736')"><pre></pre></li>
+                
+                  <li onclick="toggle('pre2106100844736', 'post2106100844736')"><pre>class NodeList(list):</pre></li>
+                
+                  <li onclick="toggle('pre2106100844736', 'post2106100844736')"><pre>    # Set to True the first time a non-TextNode is inserted by</pre></li>
+                
+                  <li onclick="toggle('pre2106100844736', 'post2106100844736')"><pre>    # extend_nodelist().</pre></li>
+                
+                  <li onclick="toggle('pre2106100844736', 'post2106100844736')"><pre>    contains_nontext = False</pre></li>
+                
+                  <li onclick="toggle('pre2106100844736', 'post2106100844736')"><pre></pre></li>
+                
+                  <li onclick="toggle('pre2106100844736', 'post2106100844736')"><pre>    def render(self, context):</pre></li>
+                
+                </ol>
+              
+              <ol start="1008" class="context-line">
+                <li onclick="toggle('pre2106100844736', 'post2106100844736')"><pre>        return SafeString(&quot;&quot;.join([node.render_annotated(context) for node in self]))
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</pre> <span>…</span></li>
+              </ol>
+              
+                <ol start='1009' class="post-context" id="post2106100844736">
+                  
+                  <li onclick="toggle('pre2106100844736', 'post2106100844736')"><pre></pre></li>
+                  
+                  <li onclick="toggle('pre2106100844736', 'post2106100844736')"><pre>    def get_nodes_by_type(self, nodetype):</pre></li>
+                  
+                  <li onclick="toggle('pre2106100844736', 'post2106100844736')"><pre>        &quot;Return a list of all nodes of the given type&quot;</pre></li>
+                  
+                  <li onclick="toggle('pre2106100844736', 'post2106100844736')"><pre>        nodes = []</pre></li>
+                  
+                  <li onclick="toggle('pre2106100844736', 'post2106100844736')"><pre>        for node in self:</pre></li>
+                  
+                  <li onclick="toggle('pre2106100844736', 'post2106100844736')"><pre>            nodes.extend(node.get_nodes_by_type(nodetype))</pre></li>
+                  
+              </ol>
+              
+            </div>
+          
+
+          
+            
+              <details>
+                <summary class="commands">Local vars</summary>
+            
+            <table class="vars" id="v2106100844736">
+              <thead>
+                <tr>
+                  <th scope="col">Variable</th>
+                  <th scope="col">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                
+                  <tr>
+                    <td>context</td>
+                    <td class="code"><pre>[{&#x27;True&#x27;: True, &#x27;False&#x27;: False, &#x27;None&#x27;: None}, {&#x27;toolbar&#x27;: &lt;debug_toolbar.toolbar.DebugToolbar object at 0x000001EA5D716FD0&gt;}]</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>self</td>
+                    <td class="code"><pre>[&lt;TextNode: &#x27;\n     data-store-id=&quot;&#x27;&gt;,
+ &lt;Variable Node: toolbar.store_id&gt;,
+ &lt;TextNode: &#x27;&quot;\n     data-render-panel-&#x27;&gt;,
+ &lt;URLNode view_name=&#x27;&#x27;djdt:render_panel&#x27;&#x27; args=[] kwargs={} as=None&gt;,
+ &lt;TextNode: &#x27;&quot;\n     &#x27;&gt;]</pre></td>
+                  </tr>
+                
+              </tbody>
+            </table>
+            </details>
+          
+        </li>
+      
+        
+        <li class="frame django">
+          
+            <code class="fname">C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\template\base.py</code>, line 969, in render_annotated
+          
+
+          
+            <div class="context" id="c2106100848000">
+              
+                <ol start="962" class="pre-context" id="pre2106100848000">
+                
+                  <li onclick="toggle('pre2106100848000', 'post2106100848000')"><pre>        &quot;&quot;&quot;</pre></li>
+                
+                  <li onclick="toggle('pre2106100848000', 'post2106100848000')"><pre>        Render the node. If debug is True and an exception occurs during</pre></li>
+                
+                  <li onclick="toggle('pre2106100848000', 'post2106100848000')"><pre>        rendering, the exception is annotated with contextual line information</pre></li>
+                
+                  <li onclick="toggle('pre2106100848000', 'post2106100848000')"><pre>        where it occurred in the template. For internal usage this method is</pre></li>
+                
+                  <li onclick="toggle('pre2106100848000', 'post2106100848000')"><pre>        preferred over using the render method directly.</pre></li>
+                
+                  <li onclick="toggle('pre2106100848000', 'post2106100848000')"><pre>        &quot;&quot;&quot;</pre></li>
+                
+                  <li onclick="toggle('pre2106100848000', 'post2106100848000')"><pre>        try:</pre></li>
+                
+                </ol>
+              
+              <ol start="969" class="context-line">
+                <li onclick="toggle('pre2106100848000', 'post2106100848000')"><pre>            return self.render(context)
+                        ^^^^^^^^^^^^^^^^^^^^</pre> <span>…</span></li>
+              </ol>
+              
+                <ol start='970' class="post-context" id="post2106100848000">
+                  
+                  <li onclick="toggle('pre2106100848000', 'post2106100848000')"><pre>        except Exception as e:</pre></li>
+                  
+                  <li onclick="toggle('pre2106100848000', 'post2106100848000')"><pre>            if context.template.engine.debug:</pre></li>
+                  
+                  <li onclick="toggle('pre2106100848000', 'post2106100848000')"><pre>                # Store the actual node that caused the exception.</pre></li>
+                  
+                  <li onclick="toggle('pre2106100848000', 'post2106100848000')"><pre>                if not hasattr(e, &quot;_culprit_node&quot;):</pre></li>
+                  
+                  <li onclick="toggle('pre2106100848000', 'post2106100848000')"><pre>                    e._culprit_node = self</pre></li>
+                  
+                  <li onclick="toggle('pre2106100848000', 'post2106100848000')"><pre>                if (</pre></li>
+                  
+              </ol>
+              
+            </div>
+          
+
+          
+            
+              <details>
+                <summary class="commands">Local vars</summary>
+            
+            <table class="vars" id="v2106100848000">
+              <thead>
+                <tr>
+                  <th scope="col">Variable</th>
+                  <th scope="col">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                
+                  <tr>
+                    <td>context</td>
+                    <td class="code"><pre>[{&#x27;True&#x27;: True, &#x27;False&#x27;: False, &#x27;None&#x27;: None}, {&#x27;toolbar&#x27;: &lt;debug_toolbar.toolbar.DebugToolbar object at 0x000001EA5D716FD0&gt;}]</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>self</td>
+                    <td class="code"><pre>&lt;URLNode view_name=&#x27;&#x27;djdt:render_panel&#x27;&#x27; args=[] kwargs={} as=None&gt;</pre></td>
+                  </tr>
+                
+              </tbody>
+            </table>
+            </details>
+          
+        </li>
+      
+        
+        <li class="frame django">
+          
+            <code class="fname">C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\template\defaulttags.py</code>, line 480, in render
+          
+
+          
+            <div class="context" id="c2106100849920">
+              
+                <ol start="473" class="pre-context" id="pre2106100849920">
+                
+                  <li onclick="toggle('pre2106100849920', 'post2106100849920')"><pre>                current_app = context.request.resolver_match.namespace</pre></li>
+                
+                  <li onclick="toggle('pre2106100849920', 'post2106100849920')"><pre>            except AttributeError:</pre></li>
+                
+                  <li onclick="toggle('pre2106100849920', 'post2106100849920')"><pre>                current_app = None</pre></li>
+                
+                  <li onclick="toggle('pre2106100849920', 'post2106100849920')"><pre>        # Try to look up the URL. If it fails, raise NoReverseMatch unless the</pre></li>
+                
+                  <li onclick="toggle('pre2106100849920', 'post2106100849920')"><pre>        # {% url ... as var %} construct is used, in which case return nothing.</pre></li>
+                
+                  <li onclick="toggle('pre2106100849920', 'post2106100849920')"><pre>        url = &quot;&quot;</pre></li>
+                
+                  <li onclick="toggle('pre2106100849920', 'post2106100849920')"><pre>        try:</pre></li>
+                
+                </ol>
+              
+              <ol start="480" class="context-line">
+                <li onclick="toggle('pre2106100849920', 'post2106100849920')"><pre>            url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</pre> <span>…</span></li>
+              </ol>
+              
+                <ol start='481' class="post-context" id="post2106100849920">
+                  
+                  <li onclick="toggle('pre2106100849920', 'post2106100849920')"><pre>        except NoReverseMatch:</pre></li>
+                  
+                  <li onclick="toggle('pre2106100849920', 'post2106100849920')"><pre>            if self.asvar is None:</pre></li>
+                  
+                  <li onclick="toggle('pre2106100849920', 'post2106100849920')"><pre>                raise</pre></li>
+                  
+                  <li onclick="toggle('pre2106100849920', 'post2106100849920')"><pre></pre></li>
+                  
+                  <li onclick="toggle('pre2106100849920', 'post2106100849920')"><pre>        if self.asvar:</pre></li>
+                  
+                  <li onclick="toggle('pre2106100849920', 'post2106100849920')"><pre>            context[self.asvar] = url</pre></li>
+                  
+              </ol>
+              
+            </div>
+          
+
+          
+            
+              <details>
+                <summary class="commands">Local vars</summary>
+            
+            <table class="vars" id="v2106100849920">
+              <thead>
+                <tr>
+                  <th scope="col">Variable</th>
+                  <th scope="col">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                
+                  <tr>
+                    <td>NoReverseMatch</td>
+                    <td class="code"><pre>&lt;class &#x27;django.urls.exceptions.NoReverseMatch&#x27;&gt;</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>args</td>
+                    <td class="code"><pre>[]</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>context</td>
+                    <td class="code"><pre>[{&#x27;True&#x27;: True, &#x27;False&#x27;: False, &#x27;None&#x27;: None}, {&#x27;toolbar&#x27;: &lt;debug_toolbar.toolbar.DebugToolbar object at 0x000001EA5D716FD0&gt;}]</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>current_app</td>
+                    <td class="code"><pre>None</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>kwargs</td>
+                    <td class="code"><pre>{}</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>reverse</td>
+                    <td class="code"><pre>&lt;function reverse at 0x000001EA5B150AE0&gt;</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>self</td>
+                    <td class="code"><pre>&lt;URLNode view_name=&#x27;&#x27;djdt:render_panel&#x27;&#x27; args=[] kwargs={} as=None&gt;</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>url</td>
+                    <td class="code"><pre>&#x27;&#x27;</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>view_name</td>
+                    <td class="code"><pre>&#x27;djdt:render_panel&#x27;</pre></td>
+                  </tr>
+                
+              </tbody>
+            </table>
+            </details>
+          
+        </li>
+      
+        
+        <li class="frame django">
+          
+            <code class="fname">C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\urls\base.py</code>, line 82, in reverse
+          
+
+          
+            <div class="context" id="c2106100850240">
+              
+                <ol start="75" class="pre-context" id="pre2106100850240">
+                
+                  <li onclick="toggle('pre2106100850240', 'post2106100850240')"><pre>            except KeyError as key:</pre></li>
+                
+                  <li onclick="toggle('pre2106100850240', 'post2106100850240')"><pre>                if resolved_path:</pre></li>
+                
+                  <li onclick="toggle('pre2106100850240', 'post2106100850240')"><pre>                    raise NoReverseMatch(</pre></li>
+                
+                  <li onclick="toggle('pre2106100850240', 'post2106100850240')"><pre>                        &quot;%s is not a registered namespace inside &#x27;%s&#x27;&quot;</pre></li>
+                
+                  <li onclick="toggle('pre2106100850240', 'post2106100850240')"><pre>                        % (key, &quot;:&quot;.join(resolved_path))</pre></li>
+                
+                  <li onclick="toggle('pre2106100850240', 'post2106100850240')"><pre>                    )</pre></li>
+                
+                  <li onclick="toggle('pre2106100850240', 'post2106100850240')"><pre>                else:</pre></li>
+                
+                </ol>
+              
+              <ol start="82" class="context-line">
+                <li onclick="toggle('pre2106100850240', 'post2106100850240')"><pre>                    raise NoReverseMatch(&quot;%s is not a registered namespace&quot; % key)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</pre> <span>…</span></li>
+              </ol>
+              
+                <ol start='83' class="post-context" id="post2106100850240">
+                  
+                  <li onclick="toggle('pre2106100850240', 'post2106100850240')"><pre>        if ns_pattern:</pre></li>
+                  
+                  <li onclick="toggle('pre2106100850240', 'post2106100850240')"><pre>            resolver = get_ns_resolver(</pre></li>
+                  
+                  <li onclick="toggle('pre2106100850240', 'post2106100850240')"><pre>                ns_pattern, resolver, tuple(ns_converters.items())</pre></li>
+                  
+                  <li onclick="toggle('pre2106100850240', 'post2106100850240')"><pre>            )</pre></li>
+                  
+                  <li onclick="toggle('pre2106100850240', 'post2106100850240')"><pre></pre></li>
+                  
+                  <li onclick="toggle('pre2106100850240', 'post2106100850240')"><pre>    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)</pre></li>
+                  
+              </ol>
+              
+            </div>
+          
+
+          
+            
+              <details>
+                <summary class="commands">Local vars</summary>
+            
+            <table class="vars" id="v2106100850240">
+              <thead>
+                <tr>
+                  <th scope="col">Variable</th>
+                  <th scope="col">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                
+                  <tr>
+                    <td>args</td>
+                    <td class="code"><pre>[]</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>current_app</td>
+                    <td class="code"><pre>None</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>current_ns</td>
+                    <td class="code"><pre>None</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>current_path</td>
+                    <td class="code"><pre>None</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>kwargs</td>
+                    <td class="code"><pre>{}</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>ns</td>
+                    <td class="code"><pre>&#x27;djdt&#x27;</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>ns_converters</td>
+                    <td class="code"><pre>{}</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>ns_pattern</td>
+                    <td class="code"><pre>&#x27;&#x27;</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>path</td>
+                    <td class="code"><pre>[&#x27;djdt&#x27;]</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>prefix</td>
+                    <td class="code"><pre>&#x27;/&#x27;</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>resolved_path</td>
+                    <td class="code"><pre>[]</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>resolver</td>
+                    <td class="code"><pre>&lt;URLResolver &#x27;config.urls&#x27; (None:None) &#x27;^/&#x27;&gt;</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>urlconf</td>
+                    <td class="code"><pre>&#x27;config.urls&#x27;</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>view</td>
+                    <td class="code"><pre>&#x27;render_panel&#x27;</pre></td>
+                  </tr>
+                
+                  <tr>
+                    <td>viewname</td>
+                    <td class="code"><pre>&#x27;djdt:render_panel&#x27;</pre></td>
+                  </tr>
+                
+              </tbody>
+            </table>
+            </details>
+          
+        </li>
+      
+    </ul>
+  </div>
+
+  <form action="https://dpaste.com/" name="pasteform" id="pasteform" method="post">
+  <div id="pastebinTraceback" class="pastebin">
+    <input type="hidden" name="language" value="PythonConsole">
+    <input type="hidden" name="title"
+      value="NoReverseMatch at /api/v1/auth/login/">
+    <input type="hidden" name="source" value="Django Dpaste Agent">
+    <input type="hidden" name="poster" value="Django">
+    <textarea name="content" id="traceback_area" cols="140" rows="25">
+Environment:
+
+
+Request Method: POST
+Request URL: http://127.0.0.1:8000/api/v1/auth/login/
+
+Django Version: 5.1.4
+Python Version: 3.13.7
+Installed Applications:
+[&#x27;django.contrib.admin&#x27;,
+ &#x27;django.contrib.auth&#x27;,
+ &#x27;django.contrib.contenttypes&#x27;,
+ &#x27;django.contrib.sessions&#x27;,
+ &#x27;django.contrib.messages&#x27;,
+ &#x27;django.contrib.staticfiles&#x27;,
+ &#x27;rest_framework&#x27;,
+ &#x27;rest_framework_simplejwt&#x27;,
+ &#x27;corsheaders&#x27;,
+ &#x27;django_filters&#x27;,
+ &#x27;apps.core&#x27;,
+ &#x27;apps.accounts&#x27;,
+ &#x27;apps.clients&#x27;,
+ &#x27;apps.leads&#x27;,
+ &#x27;apps.api&#x27;,
+ &#x27;debug_toolbar&#x27;,
+ &#x27;django_extensions&#x27;]
+Installed Middleware:
+[&#x27;debug_toolbar.middleware.DebugToolbarMiddleware&#x27;,
+ &#x27;django.middleware.security.SecurityMiddleware&#x27;,
+ &#x27;whitenoise.middleware.WhiteNoiseMiddleware&#x27;,
+ &#x27;django.contrib.sessions.middleware.SessionMiddleware&#x27;,
+ &#x27;corsheaders.middleware.CorsMiddleware&#x27;,
+ &#x27;django.middleware.common.CommonMiddleware&#x27;,
+ &#x27;django.middleware.csrf.CsrfViewMiddleware&#x27;,
+ &#x27;django.contrib.auth.middleware.AuthenticationMiddleware&#x27;,
+ &#x27;django.contrib.messages.middleware.MessageMiddleware&#x27;,
+ &#x27;django.middleware.clickjacking.XFrameOptionsMiddleware&#x27;]
+
+
+Template error:
+In template C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\debug_toolbar\templates\debug_toolbar\base.html, error at line 12
+   &#x27;djdt&#x27; is not a registered namespace
+   2 : {% block css %}
+   3 : &lt;link rel=&quot;stylesheet&quot; href=&quot;{% static &#x27;debug_toolbar/css/print.css&#x27; %}&quot; media=&quot;print&quot;&gt;
+   4 : &lt;link rel=&quot;stylesheet&quot; href=&quot;{% static &#x27;debug_toolbar/css/toolbar.css&#x27; %}&quot;&gt;
+   5 : {% endblock %}
+   6 : {% block js %}
+   7 : &lt;script type=&quot;module&quot; src=&quot;{% static &#x27;debug_toolbar/js/toolbar.js&#x27; %}&quot; async&gt;&lt;/script&gt;
+   8 : {% endblock %}
+   9 : &lt;div id=&quot;djDebug&quot; class=&quot;djdt-hidden&quot; dir=&quot;ltr&quot;
+   10 :      {% if not toolbar.should_render_panels %}
+   11 :      data-store-id=&quot;{{ toolbar.store_id }}&quot;
+   12 :      data-render-panel-url=&quot; {% url &#x27;djdt:render_panel&#x27; %} &quot;
+   13 :      {% endif %}
+   14 :      {% url &#x27;djdt:history_sidebar&#x27; as history_url %}
+   15 :      {% if history_url %}
+   16 :      data-sidebar-url=&quot;{{ history_url }}&quot;
+   17 :      {% endif %}
+   18 :      data-default-show=&quot;{% if toolbar.config.SHOW_COLLAPSED %}false{% else %}true{% endif %}&quot;
+   19 :      {{ toolbar.config.ROOT_TAG_EXTRA_ATTRS|safe }}  data-update-on-fetch=&quot;{{ toolbar.config.UPDATE_ON_FETCH }}&quot;
+   20 :      data-theme=&quot;{{ toolbar.config.DEFAULT_THEME }}&quot;&gt;
+   21 :   &lt;div class=&quot;djdt-hidden&quot; id=&quot;djDebugToolbar&quot;&gt;
+   22 :     &lt;ul id=&quot;djDebugPanelList&quot;&gt;
+
+
+Traceback (most recent call last):
+  File "C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\urls\base.py", line 71, in reverse
+    extra, resolver = resolver.namespace_dict[ns]
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+During handling of the above exception (&#x27;djdt&#x27;), another exception occurred:
+  File "C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\debug_toolbar\middleware.py", line 97, in __call__
+    rendered = toolbar.render_toolbar()
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\debug_toolbar\toolbar.py", line 84, in render_toolbar
+    return render_to_string(&quot;debug_toolbar/base.html&quot;, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\template\loader.py", line 62, in render_to_string
+    return template.render(context, request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\template\backends\django.py", line 107, in render
+    return self.template.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\template\base.py", line 171, in render
+    return self._render(context)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\test\utils.py", line 114, in instrumented_test_render
+    return self.nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\template\base.py", line 1008, in render
+    return SafeString(&quot;&quot;.join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\template\base.py", line 969, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\template\defaulttags.py", line 327, in render
+    return nodelist.render(context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\template\base.py", line 1008, in render
+    return SafeString(&quot;&quot;.join([node.render_annotated(context) for node in self]))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\template\base.py", line 969, in render_annotated
+    return self.render(context)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\template\defaulttags.py", line 480, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\prath\OneDrive\Desktop\SAAS\venv\Lib\site-packages\django\urls\base.py", line 82, in reverse
+    raise NoReverseMatch(&quot;%s is not a registered namespace&quot; % key)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Exception Type: NoReverseMatch at /api/v1/auth/login/
+Exception Value: &#x27;djdt&#x27; is not a registered namespace
+</textarea>
+  <br><br>
+  <input type="submit" value="Share this traceback on a public website">
+  </div>
+</form>
+
+</div>
+
+
+<div id="requestinfo">
+  <h2>Request information</h2>
+
+
+  
+    <h3 id="user-info">USER</h3>
+    <p>AnonymousUser</p>
+  
+
+  <h3 id="get-info">GET</h3>
+  
+    <p>No GET data</p>
+  
+
+  <h3 id="post-info">POST</h3>
+  
+    <p>No POST data</p>
+  
+
+  <h3 id="files-info">FILES</h3>
+  
+    <p>No FILES data</p>
+  
+
+  <h3 id="cookie-info">COOKIES</h3>
+  
+    <p>No cookie data</p>
+  
+
+  <h3 id="meta-info">META</h3>
+  <table class="req">
+    <thead>
+      <tr>
+        <th scope="col">Variable</th>
+        <th scope="col">Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      
+        <tr>
+          <td>ALLUSERSPROFILE</td>
+          <td class="code"><pre>&#x27;C:\\ProgramData&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>ANTIGRAVITY_AGENT</td>
+          <td class="code"><pre>&#x27;1&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>ANTIGRAVITY_CLI_ALIAS</td>
+          <td class="code"><pre>&#x27;agy&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>APPDATA</td>
+          <td class="code"><pre>&#x27;C:\\Users\\prath\\AppData\\Roaming&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>CELERY_BROKER_URL</td>
+          <td class="code"><pre>&#x27;redis://localhost:6379/1&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>CHROME_CRASHPAD_PIPE_NAME</td>
+          <td class="code"><pre>&#x27;\\\\.\\pipe\\crashpad_16804_KSKBRHRVJMWUARPP&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>COLORTERM</td>
+          <td class="code"><pre>&#x27;truecolor&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>COMMONPROGRAMFILES</td>
+          <td class="code"><pre>&#x27;C:\\Program Files\\Common Files&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>COMMONPROGRAMFILES(X86)</td>
+          <td class="code"><pre>&#x27;C:\\Program Files (x86)\\Common Files&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>COMMONPROGRAMW6432</td>
+          <td class="code"><pre>&#x27;C:\\Program Files\\Common Files&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>COMPUTERNAME</td>
+          <td class="code"><pre>&#x27;PRATHMESH&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>COMSPEC</td>
+          <td class="code"><pre>&#x27;C:\\Windows\\system32\\cmd.exe&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>CONTENT_LENGTH</td>
+          <td class="code"><pre>&#x27;64&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>CONTENT_TYPE</td>
+          <td class="code"><pre>&#x27;application/json&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>CORS_ALLOWED_ORIGINS</td>
+          <td class="code"><pre>&#x27;http://localhost:3000,http://127.0.0.1:3000&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DATABASE_URL</td>
+          <td class="code"><pre>&#x27;postgres://postgres:vipul123@localhost:5432/saas&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DJANGO_ALLOWED_HOSTS</td>
+          <td class="code"><pre>&#x27;localhost,127.0.0.1&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DJANGO_DEBUG</td>
+          <td class="code"><pre>&#x27;True&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DJANGO_SECRET_KEY</td>
+          <td class="code"><pre>&#x27;********************&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DJANGO_SETTINGS_MODULE</td>
+          <td class="code"><pre>&#x27;config.settings.development&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DRIVERDATA</td>
+          <td class="code"><pre>&#x27;C:\\Windows\\System32\\Drivers\\DriverData&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>EFC_13320_1262719628</td>
+          <td class="code"><pre>&#x27;1&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>EFC_13320_1592913036</td>
+          <td class="code"><pre>&#x27;1&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>EFC_13320_2283032206</td>
+          <td class="code"><pre>&#x27;1&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>EFC_13320_2775293581</td>
+          <td class="code"><pre>&#x27;1&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>EFC_13320_344590478</td>
+          <td class="code"><pre>&#x27;1&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>EFC_13320_3789132940</td>
+          <td class="code"><pre>&#x27;1&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>EMAIL_BACKEND</td>
+          <td class="code"><pre>&#x27;django.core.mail.backends.console.EmailBackend&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>FPS_BROWSER_APP_PROFILE_STRING</td>
+          <td class="code"><pre>&#x27;Internet Explorer&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>FPS_BROWSER_USER_PROFILE_STRING</td>
+          <td class="code"><pre>&#x27;Default&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>GATEWAY_INTERFACE</td>
+          <td class="code"><pre>&#x27;CGI/1.1&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>GIT_ASKPASS</td>
+          <td class="code"><pre>&#x27;********************&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>HOMEDRIVE</td>
+          <td class="code"><pre>&#x27;C:&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>HOMEPATH</td>
+          <td class="code"><pre>&#x27;\\Users\\prath&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>HTTP_ACCEPT_ENCODING</td>
+          <td class="code"><pre>&#x27;identity&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>HTTP_CONNECTION</td>
+          <td class="code"><pre>&#x27;close&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>HTTP_HOST</td>
+          <td class="code"><pre>&#x27;127.0.0.1:8000&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>HTTP_USER_AGENT</td>
+          <td class="code"><pre>&#x27;Python-urllib/3.13&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>JWT_ACCESS_TOKEN_LIFETIME_MINUTES</td>
+          <td class="code"><pre>&#x27;********************&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>JWT_REFRESH_TOKEN_LIFETIME_DAYS</td>
+          <td class="code"><pre>&#x27;********************&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>LANG</td>
+          <td class="code"><pre>&#x27;en_US.UTF-8&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>LOCALAPPDATA</td>
+          <td class="code"><pre>&#x27;C:\\Users\\prath\\AppData\\Local&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>LOGONSERVER</td>
+          <td class="code"><pre>&#x27;\\\\PRATHMESH&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>NUMBER_OF_PROCESSORS</td>
+          <td class="code"><pre>&#x27;16&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>ONEDRIVE</td>
+          <td class="code"><pre>&#x27;C:\\Users\\prath\\OneDrive&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>OS</td>
+          <td class="code"><pre>&#x27;Windows_NT&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>PAGER</td>
+          <td class="code"><pre>&#x27;cat&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>PATH</td>
+          <td class="code"><pre>(&#x27;C:\\Users\\prath\\OneDrive\\Desktop\\SAAS\\venv\\Scripts;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\;C:\\Windows\\System32\\OpenSSH\\;C:\\Program &#x27;
+ &#x27;Files (x86)\\NVIDIA Corporation\\PhysX\\Common;C:\\Program Files\\NVIDIA &#x27;
+ &#x27;Corporation\\NVIDIA &#x27;
+ &#x27;NvDLISR;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\;C:\\Windows\\System32\\OpenSSH\\;C:\\Program &#x27;
+ &#x27;Files\\Docker\\Docker\\resources\\bin;C:\\Program &#x27;
+ &#x27;Files\\nodejs\\;C:\\Program &#x27;
+ &#x27;Files\\Git\\cmd;C:\\Users\\prath\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\;C:\\Users\\prath\\AppData\\Local\\Programs\\Python\\Python313\\;C:\\Users\\prath\\AppData\\Local\\Programs\\Python\\Launcher\\;C:\\Users\\prath\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\prath\\AppData\\Local\\Programs\\Microsoft &#x27;
+ &#x27;VS &#x27;
+ &#x27;Code\\bin;C:\\Users\\prath\\AppData\\Roaming\\npm;C:\\Users\\prath\\AppData\\Local\\Programs\\Antigravity\\bin&#x27;)</pre></td>
+        </tr>
+      
+        <tr>
+          <td>PATHEXT</td>
+          <td class="code"><pre>&#x27;.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>PATH_INFO</td>
+          <td class="code"><pre>&#x27;/api/v1/auth/login/&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>PROCESSOR_ARCHITECTURE</td>
+          <td class="code"><pre>&#x27;AMD64&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>PROCESSOR_IDENTIFIER</td>
+          <td class="code"><pre>&#x27;Intel64 Family 6 Model 141 Stepping 1, GenuineIntel&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>PROCESSOR_LEVEL</td>
+          <td class="code"><pre>&#x27;6&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>PROCESSOR_REVISION</td>
+          <td class="code"><pre>&#x27;8d01&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>PROGRAMDATA</td>
+          <td class="code"><pre>&#x27;C:\\ProgramData&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>PROGRAMFILES</td>
+          <td class="code"><pre>&#x27;C:\\Program Files&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>PROGRAMFILES(X86)</td>
+          <td class="code"><pre>&#x27;C:\\Program Files (x86)&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>PROGRAMW6432</td>
+          <td class="code"><pre>&#x27;C:\\Program Files&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>PSMODULEPATH</td>
+          <td class="code"><pre>(&#x27;C:\\Users\\prath\\OneDrive\\Documents\\WindowsPowerShell\\Modules;C:\\Program &#x27;
+ &#x27;Files\\WindowsPowerShell\\Modules;C:\\Windows\\system32\\WindowsPowerShell\\v1.0\\Modules&#x27;)</pre></td>
+        </tr>
+      
+        <tr>
+          <td>PUBLIC</td>
+          <td class="code"><pre>&#x27;C:\\Users\\Public&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>QUERY_STRING</td>
+          <td class="code"><pre>&#x27;&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>REDIS_URL</td>
+          <td class="code"><pre>&#x27;redis://localhost:6379/0&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>REMOTE_ADDR</td>
+          <td class="code"><pre>&#x27;127.0.0.1&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>REMOTE_HOST</td>
+          <td class="code"><pre>&#x27;&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>REQUEST_METHOD</td>
+          <td class="code"><pre>&#x27;POST&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>RUN_MAIN</td>
+          <td class="code"><pre>&#x27;true&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SCRIPT_NAME</td>
+          <td class="code"><pre>&#x27;&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SERVER_NAME</td>
+          <td class="code"><pre>&#x27;kubernetes.docker.internal&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SERVER_PORT</td>
+          <td class="code"><pre>&#x27;8000&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SERVER_PROTOCOL</td>
+          <td class="code"><pre>&#x27;HTTP/1.1&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SERVER_SOFTWARE</td>
+          <td class="code"><pre>&#x27;WSGIServer/0.2&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SESSIONNAME</td>
+          <td class="code"><pre>&#x27;Console&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SYSTEMDRIVE</td>
+          <td class="code"><pre>&#x27;C:&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SYSTEMROOT</td>
+          <td class="code"><pre>&#x27;C:\\Windows&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>TEMP</td>
+          <td class="code"><pre>&#x27;C:\\Users\\prath\\AppData\\Local\\Temp&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>TERM_PROGRAM</td>
+          <td class="code"><pre>&#x27;vscode&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>TERM_PROGRAM_VERSION</td>
+          <td class="code"><pre>&#x27;1.107.0&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>TMP</td>
+          <td class="code"><pre>&#x27;C:\\Users\\prath\\AppData\\Local\\Temp&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>USERDOMAIN</td>
+          <td class="code"><pre>&#x27;PRATHMESH&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>USERDOMAIN_ROAMINGPROFILE</td>
+          <td class="code"><pre>&#x27;PRATHMESH&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>USERNAME</td>
+          <td class="code"><pre>&#x27;prath&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>USERPROFILE</td>
+          <td class="code"><pre>&#x27;C:\\Users\\prath&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>VIRTUAL_ENV</td>
+          <td class="code"><pre>&#x27;C:\\Users\\prath\\OneDrive\\Desktop\\SAAS\\venv&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>VIRTUAL_ENV_PROMPT</td>
+          <td class="code"><pre>&#x27;venv&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>VSCODE_GIT_ASKPASS_EXTRA_ARGS</td>
+          <td class="code"><pre>&#x27;********************&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>VSCODE_GIT_ASKPASS_MAIN</td>
+          <td class="code"><pre>&#x27;********************&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>VSCODE_GIT_ASKPASS_NODE</td>
+          <td class="code"><pre>&#x27;********************&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>VSCODE_GIT_IPC_HANDLE</td>
+          <td class="code"><pre>&#x27;\\\\.\\pipe\\vscode-git-2739a5dd60-sock&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>VSCODE_INJECTION</td>
+          <td class="code"><pre>&#x27;1&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>VSCODE_PYTHON_AUTOACTIVATE_GUARD</td>
+          <td class="code"><pre>&#x27;1&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>WINDIR</td>
+          <td class="code"><pre>&#x27;C:\\Windows&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>ZES_ENABLE_SYSMAN</td>
+          <td class="code"><pre>&#x27;1&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>_OLD_VIRTUAL_PATH</td>
+          <td class="code"><pre>(&#x27;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\;C:\\Windows\\System32\\OpenSSH\\;C:\\Program &#x27;
+ &#x27;Files (x86)\\NVIDIA Corporation\\PhysX\\Common;C:\\Program Files\\NVIDIA &#x27;
+ &#x27;Corporation\\NVIDIA &#x27;
+ &#x27;NvDLISR;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\;C:\\Windows\\System32\\OpenSSH\\;C:\\Program &#x27;
+ &#x27;Files\\Docker\\Docker\\resources\\bin;C:\\Program &#x27;
+ &#x27;Files\\nodejs\\;C:\\Program &#x27;
+ &#x27;Files\\Git\\cmd;C:\\Users\\prath\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\;C:\\Users\\prath\\AppData\\Local\\Programs\\Python\\Python313\\;C:\\Users\\prath\\AppData\\Local\\Programs\\Python\\Launcher\\;C:\\Users\\prath\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\prath\\AppData\\Local\\Programs\\Microsoft &#x27;
+ &#x27;VS &#x27;
+ &#x27;Code\\bin;C:\\Users\\prath\\AppData\\Roaming\\npm;C:\\Users\\prath\\AppData\\Local\\Programs\\Antigravity\\bin&#x27;)</pre></td>
+        </tr>
+      
+        <tr>
+          <td>wsgi.errors</td>
+          <td class="code"><pre>&lt;_io.TextIOWrapper name=&#x27;&lt;stderr&gt;&#x27; mode=&#x27;w&#x27; encoding=&#x27;utf-8&#x27;&gt;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>wsgi.file_wrapper</td>
+          <td class="code"><pre>&lt;class &#x27;wsgiref.util.FileWrapper&#x27;&gt;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>wsgi.input</td>
+          <td class="code"><pre>&lt;django.core.handlers.wsgi.LimitedStream object at 0x000001EA5D4B6E90&gt;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>wsgi.multiprocess</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+      
+        <tr>
+          <td>wsgi.multithread</td>
+          <td class="code"><pre>True</pre></td>
+        </tr>
+      
+        <tr>
+          <td>wsgi.run_once</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+      
+        <tr>
+          <td>wsgi.url_scheme</td>
+          <td class="code"><pre>&#x27;http&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>wsgi.version</td>
+          <td class="code"><pre>(1, 0)</pre></td>
+        </tr>
+      
+    </tbody>
+  </table>
+
+
+  <h3 id="settings-info">Settings</h3>
+  <h4>Using settings module <code>config.settings.development</code></h4>
+  <table class="req">
+    <thead>
+      <tr>
+        <th scope="col">Setting</th>
+        <th scope="col">Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      
+        <tr>
+          <td>ABSOLUTE_URL_OVERRIDES</td>
+          <td class="code"><pre>{}</pre></td>
+        </tr>
+      
+        <tr>
+          <td>ADMINS</td>
+          <td class="code"><pre>[]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>ALLOWED_HOSTS</td>
+          <td class="code"><pre>[&#x27;localhost&#x27;, &#x27;127.0.0.1&#x27;]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>APPEND_SLASH</td>
+          <td class="code"><pre>True</pre></td>
+        </tr>
+      
+        <tr>
+          <td>ASGI_APPLICATION</td>
+          <td class="code"><pre>&#x27;config.asgi.application&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>AUTHENTICATION_BACKENDS</td>
+          <td class="code"><pre>[&#x27;django.contrib.auth.backends.ModelBackend&#x27;]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>AUTH_PASSWORD_VALIDATORS</td>
+          <td class="code"><pre>&#x27;********************&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>AUTH_USER_MODEL</td>
+          <td class="code"><pre>&#x27;accounts.User&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>BASE_DIR</td>
+          <td class="code"><pre>WindowsPath(&#x27;C:/Users/prath/OneDrive/Desktop/SAAS&#x27;)</pre></td>
+        </tr>
+      
+        <tr>
+          <td>CACHES</td>
+          <td class="code"><pre>{&#x27;default&#x27;: {&#x27;BACKEND&#x27;: &#x27;django.core.cache.backends.locmem.LocMemCache&#x27;}}</pre></td>
+        </tr>
+      
+        <tr>
+          <td>CACHE_MIDDLEWARE_ALIAS</td>
+          <td class="code"><pre>&#x27;default&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>CACHE_MIDDLEWARE_KEY_PREFIX</td>
+          <td class="code"><pre>&#x27;********************&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>CACHE_MIDDLEWARE_SECONDS</td>
+          <td class="code"><pre>600</pre></td>
+        </tr>
+      
+        <tr>
+          <td>CELERY_ACCEPT_CONTENT</td>
+          <td class="code"><pre>[&#x27;json&#x27;]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>CELERY_BROKER_URL</td>
+          <td class="code"><pre>&#x27;redis://localhost:6379/1&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>CELERY_RESULT_SERIALIZER</td>
+          <td class="code"><pre>&#x27;json&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>CELERY_TASK_SERIALIZER</td>
+          <td class="code"><pre>&#x27;json&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>CELERY_TIMEZONE</td>
+          <td class="code"><pre>&#x27;Asia/Kolkata&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>CORS_ALLOWED_ORIGINS</td>
+          <td class="code"><pre>[&#x27;http://localhost:3000&#x27;, &#x27;http://127.0.0.1:3000&#x27;]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>CSRF_COOKIE_AGE</td>
+          <td class="code"><pre>31449600</pre></td>
+        </tr>
+      
+        <tr>
+          <td>CSRF_COOKIE_DOMAIN</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+      
+        <tr>
+          <td>CSRF_COOKIE_HTTPONLY</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+      
+        <tr>
+          <td>CSRF_COOKIE_NAME</td>
+          <td class="code"><pre>&#x27;csrftoken&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>CSRF_COOKIE_PATH</td>
+          <td class="code"><pre>&#x27;/&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>CSRF_COOKIE_SAMESITE</td>
+          <td class="code"><pre>&#x27;Lax&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>CSRF_COOKIE_SECURE</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+      
+        <tr>
+          <td>CSRF_FAILURE_VIEW</td>
+          <td class="code"><pre>&#x27;django.views.csrf.csrf_failure&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>CSRF_HEADER_NAME</td>
+          <td class="code"><pre>&#x27;HTTP_X_CSRFTOKEN&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>CSRF_TRUSTED_ORIGINS</td>
+          <td class="code"><pre>[]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>CSRF_USE_SESSIONS</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DATABASES</td>
+          <td class="code"><pre>{&#x27;default&#x27;: {&#x27;ATOMIC_REQUESTS&#x27;: False,
+             &#x27;AUTOCOMMIT&#x27;: True,
+             &#x27;CONN_HEALTH_CHECKS&#x27;: False,
+             &#x27;CONN_MAX_AGE&#x27;: 0,
+             &#x27;ENGINE&#x27;: &#x27;django.db.backends.postgresql&#x27;,
+             &#x27;HOST&#x27;: &#x27;localhost&#x27;,
+             &#x27;NAME&#x27;: &#x27;saas&#x27;,
+             &#x27;OPTIONS&#x27;: {},
+             &#x27;PASSWORD&#x27;: &#x27;********************&#x27;,
+             &#x27;PORT&#x27;: 5432,
+             &#x27;TEST&#x27;: {&#x27;CHARSET&#x27;: None,
+                      &#x27;COLLATION&#x27;: None,
+                      &#x27;MIGRATE&#x27;: True,
+                      &#x27;MIRROR&#x27;: None,
+                      &#x27;NAME&#x27;: None},
+             &#x27;TIME_ZONE&#x27;: None,
+             &#x27;USER&#x27;: &#x27;postgres&#x27;}}</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DATABASE_ROUTERS</td>
+          <td class="code"><pre>[]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DATA_UPLOAD_MAX_MEMORY_SIZE</td>
+          <td class="code"><pre>2621440</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DATA_UPLOAD_MAX_NUMBER_FIELDS</td>
+          <td class="code"><pre>1000</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DATA_UPLOAD_MAX_NUMBER_FILES</td>
+          <td class="code"><pre>100</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DATETIME_FORMAT</td>
+          <td class="code"><pre>&#x27;N j, Y, P&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DATETIME_INPUT_FORMATS</td>
+          <td class="code"><pre>[&#x27;%Y-%m-%d %H:%M:%S&#x27;,
+ &#x27;%Y-%m-%d %H:%M:%S.%f&#x27;,
+ &#x27;%Y-%m-%d %H:%M&#x27;,
+ &#x27;%m/%d/%Y %H:%M:%S&#x27;,
+ &#x27;%m/%d/%Y %H:%M:%S.%f&#x27;,
+ &#x27;%m/%d/%Y %H:%M&#x27;,
+ &#x27;%m/%d/%y %H:%M:%S&#x27;,
+ &#x27;%m/%d/%y %H:%M:%S.%f&#x27;,
+ &#x27;%m/%d/%y %H:%M&#x27;]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DATE_FORMAT</td>
+          <td class="code"><pre>&#x27;N j, Y&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DATE_INPUT_FORMATS</td>
+          <td class="code"><pre>[&#x27;%Y-%m-%d&#x27;,
+ &#x27;%m/%d/%Y&#x27;,
+ &#x27;%m/%d/%y&#x27;,
+ &#x27;%b %d %Y&#x27;,
+ &#x27;%b %d, %Y&#x27;,
+ &#x27;%d %b %Y&#x27;,
+ &#x27;%d %b, %Y&#x27;,
+ &#x27;%B %d %Y&#x27;,
+ &#x27;%B %d, %Y&#x27;,
+ &#x27;%d %B %Y&#x27;,
+ &#x27;%d %B, %Y&#x27;]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DEBUG</td>
+          <td class="code"><pre>True</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DEBUG_PROPAGATE_EXCEPTIONS</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DECIMAL_SEPARATOR</td>
+          <td class="code"><pre>&#x27;.&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DEFAULT_AUTO_FIELD</td>
+          <td class="code"><pre>&#x27;django.db.models.BigAutoField&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DEFAULT_CHARSET</td>
+          <td class="code"><pre>&#x27;utf-8&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DEFAULT_EXCEPTION_REPORTER</td>
+          <td class="code"><pre>&#x27;django.views.debug.ExceptionReporter&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DEFAULT_EXCEPTION_REPORTER_FILTER</td>
+          <td class="code"><pre>&#x27;django.views.debug.SafeExceptionReporterFilter&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DEFAULT_FROM_EMAIL</td>
+          <td class="code"><pre>&#x27;webmaster@localhost&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DEFAULT_INDEX_TABLESPACE</td>
+          <td class="code"><pre>&#x27;&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DEFAULT_TABLESPACE</td>
+          <td class="code"><pre>&#x27;&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DISALLOWED_USER_AGENTS</td>
+          <td class="code"><pre>[]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>DJANGO_APPS</td>
+          <td class="code"><pre>[&#x27;django.contrib.admin&#x27;,
+ &#x27;django.contrib.auth&#x27;,
+ &#x27;django.contrib.contenttypes&#x27;,
+ &#x27;django.contrib.sessions&#x27;,
+ &#x27;django.contrib.messages&#x27;,
+ &#x27;django.contrib.staticfiles&#x27;]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>EMAIL_BACKEND</td>
+          <td class="code"><pre>&#x27;django.core.mail.backends.console.EmailBackend&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>EMAIL_HOST</td>
+          <td class="code"><pre>&#x27;localhost&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>EMAIL_HOST_PASSWORD</td>
+          <td class="code"><pre>&#x27;********************&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>EMAIL_HOST_USER</td>
+          <td class="code"><pre>&#x27;&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>EMAIL_PORT</td>
+          <td class="code"><pre>25</pre></td>
+        </tr>
+      
+        <tr>
+          <td>EMAIL_SSL_CERTFILE</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+      
+        <tr>
+          <td>EMAIL_SSL_KEYFILE</td>
+          <td class="code"><pre>&#x27;********************&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>EMAIL_SUBJECT_PREFIX</td>
+          <td class="code"><pre>&#x27;[Django] &#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>EMAIL_TIMEOUT</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+      
+        <tr>
+          <td>EMAIL_USE_LOCALTIME</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+      
+        <tr>
+          <td>EMAIL_USE_SSL</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+      
+        <tr>
+          <td>EMAIL_USE_TLS</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+      
+        <tr>
+          <td>FILE_UPLOAD_DIRECTORY_PERMISSIONS</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+      
+        <tr>
+          <td>FILE_UPLOAD_HANDLERS</td>
+          <td class="code"><pre>[&#x27;django.core.files.uploadhandler.MemoryFileUploadHandler&#x27;,
+ &#x27;django.core.files.uploadhandler.TemporaryFileUploadHandler&#x27;]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>FILE_UPLOAD_MAX_MEMORY_SIZE</td>
+          <td class="code"><pre>2621440</pre></td>
+        </tr>
+      
+        <tr>
+          <td>FILE_UPLOAD_PERMISSIONS</td>
+          <td class="code"><pre>420</pre></td>
+        </tr>
+      
+        <tr>
+          <td>FILE_UPLOAD_TEMP_DIR</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+      
+        <tr>
+          <td>FIRST_DAY_OF_WEEK</td>
+          <td class="code"><pre>0</pre></td>
+        </tr>
+      
+        <tr>
+          <td>FIXTURE_DIRS</td>
+          <td class="code"><pre>[]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>FORCE_SCRIPT_NAME</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+      
+        <tr>
+          <td>FORMAT_MODULE_PATH</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+      
+        <tr>
+          <td>FORMS_URLFIELD_ASSUME_HTTPS</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+      
+        <tr>
+          <td>FORM_RENDERER</td>
+          <td class="code"><pre>&#x27;django.forms.renderers.DjangoTemplates&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>IGNORABLE_404_URLS</td>
+          <td class="code"><pre>[]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>INSTALLED_APPS</td>
+          <td class="code"><pre>[&#x27;django.contrib.admin&#x27;,
+ &#x27;django.contrib.auth&#x27;,
+ &#x27;django.contrib.contenttypes&#x27;,
+ &#x27;django.contrib.sessions&#x27;,
+ &#x27;django.contrib.messages&#x27;,
+ &#x27;django.contrib.staticfiles&#x27;,
+ &#x27;rest_framework&#x27;,
+ &#x27;rest_framework_simplejwt&#x27;,
+ &#x27;corsheaders&#x27;,
+ &#x27;django_filters&#x27;,
+ &#x27;apps.core&#x27;,
+ &#x27;apps.accounts&#x27;,
+ &#x27;apps.clients&#x27;,
+ &#x27;apps.leads&#x27;,
+ &#x27;apps.api&#x27;,
+ &#x27;debug_toolbar&#x27;,
+ &#x27;django_extensions&#x27;]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>INTERNAL_IPS</td>
+          <td class="code"><pre>[&#x27;127.0.0.1&#x27;]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>LANGUAGES</td>
+          <td class="code"><pre>[(&#x27;af&#x27;, &#x27;Afrikaans&#x27;),
+ (&#x27;ar&#x27;, &#x27;Arabic&#x27;),
+ (&#x27;ar-dz&#x27;, &#x27;Algerian Arabic&#x27;),
+ (&#x27;ast&#x27;, &#x27;Asturian&#x27;),
+ (&#x27;az&#x27;, &#x27;Azerbaijani&#x27;),
+ (&#x27;bg&#x27;, &#x27;Bulgarian&#x27;),
+ (&#x27;be&#x27;, &#x27;Belarusian&#x27;),
+ (&#x27;bn&#x27;, &#x27;Bengali&#x27;),
+ (&#x27;br&#x27;, &#x27;Breton&#x27;),
+ (&#x27;bs&#x27;, &#x27;Bosnian&#x27;),
+ (&#x27;ca&#x27;, &#x27;Catalan&#x27;),
+ (&#x27;ckb&#x27;, &#x27;Central Kurdish (Sorani)&#x27;),
+ (&#x27;cs&#x27;, &#x27;Czech&#x27;),
+ (&#x27;cy&#x27;, &#x27;Welsh&#x27;),
+ (&#x27;da&#x27;, &#x27;Danish&#x27;),
+ (&#x27;de&#x27;, &#x27;German&#x27;),
+ (&#x27;dsb&#x27;, &#x27;Lower Sorbian&#x27;),
+ (&#x27;el&#x27;, &#x27;Greek&#x27;),
+ (&#x27;en&#x27;, &#x27;English&#x27;),
+ (&#x27;en-au&#x27;, &#x27;Australian English&#x27;),
+ (&#x27;en-gb&#x27;, &#x27;British English&#x27;),
+ (&#x27;eo&#x27;, &#x27;Esperanto&#x27;),
+ (&#x27;es&#x27;, &#x27;Spanish&#x27;),
+ (&#x27;es-ar&#x27;, &#x27;Argentinian Spanish&#x27;),
+ (&#x27;es-co&#x27;, &#x27;Colombian Spanish&#x27;),
+ (&#x27;es-mx&#x27;, &#x27;Mexican Spanish&#x27;),
+ (&#x27;es-ni&#x27;, &#x27;Nicaraguan Spanish&#x27;),
+ (&#x27;es-ve&#x27;, &#x27;Venezuelan Spanish&#x27;),
+ (&#x27;et&#x27;, &#x27;Estonian&#x27;),
+ (&#x27;eu&#x27;, &#x27;Basque&#x27;),
+ (&#x27;fa&#x27;, &#x27;Persian&#x27;),
+ (&#x27;fi&#x27;, &#x27;Finnish&#x27;),
+ (&#x27;fr&#x27;, &#x27;French&#x27;),
+ (&#x27;fy&#x27;, &#x27;Frisian&#x27;),
+ (&#x27;ga&#x27;, &#x27;Irish&#x27;),
+ (&#x27;gd&#x27;, &#x27;Scottish Gaelic&#x27;),
+ (&#x27;gl&#x27;, &#x27;Galician&#x27;),
+ (&#x27;he&#x27;, &#x27;Hebrew&#x27;),
+ (&#x27;hi&#x27;, &#x27;Hindi&#x27;),
+ (&#x27;hr&#x27;, &#x27;Croatian&#x27;),
+ (&#x27;hsb&#x27;, &#x27;Upper Sorbian&#x27;),
+ (&#x27;hu&#x27;, &#x27;Hungarian&#x27;),
+ (&#x27;hy&#x27;, &#x27;Armenian&#x27;),
+ (&#x27;ia&#x27;, &#x27;Interlingua&#x27;),
+ (&#x27;id&#x27;, &#x27;Indonesian&#x27;),
+ (&#x27;ig&#x27;, &#x27;Igbo&#x27;),
+ (&#x27;io&#x27;, &#x27;Ido&#x27;),
+ (&#x27;is&#x27;, &#x27;Icelandic&#x27;),
+ (&#x27;it&#x27;, &#x27;Italian&#x27;),
+ (&#x27;ja&#x27;, &#x27;Japanese&#x27;),
+ (&#x27;ka&#x27;, &#x27;Georgian&#x27;),
+ (&#x27;kab&#x27;, &#x27;Kabyle&#x27;),
+ (&#x27;kk&#x27;, &#x27;Kazakh&#x27;),
+ (&#x27;km&#x27;, &#x27;Khmer&#x27;),
+ (&#x27;kn&#x27;, &#x27;Kannada&#x27;),
+ (&#x27;ko&#x27;, &#x27;Korean&#x27;),
+ (&#x27;ky&#x27;, &#x27;Kyrgyz&#x27;),
+ (&#x27;lb&#x27;, &#x27;Luxembourgish&#x27;),
+ (&#x27;lt&#x27;, &#x27;Lithuanian&#x27;),
+ (&#x27;lv&#x27;, &#x27;Latvian&#x27;),
+ (&#x27;mk&#x27;, &#x27;Macedonian&#x27;),
+ (&#x27;ml&#x27;, &#x27;Malayalam&#x27;),
+ (&#x27;mn&#x27;, &#x27;Mongolian&#x27;),
+ (&#x27;mr&#x27;, &#x27;Marathi&#x27;),
+ (&#x27;ms&#x27;, &#x27;Malay&#x27;),
+ (&#x27;my&#x27;, &#x27;Burmese&#x27;),
+ (&#x27;nb&#x27;, &#x27;Norwegian Bokmål&#x27;),
+ (&#x27;ne&#x27;, &#x27;Nepali&#x27;),
+ (&#x27;nl&#x27;, &#x27;Dutch&#x27;),
+ (&#x27;nn&#x27;, &#x27;Norwegian Nynorsk&#x27;),
+ (&#x27;os&#x27;, &#x27;Ossetic&#x27;),
+ (&#x27;pa&#x27;, &#x27;Punjabi&#x27;),
+ (&#x27;pl&#x27;, &#x27;Polish&#x27;),
+ (&#x27;pt&#x27;, &#x27;Portuguese&#x27;),
+ (&#x27;pt-br&#x27;, &#x27;Brazilian Portuguese&#x27;),
+ (&#x27;ro&#x27;, &#x27;Romanian&#x27;),
+ (&#x27;ru&#x27;, &#x27;Russian&#x27;),
+ (&#x27;sk&#x27;, &#x27;Slovak&#x27;),
+ (&#x27;sl&#x27;, &#x27;Slovenian&#x27;),
+ (&#x27;sq&#x27;, &#x27;Albanian&#x27;),
+ (&#x27;sr&#x27;, &#x27;Serbian&#x27;),
+ (&#x27;sr-latn&#x27;, &#x27;Serbian Latin&#x27;),
+ (&#x27;sv&#x27;, &#x27;Swedish&#x27;),
+ (&#x27;sw&#x27;, &#x27;Swahili&#x27;),
+ (&#x27;ta&#x27;, &#x27;Tamil&#x27;),
+ (&#x27;te&#x27;, &#x27;Telugu&#x27;),
+ (&#x27;tg&#x27;, &#x27;Tajik&#x27;),
+ (&#x27;th&#x27;, &#x27;Thai&#x27;),
+ (&#x27;tk&#x27;, &#x27;Turkmen&#x27;),
+ (&#x27;tr&#x27;, &#x27;Turkish&#x27;),
+ (&#x27;tt&#x27;, &#x27;Tatar&#x27;),
+ (&#x27;udm&#x27;, &#x27;Udmurt&#x27;),
+ (&#x27;ug&#x27;, &#x27;Uyghur&#x27;),
+ (&#x27;uk&#x27;, &#x27;Ukrainian&#x27;),
+ (&#x27;ur&#x27;, &#x27;Urdu&#x27;),
+ (&#x27;uz&#x27;, &#x27;Uzbek&#x27;),
+ (&#x27;vi&#x27;, &#x27;Vietnamese&#x27;),
+ (&#x27;zh-hans&#x27;, &#x27;Simplified Chinese&#x27;),
+ (&#x27;zh-hant&#x27;, &#x27;Traditional Chinese&#x27;)]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>LANGUAGES_BIDI</td>
+          <td class="code"><pre>[&#x27;he&#x27;, &#x27;ar&#x27;, &#x27;ar-dz&#x27;, &#x27;ckb&#x27;, &#x27;fa&#x27;, &#x27;ug&#x27;, &#x27;ur&#x27;]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>LANGUAGE_CODE</td>
+          <td class="code"><pre>&#x27;en-us&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>LANGUAGE_COOKIE_AGE</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+      
+        <tr>
+          <td>LANGUAGE_COOKIE_DOMAIN</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+      
+        <tr>
+          <td>LANGUAGE_COOKIE_HTTPONLY</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+      
+        <tr>
+          <td>LANGUAGE_COOKIE_NAME</td>
+          <td class="code"><pre>&#x27;django_language&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>LANGUAGE_COOKIE_PATH</td>
+          <td class="code"><pre>&#x27;/&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>LANGUAGE_COOKIE_SAMESITE</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+      
+        <tr>
+          <td>LANGUAGE_COOKIE_SECURE</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+      
+        <tr>
+          <td>LOCALE_PATHS</td>
+          <td class="code"><pre>[]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>LOCAL_APPS</td>
+          <td class="code"><pre>[&#x27;apps.core&#x27;, &#x27;apps.accounts&#x27;, &#x27;apps.clients&#x27;, &#x27;apps.leads&#x27;, &#x27;apps.api&#x27;]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>LOGGING</td>
+          <td class="code"><pre>{}</pre></td>
+        </tr>
+      
+        <tr>
+          <td>LOGGING_CONFIG</td>
+          <td class="code"><pre>&#x27;logging.config.dictConfig&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>LOGIN_REDIRECT_URL</td>
+          <td class="code"><pre>&#x27;/accounts/profile/&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>LOGIN_URL</td>
+          <td class="code"><pre>&#x27;/accounts/login/&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>LOGOUT_REDIRECT_URL</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+      
+        <tr>
+          <td>MANAGERS</td>
+          <td class="code"><pre>[]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>MEDIA_ROOT</td>
+          <td class="code"><pre>&#x27;&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>MEDIA_URL</td>
+          <td class="code"><pre>&#x27;/&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>MESSAGE_STORAGE</td>
+          <td class="code"><pre>&#x27;django.contrib.messages.storage.fallback.FallbackStorage&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>MIDDLEWARE</td>
+          <td class="code"><pre>[&#x27;debug_toolbar.middleware.DebugToolbarMiddleware&#x27;,
+ &#x27;django.middleware.security.SecurityMiddleware&#x27;,
+ &#x27;whitenoise.middleware.WhiteNoiseMiddleware&#x27;,
+ &#x27;django.contrib.sessions.middleware.SessionMiddleware&#x27;,
+ &#x27;corsheaders.middleware.CorsMiddleware&#x27;,
+ &#x27;django.middleware.common.CommonMiddleware&#x27;,
+ &#x27;django.middleware.csrf.CsrfViewMiddleware&#x27;,
+ &#x27;django.contrib.auth.middleware.AuthenticationMiddleware&#x27;,
+ &#x27;django.contrib.messages.middleware.MessageMiddleware&#x27;,
+ &#x27;django.middleware.clickjacking.XFrameOptionsMiddleware&#x27;]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>MIGRATION_MODULES</td>
+          <td class="code"><pre>{}</pre></td>
+        </tr>
+      
+        <tr>
+          <td>MONTH_DAY_FORMAT</td>
+          <td class="code"><pre>&#x27;F j&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>NUMBER_GROUPING</td>
+          <td class="code"><pre>0</pre></td>
+        </tr>
+      
+        <tr>
+          <td>PASSWORD_HASHERS</td>
+          <td class="code"><pre>&#x27;********************&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>PASSWORD_RESET_TIMEOUT</td>
+          <td class="code"><pre>&#x27;********************&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>PREPEND_WWW</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+      
+        <tr>
+          <td>REST_FRAMEWORK</td>
+          <td class="code"><pre>{&#x27;DEFAULT_AUTHENTICATION_CLASSES&#x27;: (&#x27;rest_framework_simplejwt.authentication.JWTAuthentication&#x27;,),
+ &#x27;DEFAULT_FILTER_BACKENDS&#x27;: (&#x27;django_filters.rest_framework.DjangoFilterBackend&#x27;,
+                             &#x27;rest_framework.filters.SearchFilter&#x27;,
+                             &#x27;rest_framework.filters.OrderingFilter&#x27;),
+ &#x27;DEFAULT_PAGINATION_CLASS&#x27;: &#x27;rest_framework.pagination.PageNumberPagination&#x27;,
+ &#x27;DEFAULT_PERMISSION_CLASSES&#x27;: (&#x27;rest_framework.permissions.IsAuthenticated&#x27;,),
+ &#x27;PAGE_SIZE&#x27;: 20}</pre></td>
+        </tr>
+      
+        <tr>
+          <td>ROOT_URLCONF</td>
+          <td class="code"><pre>&#x27;config.urls&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SECRET_KEY</td>
+          <td class="code"><pre>&#x27;********************&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SECRET_KEY_FALLBACKS</td>
+          <td class="code"><pre>&#x27;********************&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SECURE_CONTENT_TYPE_NOSNIFF</td>
+          <td class="code"><pre>True</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SECURE_CROSS_ORIGIN_OPENER_POLICY</td>
+          <td class="code"><pre>&#x27;same-origin&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SECURE_HSTS_INCLUDE_SUBDOMAINS</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SECURE_HSTS_PRELOAD</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SECURE_HSTS_SECONDS</td>
+          <td class="code"><pre>0</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SECURE_PROXY_SSL_HEADER</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SECURE_REDIRECT_EXEMPT</td>
+          <td class="code"><pre>[]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SECURE_REFERRER_POLICY</td>
+          <td class="code"><pre>&#x27;same-origin&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SECURE_SSL_HOST</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SECURE_SSL_REDIRECT</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SERVER_EMAIL</td>
+          <td class="code"><pre>&#x27;root@localhost&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SESSION_CACHE_ALIAS</td>
+          <td class="code"><pre>&#x27;default&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SESSION_COOKIE_AGE</td>
+          <td class="code"><pre>1209600</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SESSION_COOKIE_DOMAIN</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SESSION_COOKIE_HTTPONLY</td>
+          <td class="code"><pre>True</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SESSION_COOKIE_NAME</td>
+          <td class="code"><pre>&#x27;sessionid&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SESSION_COOKIE_PATH</td>
+          <td class="code"><pre>&#x27;/&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SESSION_COOKIE_SAMESITE</td>
+          <td class="code"><pre>&#x27;Lax&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SESSION_COOKIE_SECURE</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SESSION_ENGINE</td>
+          <td class="code"><pre>&#x27;django.contrib.sessions.backends.db&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SESSION_EXPIRE_AT_BROWSER_CLOSE</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SESSION_FILE_PATH</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SESSION_SAVE_EVERY_REQUEST</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SESSION_SERIALIZER</td>
+          <td class="code"><pre>&#x27;django.contrib.sessions.serializers.JSONSerializer&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SETTINGS_MODULE</td>
+          <td class="code"><pre>&#x27;config.settings.development&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SHORT_DATETIME_FORMAT</td>
+          <td class="code"><pre>&#x27;m/d/Y P&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SHORT_DATE_FORMAT</td>
+          <td class="code"><pre>&#x27;m/d/Y&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SIGNING_BACKEND</td>
+          <td class="code"><pre>&#x27;django.core.signing.TimestampSigner&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SILENCED_SYSTEM_CHECKS</td>
+          <td class="code"><pre>[]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>SIMPLE_JWT</td>
+          <td class="code"><pre>{&#x27;ACCESS_TOKEN_LIFETIME&#x27;: &#x27;********************&#x27;,
+ &#x27;AUTH_HEADER_TYPES&#x27;: (&#x27;Bearer&#x27;,),
+ &#x27;BLACKLIST_AFTER_ROTATION&#x27;: True,
+ &#x27;REFRESH_TOKEN_LIFETIME&#x27;: &#x27;********************&#x27;,
+ &#x27;ROTATE_REFRESH_TOKENS&#x27;: &#x27;********************&#x27;,
+ &#x27;USER_ID_CLAIM&#x27;: &#x27;user_id&#x27;,
+ &#x27;USER_ID_FIELD&#x27;: &#x27;id&#x27;}</pre></td>
+        </tr>
+      
+        <tr>
+          <td>STATICFILES_DIRS</td>
+          <td class="code"><pre>[]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>STATICFILES_FINDERS</td>
+          <td class="code"><pre>[&#x27;django.contrib.staticfiles.finders.FileSystemFinder&#x27;,
+ &#x27;django.contrib.staticfiles.finders.AppDirectoriesFinder&#x27;]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>STATIC_ROOT</td>
+          <td class="code"><pre>WindowsPath(&#x27;C:/Users/prath/OneDrive/Desktop/SAAS/staticfiles&#x27;)</pre></td>
+        </tr>
+      
+        <tr>
+          <td>STATIC_URL</td>
+          <td class="code"><pre>&#x27;/static/&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>STORAGES</td>
+          <td class="code"><pre>{&#x27;default&#x27;: {&#x27;BACKEND&#x27;: &#x27;django.core.files.storage.FileSystemStorage&#x27;},
+ &#x27;staticfiles&#x27;: {&#x27;BACKEND&#x27;: &#x27;django.contrib.staticfiles.storage.StaticFilesStorage&#x27;}}</pre></td>
+        </tr>
+      
+        <tr>
+          <td>TEMPLATES</td>
+          <td class="code"><pre>[{&#x27;APP_DIRS&#x27;: True,
+  &#x27;BACKEND&#x27;: &#x27;django.template.backends.django.DjangoTemplates&#x27;,
+  &#x27;DIRS&#x27;: [WindowsPath(&#x27;C:/Users/prath/OneDrive/Desktop/SAAS/templates&#x27;)],
+  &#x27;OPTIONS&#x27;: {&#x27;context_processors&#x27;: [&#x27;django.template.context_processors.debug&#x27;,
+                                     &#x27;django.template.context_processors.request&#x27;,
+                                     &#x27;django.contrib.auth.context_processors.auth&#x27;,
+                                     &#x27;django.contrib.messages.context_processors.messages&#x27;]}}]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>TEST_NON_SERIALIZED_APPS</td>
+          <td class="code"><pre>[]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>TEST_RUNNER</td>
+          <td class="code"><pre>&#x27;django.test.runner.DiscoverRunner&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>THIRD_PARTY_APPS</td>
+          <td class="code"><pre>[&#x27;rest_framework&#x27;, &#x27;rest_framework_simplejwt&#x27;, &#x27;corsheaders&#x27;, &#x27;django_filters&#x27;]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>THOUSAND_SEPARATOR</td>
+          <td class="code"><pre>&#x27;,&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>TIME_FORMAT</td>
+          <td class="code"><pre>&#x27;P&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>TIME_INPUT_FORMATS</td>
+          <td class="code"><pre>[&#x27;%H:%M:%S&#x27;, &#x27;%H:%M:%S.%f&#x27;, &#x27;%H:%M&#x27;]</pre></td>
+        </tr>
+      
+        <tr>
+          <td>TIME_ZONE</td>
+          <td class="code"><pre>&#x27;Asia/Kolkata&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>USE_I18N</td>
+          <td class="code"><pre>True</pre></td>
+        </tr>
+      
+        <tr>
+          <td>USE_THOUSAND_SEPARATOR</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+      
+        <tr>
+          <td>USE_TZ</td>
+          <td class="code"><pre>True</pre></td>
+        </tr>
+      
+        <tr>
+          <td>USE_X_FORWARDED_HOST</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+      
+        <tr>
+          <td>USE_X_FORWARDED_PORT</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+      
+        <tr>
+          <td>WSGI_APPLICATION</td>
+          <td class="code"><pre>&#x27;config.wsgi.application&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>X_FRAME_OPTIONS</td>
+          <td class="code"><pre>&#x27;DENY&#x27;</pre></td>
+        </tr>
+      
+        <tr>
+          <td>YEAR_MONTH_FORMAT</td>
+          <td class="code"><pre>&#x27;F Y&#x27;</pre></td>
+        </tr>
+      
+    </tbody>
+  </table>
+
+</div>
+</main>
+
+
+  <footer id="explanation">
+    <p>
+      You’re seeing this error because you have <code>DEBUG = True</code> in your
+      Django settings file. Change that to <code>False</code>, and Django will
+      display a standard page generated by the handler for this status code.
+    </p>
+  </footer>
+
+</body>
+</html>
