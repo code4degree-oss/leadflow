@@ -20,6 +20,13 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
+            set -e
             cd /home/${{ secrets.SERVER_USER }}/saas-project
+
+            echo "==> Pulling latest code..."
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "==> Running auto-sync script..."
             chmod +x deploy/auto-sync.sh
             ./deploy/auto-sync.sh
