@@ -1,0 +1,25 @@
+name: Deploy Auto-Sync Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  auto-sync:
+    name: Sync Code & Restart Gunicorn/PM2
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 🚀 Ping Azure VM to Start Fast Sync
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+              cd /home/${{ secrets.SERVER_USER }}/saas-project
+              chmod +x deploy-update.sh
+              ./deploy-update.sh

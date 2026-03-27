@@ -8,7 +8,7 @@ from django.urls import include, path
 from django.conf import settings
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path("leadflow-backend-admin/", admin.site.urls),
     # API v1 namespace
     path("api/v1/", include("apps.api.urls")),
     path("api/v1/", include("apps.leads.api.urls")),

@@ -1,24 +1,19 @@
 #!/bin/bash
 
 # ==============================================================================
-# LeadFlow CRM Automated Deployment Script (Ubuntu 22.04 LTS)
-# 
-# Instructions:
-# 1. Update the variables below with your deployment details.
-# 2. Make the script executable: chmod +x deploy.sh
-# 3. Run the script with sudo: sudo ./deploy.sh
+# LeadFlow CRM Automated Deployment Script (Ubuntu 22.04 / 24.04 LTS)
 # ==============================================================================
 
 # Exit immediately on error
 set -e
 
 # --- CONFIGURATION VARIABLES (Update these!) ---
-export TARGET_USER="leadflow"                         # The non-root user that owns the project files
-export PROJECT_DIR="/home/$TARGET_USER/saas-project" # Path to the cloned repository
-export DOMAIN_NAME="yourdomain.com"                  # Domain name or VM IP
+export TARGET_USER="leadflow"
+export PROJECT_DIR="/home/$TARGET_USER/saas-project"
+export DOMAIN_NAME="20.18.160.17"
 export DB_NAME="leadflow_db"
 export DB_USER="leadflow_user"
-export DB_PASSWORD="StrongDatabasePassword123!"
+export DB_PASSWORD="leadflow123"
 export DJANGO_SECRET_KEY="replace-this-with-a-very-secret-string"
 
 echo "========================================================"
@@ -31,7 +26,7 @@ echo "========================================================"
 # Check if script is run as root
 if [ "$EUID" -ne 0 ]; then
   echo "Please run this script with sudo."
-  exit
+  exit 1
 fi
 
 # 1. System Updates & Dependencies
@@ -52,52 +47,50 @@ if ! command -v pm2 &> /dev/null; then
     npm install -g pm2
 fi
 
-# 1.5. Clone the project if it doesn't exist
+# 2. Clone the project if it doesn't exist
 echo "--> Cloning Repository..."
 if [ ! -d "$PROJECT_DIR" ]; then
-    sudo -u $TARGET_USER git clone https://github.com/code4degree-oss/leadflow.git "$PROJECT_DIR"
+    sudo -u "$TARGET_USER" git clone https://github.com/code4degree-oss/leadflow.git "$PROJECT_DIR"
 else
     echo "Directory $PROJECT_DIR already exists, skipping clone."
 fi
 
-# 2. PostgreSQL Setup
+# 3. PostgreSQL Setup
 echo "--> Configuring PostgreSQL..."
-# Run postgres commands as the postgres user
 sudo -u postgres psql -c "CREATE DATABASE ${DB_NAME};" || echo "DB already exists"
 sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';" || echo "User already exists"
 sudo -u postgres psql -c "ALTER ROLE ${DB_USER} SET client_encoding TO 'utf8';"
 sudo -u postgres psql -c "ALTER ROLE ${DB_USER} SET default_transaction_isolation TO 'read committed';"
 sudo -u postgres psql -c "ALTER ROLE ${DB_USER} SET timezone TO 'UTC';"
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};"
+# Fix for PostgreSQL 15+: grant schema permissions
+sudo -u postgres psql -d "${DB_NAME}" -c "GRANT ALL ON SCHEMA public TO ${DB_USER};"
 
-
-# 3. Backend (Django) Setup
+# 4. Backend (Django) Setup
 echo "--> Setting up Django Backend..."
-cd $PROJECT_DIR/SAAS
+cd "$PROJECT_DIR/SAAS"
 
-# Create venv and install dependencies as the target user
-sudo -u $TARGET_USER python3 -m venv venv
-sudo -u $TARGET_USER -H bash -c "source venv/bin/activate && pip install wheel gunicorn && pip install -r requirements/prod.txt"
+# Create venv and install dependencies
+sudo -u "$TARGET_USER" python3 -m venv venv
+sudo -u "$TARGET_USER" -H bash -c "source venv/bin/activate && pip install wheel gunicorn psutil && pip install -r requirements/prod.txt"
 
-# Create .env for Django
+# Create .env for Django (using django-environ variable names)
 echo "--> Creating Backend .env..."
-cat <<EOF | sudo -u $TARGET_USER tee $PROJECT_DIR/SAAS/.env
-DEBUG=False
-SECRET_KEY=$DJANGO_SECRET_KEY
-ALLOWED_HOSTS=$DOMAIN_NAME,127.0.0.1,localhost
-
-DB_NAME=$DB_NAME
-DB_USER=$DB_USER
-DB_PASSWORD=$DB_PASSWORD
-DB_HOST=127.0.0.1
-DB_PORT=5432
+cat <<EOF | sudo -u "$TARGET_USER" tee "$PROJECT_DIR/SAAS/.env"
+DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY
+DJANGO_DEBUG=False
+DJANGO_ALLOWED_HOSTS=$DOMAIN_NAME,127.0.0.1,localhost
+DATABASE_URL=postgres://$DB_USER:$DB_PASSWORD@127.0.0.1:5432/$DB_NAME
+REDIS_URL=redis://127.0.0.1:6379/0
+CELERY_BROKER_URL=redis://127.0.0.1:6379/1
+CORS_ALLOWED_ORIGINS=http://$DOMAIN_NAME,https://$DOMAIN_NAME,http://127.0.0.1:3000
 EOF
 
-# Run migrations and collect static files
+# Run migrations and collect static files (using production settings)
 echo "--> Running migrations and collecting static files..."
-sudo -u $TARGET_USER -H bash -c "source venv/bin/activate && python manage.py migrate && python manage.py collectstatic --noinput"
+sudo -u "$TARGET_USER" -H bash -c "source venv/bin/activate && export DJANGO_SETTINGS_MODULE=config.settings.production && python manage.py migrate && python manage.py collectstatic --noinput"
 
-# Set up Gunicorn Systemd Service
+# 5. Gunicorn Systemd Service
 echo "--> Configuring Gunicorn Systemd Service..."
 cat <<EOF | tee /etc/systemd/system/gunicorn.service
 [Unit]
@@ -108,6 +101,7 @@ After=network.target
 User=$TARGET_USER
 Group=www-data
 WorkingDirectory=$PROJECT_DIR/SAAS
+Environment="DJANGO_SETTINGS_MODULE=config.settings.production"
 ExecStart=$PROJECT_DIR/SAAS/venv/bin/gunicorn --access-logfile - --workers 3 --bind unix:$PROJECT_DIR/SAAS/gunicorn.sock config.wsgi:application
 
 [Install]
@@ -118,35 +112,30 @@ systemctl daemon-reload
 systemctl start gunicorn
 systemctl enable gunicorn
 
-# 4. Frontend (Next.js) Setup
+# 6. Frontend (Next.js) Setup
 echo "--> Setting up Next.js Frontend..."
-cd $PROJECT_DIR/leadflow-crm-frontend/leadflow
+cd "$PROJECT_DIR/leadflow-crm-frontend/leadflow"
 
-# Install node modules
 echo "--> Installing Node modules..."
-sudo -u $TARGET_USER -H bash -c "npm install"
+sudo -u "$TARGET_USER" -H bash -c "cd $PROJECT_DIR/leadflow-crm-frontend/leadflow && npm install"
 
 # Create .env for Next.js
 echo "--> Creating Frontend .env..."
-# Note: For Server side components, point to the internal API (or via Nginx). 
-# For client-side, it usually needs the public URL.
-cat <<EOF | sudo -u $TARGET_USER tee $PROJECT_DIR/leadflow-crm-frontend/leadflow/.env.local
-NEXT_PUBLIC_API_URL=http://$DOMAIN_NAME/api
+cat <<EOF | sudo -u "$TARGET_USER" tee "$PROJECT_DIR/leadflow-crm-frontend/leadflow/.env.local"
+NEXT_PUBLIC_API_URL=http://$DOMAIN_NAME/api/v1
 EOF
 
 # Build Next.js app
 echo "--> Building Next.js application..."
-sudo -u $TARGET_USER -H bash -c "npm run build"
+sudo -u "$TARGET_USER" -H bash -c "cd $PROJECT_DIR/leadflow-crm-frontend/leadflow && npm run build"
 
 # Start PM2
 echo "--> Starting PM2 Process for Frontend..."
-sudo -u $TARGET_USER -H bash -c "pm2 start npm --name 'leadflow-frontend' -- start"
-# Save PM2 state and generate startup script
-sudo -u $TARGET_USER -H bash -c "pm2 save"
-env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u $TARGET_USER --hp /home/$TARGET_USER
+sudo -u "$TARGET_USER" -H bash -c "cd $PROJECT_DIR/leadflow-crm-frontend/leadflow && pm2 delete leadflow-frontend 2>/dev/null; pm2 start npm --name 'leadflow-frontend' -- start"
+sudo -u "$TARGET_USER" -H bash -c "pm2 save"
+env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u "$TARGET_USER" --hp "/home/$TARGET_USER"
 
-
-# 5. Nginx Reverse Proxy Setup
+# 7. Nginx Reverse Proxy Setup
 echo "--> Configuring Nginx..."
 cat <<EOF | tee /etc/nginx/sites-available/leadflow
 server {
@@ -158,8 +147,13 @@ server {
         alias $PROJECT_DIR/SAAS/staticfiles/;
     }
 
+    # Media Files
+    location /media/ {
+        alias $PROJECT_DIR/SAAS/media/;
+    }
+
     # Django Backend (API & Admin)
-    location ~ ^/(api|admin) {
+    location ~ ^/(api|leadflow-backend-admin) {
         include proxy_params;
         proxy_pass http://unix:$PROJECT_DIR/SAAS/gunicorn.sock;
     }
@@ -176,28 +170,17 @@ server {
 }
 EOF
 
-# Enable the Nginx site config
 ln -sf /etc/nginx/sites-available/leadflow /etc/nginx/sites-enabled/
-# Remove default nginx config to prevent conflicts
 rm -f /etc/nginx/sites-enabled/default
-
-# Test and restart Nginx
 nginx -t
 systemctl restart nginx
 
-
-# 6. Basic Firewall Setup
+# 8. Firewall Setup
 echo "--> Configuring UFW Firewall..."
 ufw allow 'Nginx Full'
 ufw allow OpenSSH
-# ufw --force enable 
-
 
 echo "========================================================"
 echo "Deployment Script Completed Successfully!"
 echo "Please verify by visiting: http://$DOMAIN_NAME"
-echo ""
-echo "Note: If you want to enable HTTPS, install certbot and run:"
-echo "sudo apt install -y certbot python3-certbot-nginx"
-echo "sudo certbot --nginx -d $DOMAIN_NAME"
 echo "========================================================"
