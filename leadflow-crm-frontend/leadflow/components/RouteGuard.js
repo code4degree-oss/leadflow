@@ -19,7 +19,7 @@ const ROLE_DASHBOARD = {
 }
 
 // Pages that don't require any role check
-const PUBLIC_PATHS = ['/', '/change-password']
+const PUBLIC_PATHS = ['/', '/login', '/change-password']
 
 export default function RouteGuard({ children }) {
   const router = useRouter()
@@ -50,7 +50,7 @@ export default function RouteGuard({ children }) {
     // Not logged in → redirect to login
     if (!token) {
       setAuthorized(false)
-      router.push('/')
+      router.push('/login')
       return
     }
 

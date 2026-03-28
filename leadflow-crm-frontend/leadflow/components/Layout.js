@@ -91,7 +91,7 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
 
   const handleLogout = () => {
     localStorage.clear()
-    router.push('/')
+    router.push('/login')
   }
 
   const roleColors = {
