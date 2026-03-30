@@ -39,6 +39,22 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
         # Telecaller isolation: only see own assigned leads
         if self.request.user.role == RoleChoices.TELECALLER:
             qs = qs.filter(assigned_to=self.request.user)
+        
+        # Date filter for history view — filter by last_interaction_at date
+        date_param = self.request.query_params.get('date')
+        if date_param:
+            try:
+                from datetime import datetime as dt
+                filter_date = dt.strptime(date_param, '%Y-%m-%d').date()
+                qs = qs.filter(last_interaction_at__date=filter_date)
+            except (ValueError, TypeError):
+                pass
+        
+        # Exclude uncontacted leads (for history view)
+        exclude_new = self.request.query_params.get('exclude_new')
+        if exclude_new == 'true':
+            qs = qs.exclude(status__in=[LeadStatus.NEW, 'IMPORTED'])
+        
         return qs
 
     def perform_create(self, serializer):
@@ -197,6 +213,14 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
             lead.status = LeadStatus.CALLED
             lead.save()
             
+            # Log the call itself (counts toward daily target)
+            ActivityTimeline.objects.create(
+                client=lead.client, lead=lead, performed_by=request.user,
+                activity_type=ActivityType.CALL_LOGGED,
+                title=f"Call logged \u2014 callback requested",
+                metadata={'outcome': outcome, 'old_status': old_status}
+            )
+            
             follow_up_at = data.get('follow_up_at')
             if follow_up_at:
                 FollowUpReminder.objects.create(
@@ -212,6 +236,29 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
                 )
             
             return Response({"detail": "Callback scheduled.", "status": lead.status})
+
+        elif outcome == 'WON':
+            old_status = lead.status
+            lead.status = LeadStatus.WON
+            lead.last_interaction_at = timezone.now()
+            lead.save()
+            ActivityTimeline.objects.create(
+                client=lead.client, lead=lead, performed_by=request.user,
+                activity_type=ActivityType.CALL_LOGGED,
+                title=f"🎉 Lead marked as WON by {request.user.first_name} {request.user.last_name}",
+                metadata={'outcome': outcome, 'old_status': old_status, 'new_status': 'WON',
+                          'telecaller': request.user.email,
+                          'field_agent': lead.field_agent.email if lead.field_agent else None}
+            )
+            AuditService.record_action(
+                user=request.user,
+                action="LEAD_WON",
+                resource_type="Lead",
+                resource_id=lead.id,
+                changes={'old_status': old_status, 'telecaller': request.user.email,
+                         'field_agent': lead.field_agent.email if lead.field_agent else None}
+            )
+            return Response({"detail": "🎉 Lead marked as WON!", "status": lead.status})
 
         elif outcome == 'LOST':
             return self._handle_lost(lead, request)
@@ -313,6 +360,13 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
             lead.status = LeadStatus.NEW
             lead.save()
 
+            ActivityTimeline.objects.create(
+                client=lead.client, lead=lead, performed_by=request.user,
+                activity_type=ActivityType.CALL_LOGGED,
+                title=f"Call logged \u2014 marked Lost (auto-reassigned, count: {lead.lost_count}/4)",
+                metadata={'outcome': 'LOST', 'lost_count': lead.lost_count, 'reassigned_to': lead.assigned_to.email if lead.assigned_to else None}
+            )
+
             AuditService.record_action(
                 user=request.user,
                 action="LEAD_LOST_REASSIGN",
@@ -334,6 +388,13 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
             # Escalate to admin review queue
             lead.status = LeadStatus.LOST
             lead.save()
+
+            ActivityTimeline.objects.create(
+                client=lead.client, lead=lead, performed_by=request.user,
+                activity_type=ActivityType.CALL_LOGGED,
+                title=f"Call logged \u2014 marked Lost (escalated to admin, count: {lead.lost_count})",
+                metadata={'outcome': 'LOST', 'lost_count': lead.lost_count}
+            )
 
             AuditService.record_action(
                 user=request.user,
@@ -519,13 +580,130 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
         recent_leads = queryset.order_by('-updated_at')[:5]
         recent_data = LeadSerializer(recent_leads, many=True, context={'request': request}).data
 
+        # Calculate today's progress for current user
+        today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_end = today_start + datetime.timedelta(days=1)
+        
+        calls_today = ActivityTimeline.objects.filter(
+            client=request.user.client,
+            performed_by=request.user,
+            activity_type=ActivityType.CALL_LOGGED,
+            created_at__gte=today_start,
+            created_at__lt=today_end
+        ).count()
+
         return Response({
             "status_counts": formatted_stats,
             "total_leads": total_leads,
             "source_performance": source_performance,
             "team_performance": team_stats,
             "recent_activity": recent_data,
-            "conversion_rate": round((formatted_stats.get('WON', 0) / total_leads * 100), 2) if total_leads > 0 else 0
+            "conversion_rate": round((formatted_stats.get('WON', 0) / total_leads * 100), 2) if total_leads > 0 else 0,
+            "calls_today": calls_today,
+        })
+
+    @action(detail=False, methods=['get'], url_path='performance-report', permission_classes=[IsClientAdmin])
+    def performance_report(self, request):
+        """Detailed performance report for the Client Admin Dashboard."""
+        client = request.user.client
+        today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_end = today_start + datetime.timedelta(days=1)
+        month_start = today_start.replace(day=1)
+        
+        # 1. KPIs
+        total_calls_today = ActivityTimeline.objects.filter(
+            client=client, activity_type=ActivityType.CALL_LOGGED, created_at__gte=today_start, created_at__lt=today_end
+        ).count()
+        
+        leads_won_month = Lead.objects.filter(client=client, status=LeadStatus.WON, updated_at__gte=month_start).count()
+        
+        site_visits_month = ActivityTimeline.objects.filter(
+            client=client, activity_type=ActivityType.SITE_VISIT_SCHEDULED, created_at__gte=month_start
+        ).count()
+        
+        total_leads = Lead.objects.filter(client=client).count()
+        total_won = Lead.objects.filter(client=client, status=LeadStatus.WON).count()
+        conversion_rate = round((total_won / total_leads * 100), 1) if total_leads > 0 else 0
+
+        # 2. Outcome Breakdown (Today)
+        todays_calls = ActivityTimeline.objects.filter(
+            client=client, activity_type=ActivityType.CALL_LOGGED, created_at__gte=today_start, created_at__lt=today_end
+        )
+        outcomes = {}
+        for call in todays_calls:
+            outcome = call.metadata.get('outcome', 'UNKNOWN') if call.metadata else 'UNKNOWN'
+            outcomes[outcome] = outcomes.get(outcome, 0) + 1
+            
+        outcome_breakdown = [{"name": k, "value": v} for k, v in outcomes.items()]
+
+        # 3. Activity Stream (Live)
+        recent_activities = ActivityTimeline.objects.filter(
+            client=client
+        ).select_related('performed_by').order_by('-created_at')[:12]
+        
+        activity_stream = []
+        for act in recent_activities:
+            activity_stream.append({
+                "id": act.id,
+                "title": act.title,
+                "user": f"{act.performed_by.first_name} {act.performed_by.last_name}" if act.performed_by else "System",
+                "time": act.created_at.strftime("%I:%M %p"),
+                "type": act.activity_type
+            })
+
+        # 4. Employee Performance Array
+        employees = User.objects.filter(
+            client=client, 
+            role__in=[RoleChoices.TELECALLER, RoleChoices.FIELD_AGENT, RoleChoices.CLIENT_ADMIN], 
+            is_active=True
+        )
+        
+        user_stats = {emp.id: {
+            "id": emp.id,
+            "name": f"{emp.first_name} {emp.last_name}",
+            "role": emp.role,
+            "calls_today": 0,
+            "won_today": 0,
+            "lost_today": 0,
+            "visits_today": 0,
+            "target": client.daily_telecaller_target if emp.role == RoleChoices.TELECALLER else client.daily_field_agent_target,
+            "last_login": emp.last_login.strftime("%I:%M %p") if emp.last_login else "N/A"
+        } for emp in employees}
+
+        for call in todays_calls:
+            uid = call.performed_by_id
+            if uid in user_stats:
+                user_stats[uid]["calls_today"] += 1
+                outcome = call.metadata.get('outcome', '') if call.metadata else ''
+                if outcome == 'WON':
+                    user_stats[uid]["won_today"] += 1
+                elif outcome == 'LOST':
+                    user_stats[uid]["lost_today"] += 1
+                elif "WON" in str(call.metadata.get('new_status', '')):
+                    user_stats[uid]["won_today"] += 1
+
+        visits_today = ActivityTimeline.objects.filter(
+            client=client, activity_type=ActivityType.SITE_VISIT_SCHEDULED, created_at__gte=today_start, created_at__lt=today_end
+        )
+        for visit in visits_today:
+            uid = visit.performed_by_id
+            if uid in user_stats:
+                user_stats[uid]["visits_today"] += 1
+
+        team_performance = list(user_stats.values())
+        team_performance.sort(key=lambda x: x["calls_today"], reverse=True)
+
+        return Response({
+            "kpis": {
+                "total_calls_today": total_calls_today,
+                "leads_won_month": leads_won_month,
+                "site_visits_month": site_visits_month,
+                "conversion_rate": conversion_rate
+            },
+            "outcome_breakdown": outcome_breakdown,
+            "activity_stream": activity_stream,
+            "team_performance": team_performance,
+            "target_telecaller": client.daily_telecaller_target
         })
 
     @action(detail=False, methods=['get'])
@@ -544,6 +722,212 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
         if format == 'excel':
             return LeadExportService.export_to_excel(queryset)
         return LeadExportService.export_to_csv(queryset)
+
+
+    @action(detail=False, methods=['get'], url_path='field-agents')
+    def field_agents(self, request):
+        """Returns field agents in the same client for telecaller assignment."""
+        agents = User.objects.filter(
+            client=request.user.client,
+            role=RoleChoices.FIELD_AGENT,
+            is_active=True
+        ).values('id', 'first_name', 'last_name', 'email', 'role')
+        return Response(list(agents))
+
+    @action(detail=False, methods=['get'], url_path='daily-target')
+    def daily_target(self, request):
+        """Returns the daily target set by the client admin and today's progress."""
+        client = request.user.client
+        if not client:
+            return Response({"detail": "No client account."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_end = today_start + datetime.timedelta(days=1)
+        
+        calls_today = ActivityTimeline.objects.filter(
+            client=client,
+            performed_by=request.user,
+            activity_type=ActivityType.CALL_LOGGED,
+            created_at__gte=today_start,
+            created_at__lt=today_end
+        ).count()
+        
+        target = client.daily_telecaller_target if request.user.role == RoleChoices.TELECALLER else client.daily_field_agent_target
+        
+        # Auto-calculate: Add pending overdue/today tasks to the target dynamically
+        # We need to dedupe followups and scheduled leads, since follow-ups also update the lead's next_call_at
+        pending_followups_qs = FollowUpReminder.objects.filter(
+            client=client, created_by=request.user, is_completed=False, scheduled_at__lt=today_end
+        )
+        pending_followups_count = pending_followups_qs.count()
+        pending_followups_lead_ids = list(pending_followups_qs.values_list('lead_id', flat=True))
+        
+        pending_leads_count = Lead.objects.filter(
+            client=client, next_call_at__lt=today_end
+        ).exclude(
+            status__in=[LeadStatus.WON, 'LOST', 'IMPORTED']
+        ).exclude(
+            id__in=pending_followups_lead_ids
+        ).count()
+        
+        total_dynamic_target = target + pending_followups_count + pending_leads_count
+        
+        return Response({
+            "target": total_dynamic_target,
+            "progress": calls_today,
+            "telecaller_target": client.daily_telecaller_target,
+            "field_agent_target": client.daily_field_agent_target,
+            "base_target": target,
+        })
+
+    @action(detail=False, methods=['put'], url_path='set-daily-target', permission_classes=[IsClientAdmin])
+    def set_daily_target(self, request):
+        """Admin updates the daily target for telecallers and/or field agents."""
+        client = request.user.client
+        if not client:
+            return Response({"detail": "No client account."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        tc_target = request.data.get('telecaller_target')
+        fa_target = request.data.get('field_agent_target')
+        
+        if tc_target is not None:
+            client.daily_telecaller_target = int(tc_target)
+        if fa_target is not None:
+            client.daily_field_agent_target = int(fa_target)
+        client.save()
+        
+        return Response({
+            "detail": "Daily targets updated.",
+            "telecaller_target": client.daily_telecaller_target,
+            "field_agent_target": client.daily_field_agent_target,
+        })
+
+    @action(detail=False, methods=['get'], url_path='won-leads')
+    def won_leads(self, request):
+        """Returns all WON leads with both telecaller and field agent names."""
+        qs = self.get_queryset().filter(status=LeadStatus.WON).select_related(
+            'assigned_to', 'field_agent', 'project'
+        ).order_by('-updated_at')
+        
+        results = []
+        for lead in qs:
+            tc_name = ''
+            fa_name = ''
+            if lead.assigned_to:
+                tc_name = f"{lead.assigned_to.first_name} {lead.assigned_to.last_name}".strip() or lead.assigned_to.email
+            if lead.field_agent:
+                fa_name = f"{lead.field_agent.first_name} {lead.field_agent.last_name}".strip() or lead.field_agent.email
+            
+            results.append({
+                'id': str(lead.id),
+                'first_name': lead.first_name,
+                'last_name': lead.last_name,
+                'phone': lead.phone,
+                'email': lead.email,
+                'project_name': lead.project.name if lead.project else None,
+                'budget': str(lead.budget) if lead.budget else None,
+                'telecaller_name': tc_name,
+                'field_agent_name': fa_name,
+                'won_date': lead.updated_at.isoformat() if lead.updated_at else None,
+                'source': lead.source,
+            })
+        
+        return Response(results)
+
+    @action(detail=False, methods=['post'], url_path='bulk-assign', permission_classes=[IsClientAdmin])
+    def bulk_assign(self, request):
+        """
+        Admin bulk-assigns leads. Supports:
+        - mode: 'manual' (assign to specific user), 'round_robin', 'load_balance'
+        - user_id: target user (for manual mode)
+        - count: number of leads to assign
+        - status_filter: 'NEW' (default) or 'all'
+        """
+        mode = request.data.get('mode', 'manual')
+        user_id = request.data.get('user_id')
+        count = int(request.data.get('count', 10))
+        status_filter = request.data.get('status_filter', 'NEW')
+        
+        # Get unassigned or all new leads
+        base_qs = Lead.objects.filter(client=request.user.client)
+        if status_filter == 'NEW':
+            base_qs = base_qs.filter(status__in=[LeadStatus.NEW, 'IMPORTED'])
+        
+        unassigned = base_qs.filter(assigned_to__isnull=True).order_by('created_at')[:count]
+        leads_to_assign = list(unassigned)
+        
+        if not leads_to_assign:
+            return Response({"detail": "No unassigned leads found matching criteria."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if mode == 'manual':
+            if not user_id:
+                return Response({"detail": "user_id is required for manual assignment."}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                target_user = User.objects.get(id=user_id, client=request.user.client, is_active=True)
+            except User.DoesNotExist:
+                return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+            
+            assigned_count = 0
+            for lead in leads_to_assign:
+                # If assigning to field agent, set field_agent; if telecaller, set assigned_to
+                if target_user.role == RoleChoices.FIELD_AGENT:
+                    lead.field_agent = target_user
+                    lead.assigned_to = target_user  # Also set assigned_to for visibility
+                else:
+                    lead.assigned_to = target_user
+                lead.save(update_fields=['assigned_to', 'field_agent'])
+                assigned_count += 1
+            
+            return Response({"detail": f"Successfully assigned {assigned_count} leads to {target_user.first_name} {target_user.last_name}."})
+        
+        elif mode == 'round_robin':
+            users_qs = User.objects.filter(
+                client=request.user.client,
+                role__in=[RoleChoices.TELECALLER, RoleChoices.FIELD_AGENT],
+                is_active=True
+            ).order_by('id')
+            users = list(users_qs)
+            
+            if not users:
+                return Response({"detail": "No active telecallers or field agents found."}, status=status.HTTP_400_BAD_REQUEST)
+            
+            assigned_count = 0
+            for i, lead in enumerate(leads_to_assign):
+                target = users[i % len(users)]
+                if target.role == RoleChoices.FIELD_AGENT:
+                    lead.field_agent = target
+                lead.assigned_to = target
+                lead.save(update_fields=['assigned_to', 'field_agent'])
+                assigned_count += 1
+            
+            return Response({"detail": f"Round-robin assigned {assigned_count} leads across {len(users)} users."})
+        
+        elif mode == 'load_balance':
+            # Assign to user with fewest currently assigned leads
+            users_qs = User.objects.filter(
+                client=request.user.client,
+                role__in=[RoleChoices.TELECALLER, RoleChoices.FIELD_AGENT],
+                is_active=True
+            ).annotate(
+                active_leads=Count('assigned_leads', filter=Q(assigned_leads__status__in=[LeadStatus.NEW, LeadStatus.CALLED, LeadStatus.NOT_ANSWERED, LeadStatus.INTERESTED]))
+            ).order_by('active_leads')
+            
+            users = list(users_qs)
+            if not users:
+                return Response({"detail": "No active employees found."}, status=status.HTTP_400_BAD_REQUEST)
+            
+            assigned_count = 0
+            for i, lead in enumerate(leads_to_assign):
+                target = users[i % len(users)]
+                if target.role == RoleChoices.FIELD_AGENT:
+                    lead.field_agent = target
+                lead.assigned_to = target
+                lead.save(update_fields=['assigned_to', 'field_agent'])
+                assigned_count += 1
+            
+            return Response({"detail": f"Load-balanced {assigned_count} leads across {len(users)} users."})
+        
+        return Response({"detail": "Invalid mode. Use 'manual', 'round_robin', or 'load_balance'."}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LeadBatchViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):

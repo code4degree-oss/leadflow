@@ -1,12 +1,99 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Layout from '../../components/Layout'
-import { Save, Bell, MapPin, Clock, Shield, Users, Crosshair, Plus, Trash2, Hexagon, Circle as CircleIcon } from 'lucide-react'
+import { Save, Bell, MapPin, Clock, Shield, Users, Crosshair, Plus, Trash2, Hexagon, Circle as CircleIcon, Target, Loader2 } from 'lucide-react'
 import clsx from 'clsx'
 import { fetchWithAuth } from '../../utils/api'
 import { GoogleMap, useJsApiLoader, Marker, Circle, Polygon, DrawingManager } from '@react-google-maps/api'
 
 const SECTIONS = ['General', 'Geo-Login', 'Notifications', 'Targets', 'Security']
 const LIBRARIES = ['drawing']
+
+// ═══ Targets Section (functional, loads from API) ═══
+function TargetsSection() {
+  const [tcTarget, setTcTarget] = useState(100)
+  const [faTarget, setFaTarget] = useState(8)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    const loadTargets = async () => {
+      try {
+        const data = await fetchWithAuth('/leads/daily-target/')
+        setTcTarget(data.telecaller_target || 100)
+        setFaTarget(data.field_agent_target || 8)
+      } catch (err) { console.error(err) }
+      finally { setLoading(false) }
+    }
+    loadTargets()
+  }, [])
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      await fetchWithAuth('/leads/set-daily-target/', {
+        method: 'PUT',
+        body: JSON.stringify({
+          telecaller_target: tcTarget,
+          field_agent_target: faTarget,
+        })
+      })
+      alert('✅ Daily targets updated successfully! Changes will reflect on telecaller and field agent dashboards immediately.')
+    } catch (err) {
+      alert('Failed: ' + err.message)
+    } finally { setSaving(false) }
+  }
+
+  if (loading) {
+    return (
+      <div className="card p-12 text-center">
+        <Loader2 className="animate-spin mx-auto text-accent mb-2" size={24} />
+        <p className="text-xs text-txt3">Loading targets...</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="card p-5">
+      <h3 className="font-display font-semibold text-sm text-txt mb-1 flex items-center gap-2">
+        <Target size={16} className="text-accent" /> Default Daily Targets
+      </h3>
+      <p className="text-xs text-txt3 mb-6">Set daily targets per role. Changes sync to telecaller and field agent dashboards in real-time.</p>
+      
+      <div className="space-y-4">
+        <div className="flex items-center justify-between p-4 bg-bg2/50 rounded-xl border border-border">
+          <div>
+            <div className="text-sm font-bold text-txt">📞 Telecaller</div>
+            <div className="text-[10px] text-txt3">Calls per day</div>
+          </div>
+          <div className="flex items-center gap-2">
+            <input type="number" value={tcTarget} onChange={e => setTcTarget(parseInt(e.target.value) || 0)}
+              className="input w-24 text-sm text-center font-bold" min={1} />
+            <span className="text-xs text-txt3">per day</span>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between p-4 bg-bg2/50 rounded-xl border border-border">
+          <div>
+            <div className="text-sm font-bold text-txt">🏃 Field Agent</div>
+            <div className="text-[10px] text-txt3">Visits per day</div>
+          </div>
+          <div className="flex items-center gap-2">
+            <input type="number" value={faTarget} onChange={e => setFaTarget(parseInt(e.target.value) || 0)}
+              className="input w-24 text-sm text-center font-bold" min={1} />
+            <span className="text-xs text-txt3">per day</span>
+          </div>
+        </div>
+      </div>
+
+      <p className="text-[10px] text-txt3 mt-3">These are default values that apply to all employees. Changing these will update the progress bars visible to your team.</p>
+      
+      <button onClick={handleSave} disabled={saving} className="btn-primary mt-4">
+        {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+        {saving ? 'Saving...' : 'Save Targets'}
+      </button>
+    </div>
+  )
+}
 
 export default function AdminSettings() {
   const [active, setActive] = useState('General')
@@ -458,26 +545,7 @@ export default function AdminSettings() {
         )}
 
         {active === 'Targets' && (
-          <div className="card p-5">
-            <h3 className="font-display font-semibold text-sm text-txt mb-4">Default Daily Targets</h3>
-            <div className="space-y-3">
-              {[
-                { role:'Telecaller', target:100 },
-                { role:'Field Agent (visits)', target:8 },
-                { role:'Manager', target:20 },
-              ].map(t => (
-                <div key={t.role} className="flex items-center justify-between">
-                  <div className="text-sm text-txt">{t.role}</div>
-                  <div className="flex items-center gap-2">
-                    <input type="number" defaultValue={t.target} className="input w-24 text-sm" />
-                    <span className="text-xs text-txt3">per day</span>
-                  </div>
-                </div>
-              ))}
-              <p className="text-xs text-txt3 pt-2">These are default values. You can override per employee in the Employees page.</p>
-              <button className="btn-primary"><Save size={14}/>Save Targets</button>
-            </div>
-          </div>
+          <TargetsSection />
         )}
 
         {active === 'Security' && (

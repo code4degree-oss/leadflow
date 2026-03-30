@@ -16,6 +16,10 @@ class ClientAccount(models.Model):
     storage_quota_mb = models.IntegerField(default=1024, help_text="File storage quota in MB")
     geofencing_enabled = models.BooleanField(default=False, help_text="Global toggle to enforce geolocation checking for employees")
     
+    # Daily targets — configurable by client admin
+    daily_telecaller_target = models.IntegerField(default=100, help_text="Daily call target per telecaller")
+    daily_field_agent_target = models.IntegerField(default=8, help_text="Daily visit target per field agent")
+
     plan = models.CharField(max_length=20, choices=[('basic','Basic'),('pro','Pro'),('enterprise','Enterprise')], default='basic')
     trial_days = models.IntegerField(default=14, help_text="Number of trial days")
     valid_until = models.DateField(null=True, blank=True, help_text="Subscription valid until date")

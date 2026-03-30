@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
-import { Eye, EyeOff, Lock, Mail, ArrowRight, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff, Lock, Mail, ArrowRight, AlertCircle, MapPin } from 'lucide-react'
 import ThemeToggle from '../components/ThemeToggle'
 
 export default function LoginPage() {
@@ -12,35 +12,77 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState('')
   const [authStatus, setAuthStatus] = useState('Sign In')
 
+  // Store geolocation in a ref so it's available when login fires
+  const geoRef = useRef({ lat: null, lng: null, resolved: false })
+
+  // Pre-fetch geolocation silently in background on page load
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          geoRef.current = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            resolved: true
+          }
+        },
+        () => {
+          // Silently handle denial — admins won't need it
+          geoRef.current = { lat: null, lng: null, resolved: true }
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+      )
+    } else {
+      geoRef.current = { lat: null, lng: null, resolved: true }
+    }
+  }, [])
+
   const handleLogin = async (e) => {
     if (e) e.preventDefault()
     if (!email || !password) return
     
     setLoading(true)
     setErrorMsg('')
+    setAuthStatus('Authenticating...')
+
+    // Helper: wait for geo if not resolved yet (max 3 seconds)
+    const waitForGeo = () => new Promise((resolve) => {
+      if (geoRef.current.resolved) return resolve()
+      const start = Date.now()
+      const interval = setInterval(() => {
+        if (geoRef.current.resolved || Date.now() - start > 3000) {
+          clearInterval(interval)
+          resolve()
+        }
+      }, 200)
+    })
+
+    await waitForGeo()
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/auth/login/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email: email.trim(), 
+          password,
+          latitude: geoRef.current.lat,
+          longitude: geoRef.current.lng
+        })
+      })
     
-    const executeLogin = async (lat = null, lng = null) => {
-        setAuthStatus('Authenticating...')
-        try {
-          // 1. Call real Login API
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/auth/login/`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                email: email.trim(), 
-                password,
-                latitude: lat,
-                longitude: lng
-            })
-          })
-      
       const data = await response.json()
       
       if (!response.ok) {
-        throw new Error(data.detail || 'Invalid email or password')
+        // If geofence error and we didn't have location, show a helpful message
+        const msg = data.detail || 'Invalid email or password'
+        if (msg.includes('Location coordinates are required') || msg.includes('outside your organization')) {
+          throw new Error('📍 ' + msg + ' Please enable location access and try again.')
+        }
+        throw new Error(msg)
       }
       
-      // 2. Store tokens
+      // Store tokens
       localStorage.setItem('access_token', data.access)
       localStorage.setItem('refresh_token', data.refresh)
       localStorage.setItem('user_role', data.role)
@@ -50,49 +92,31 @@ export default function LoginPage() {
       localStorage.setItem('must_change_password', data.must_change_password ? 'true' : 'false')
       localStorage.setItem('subscription_active', data.subscription_active !== false ? 'true' : 'false')
       
-      // 3. If user must change password, redirect to change-password page
+      // If user must change password, redirect to change-password page
       if (data.must_change_password) {
         router.push('/change-password')
         return
       }
 
-      // 4. Redirect based on real role
+      // Redirect based on role
+      setAuthStatus('Redirecting...')
       const roleMap = {
         'SUPER_ADMIN': '/superadmin',
         'CLIENT_ADMIN': '/admin',
-        'MANAGER': '/admin', // Managers share admin panel with restricted view
+        'MANAGER': '/admin',
         'TELECALLER': '/telecaller',
         'FIELD_AGENT': '/fieldagent'
       }
       
-        const target = roleMap[data.role] || '/'
-        router.push(target)
+      const target = roleMap[data.role] || '/'
+      router.push(target)
         
-      } catch (err) {
-        setErrorMsg(err.message)
-        setLoading(false)
-        setAuthStatus('Sign In')
-      }
-    }
-
-    setAuthStatus('Checking location...')
-    if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                executeLogin(position.coords.latitude, position.coords.longitude)
-            },
-            (error) => {
-                console.warn("Location check failed or was denied.", error)
-                executeLogin(null, null)
-            },
-            { enableHighAccuracy: true, timeout: 6000 }
-        )
-    } else {
-        executeLogin(null, null)
+    } catch (err) {
+      setErrorMsg(err.message)
+      setLoading(false)
+      setAuthStatus('Sign In')
     }
   }
-
-
 
   return (
     <div className="relative overflow-hidden min-h-screen bg-bg flex items-center justify-center p-4">
@@ -124,9 +148,9 @@ export default function LoginPage() {
           <h2 className="font-display font-bold text-base text-txt mb-5">Sign in to your account</h2>
           
           {errorMsg && (
-            <div className="mb-4 p-3 bg-danger/10 border border-danger/20 rounded-lg flex items-center gap-2 text-danger text-xs">
-              <AlertCircle size={14} />
-              {errorMsg}
+            <div className="mb-4 p-3 bg-danger/10 border border-danger/20 rounded-lg flex items-start gap-2 text-danger text-xs">
+              {errorMsg.includes('📍') ? <MapPin size={14} className="shrink-0 mt-0.5" /> : <AlertCircle size={14} className="shrink-0 mt-0.5" />}
+              <span>{errorMsg}</span>
             </div>
           )}
 
@@ -167,10 +191,8 @@ export default function LoginPage() {
           </form>
         </div>
 
-
-
         <p className="text-center text-xs text-txt3 mt-4">
-          Geo-lock enforced on login · JWT secured
+          Geo-lock enforced for field employees · JWT secured
         </p>
       </div>
     </div>

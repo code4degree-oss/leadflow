@@ -1,414 +1,775 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Layout from '../../components/Layout'
-import { StatCard, SectionHeader, StatusBadge, ProgressBar } from '../../components/UI'
-import { Phone, Flame, Target, Calendar, ChevronRight, Plus, Star, Clock, CheckCircle, XCircle, ArrowRight, Bell, RefreshCw, AlertCircle, Eye, EyeOff, MessageSquare, DollarSign, Home, X } from 'lucide-react'
+import { StatusBadge } from '../../components/UI'
+import {
+  Search, Flame, Clock, X, PhoneCall, Check, FileText, Calendar, RotateCcw,
+  PhoneOff, DollarSign, MapPin, Home, ChevronRight, History, Bell, CheckCircle2,
+  Circle, Loader2, UserCheck, Building2, ChevronLeft, ChevronRight as ChevronRightIcon,
+  Target, Trophy, Filter, Sparkles
+} from 'lucide-react'
 import clsx from 'clsx'
 import { fetchWithAuth } from '../../utils/api'
+import DateTimePicker from '../../components/DateTimePicker'
+
+// ═══ Helpers ═══
+function getNextBusinessDay(daysFromNow = 1) {
+  const d = new Date()
+  d.setDate(d.getDate() + daysFromNow)
+  while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1)
+  d.setHours(9, 0, 0, 0)
+  return d
+}
+
+function formatDatetimeLocal(date) {
+  const pad = n => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+function todayStr() {
+  return new Date().toISOString().split('T')[0]
+}
 
 export default function TelecallerDashboard() {
-  const [stats, setStats] = useState(null)
+  // ═══ Tab state: 'new' or 'history' ═══
+  const [activeTab, setActiveTab] = useState('new')
+
+  // ═══ Daily Target ═══
+  const [target, setTarget] = useState(0)
+  const [progress, setProgress] = useState(0)
+
+  // ═══ Leads state ═══
   const [leads, setLeads] = useState([])
-  const [reminders, setReminders] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [selected, setSelected] = useState(null)
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  
-  // Contact reveal state
-  const [revealedContacts, setRevealedContacts] = useState({})
-  
-  // Call log form
-  const [callForm, setCallForm] = useState({
-    notes: '', budget: '', interested_flat: '', outcome: '',
-    follow_up_at: '', follow_up_note: ''
-  })
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('new') // for NEW tab
+  const [historyFilter, setHistoryFilter] = useState('all') // for HISTORY tab
+  const [historyDate, setHistoryDate] = useState(todayStr())
+
+  // ═══ Pagination ═══
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [totalLeads, setTotalLeads] = useState(0)
+
+  // ═══ Lead Drawer ═══
+  const [selectedLead, setSelectedLead] = useState(null)
+  const [drawerTab, setDrawerTab] = useState('form')
+  const [outcome, setOutcome] = useState('CALLED')
+  const [notes, setNotes] = useState('')
+  const [budget, setBudget] = useState('')
+  const [area, setArea] = useState('')
+  const [interestedFlat, setInterestedFlat] = useState('')
+  const [nextCallAt, setNextCallAt] = useState('')
+  const [selectedProject, setSelectedProject] = useState('')
+  const [selectedFieldAgent, setSelectedFieldAgent] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  
-  useEffect(() => {
-    fetchDashboardData()
+
+  // ═══ Reference Data ═══
+  const [projects, setProjects] = useState([])
+  const [fieldAgents, setFieldAgents] = useState([])
+  const [timeline, setTimeline] = useState([])
+  const [followUps, setFollowUps] = useState([])
+  const [loadingTimeline, setLoadingTimeline] = useState(false)
+
+  // ═══ Fetch Daily Target (poll every 2 min) ═══
+  const fetchTarget = useCallback(async () => {
+    try {
+      const data = await fetchWithAuth('/leads/daily-target/')
+      setTarget(data.target || 0)
+      setProgress(data.progress || 0)
+    } catch (err) { console.error(err) }
   }, [])
 
-  const fetchDashboardData = async () => {
-    setLoading(true)
+  useEffect(() => {
+    fetchTarget()
+    fetchProjects()
+    fetchFieldAgents()
+    const interval = setInterval(fetchTarget, 120000) // poll every 2 min
+    return () => clearInterval(interval)
+  }, [])
+
+  // ═══ Fetch leads when tab/page/filters change ═══
+  useEffect(() => {
+    fetchLeads()
+  }, [activeTab, page, pageSize, statusFilter, historyFilter, historyDate])
+
+  useEffect(() => {
+    setPage(1)
+  }, [search, statusFilter, historyFilter, historyDate, activeTab])
+
+  useEffect(() => {
+    const delay = setTimeout(fetchLeads, 500)
+    return () => clearTimeout(delay)
+  }, [search])
+
+  const fetchLeads = async () => {
     try {
-      const [statsData, leadsData, remindersData] = await Promise.all([
-        fetchWithAuth('/leads/stats/'),
-        fetchWithAuth('/leads/'),
-        fetchWithAuth('/reminders/upcoming/').catch(() => [])
+      setLoading(true)
+      let url = `/leads/?page=${page}&page_size=${pageSize}`
+      if (search) url += `&search=${search}`
+
+      if (activeTab === 'new') {
+        // Show NEW status only
+        url += '&status=NEW'
+      } else {
+        // History tab — filter by date and status, exclude uncontacted
+        if (historyFilter !== 'all') url += `&status=${historyFilter.toUpperCase()}`
+        if (historyDate) url += `&date=${historyDate}`
+        url += '&exclude_new=true'
+      }
+
+      const data = await fetchWithAuth(url)
+      setLeads(data.results || data || [])
+      setTotalLeads(data.count || 0)
+    } catch (err) { console.error(err) }
+    finally { setLoading(false) }
+  }
+
+  const fetchProjects = async () => {
+    try {
+      const data = await fetchWithAuth('/projects/')
+      setProjects(data.results || data || [])
+    } catch (err) { console.error(err) }
+  }
+
+  const fetchFieldAgents = async () => {
+    try {
+      const data = await fetchWithAuth('/leads/field-agents/')
+      setFieldAgents(data || [])
+    } catch (err) { console.error(err) }
+  }
+
+  const getSmartNextCall = (outcomeKey) => {
+    switch (outcomeKey) {
+      case 'INTERESTED': return formatDatetimeLocal(getNextBusinessDay(2))
+      case 'CALLED': return formatDatetimeLocal(getNextBusinessDay(3))
+      case 'CALLBACK': return ''
+      case 'NOT_ANSWERED': return formatDatetimeLocal(getNextBusinessDay(1))
+      default: return ''
+    }
+  }
+
+  const openLeadDetails = async (lead) => {
+    setSelectedLead(lead)
+    setNotes(lead.notes || '')
+    setBudget(lead.budget || '')
+    setArea(lead.area || '')
+    setInterestedFlat(lead.interested_flat || '')
+    setSelectedProject(lead.project || '')
+    setSelectedFieldAgent(lead.field_agent || '')
+    setOutcome('CALLED')
+    setNextCallAt(getSmartNextCall('CALLED'))
+    setDrawerTab('form')
+
+    setLoadingTimeline(true)
+    try {
+      const [timelineData, followUpData] = await Promise.all([
+        fetchWithAuth(`/leads/${lead.id}/timeline/`).catch(() => []),
+        fetchWithAuth(`/leads/${lead.id}/follow-ups/`).catch(() => [])
       ])
-      setStats(statsData)
-      setLeads(leadsData.results || leadsData)
-      setReminders(remindersData.results || remindersData || [])
-      setError(null)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+      setTimeline(timelineData || [])
+      setFollowUps(followUpData || [])
+    } catch (err) { console.error(err) }
+    finally { setLoadingTimeline(false) }
   }
 
-  const openDrawer = (lead) => {
-    setSelected(lead)
-    setDrawerOpen(true)
-    setCallForm({ notes: lead.notes || '', budget: lead.budget || '', interested_flat: lead.interested_flat || '', outcome: '', follow_up_at: '', follow_up_note: '' })
+  const handleOutcomeChange = (newOutcome) => {
+    setOutcome(newOutcome)
+    setNextCallAt(getSmartNextCall(newOutcome))
   }
 
-  const closeDrawer = () => {
-    setDrawerOpen(false)
-    setTimeout(() => setSelected(null), 300)
-  }
-
-  const handleRevealContact = async (leadId) => {
+  const handleToggleHot = async () => {
+    if (!selectedLead) return
     try {
-      const data = await fetchWithAuth(`/leads/${leadId}/reveal-contact/`)
-      setRevealedContacts(prev => ({ ...prev, [leadId]: data }))
-    } catch (err) {
-      alert('Failed to reveal contact: ' + err.message)
-    }
+      const result = await fetchWithAuth(`/leads/${selectedLead.id}/toggle-hot/`, { method: 'POST' })
+      setSelectedLead(prev => ({ ...prev, is_hot: result.is_hot }))
+      setLeads(prev => prev.map(l => l.id === selectedLead.id ? { ...l, is_hot: result.is_hot } : l))
+    } catch (err) { alert("Failed: " + err.message) }
   }
 
-  const handleLogCall = async (outcome) => {
-    if (!selected) return
+  const handleLogCall = async (e) => {
+    e.preventDefault()
+
+    if (outcome !== 'LOST' && outcome !== 'NOT_ANSWERED' && outcome !== 'WON' && !nextCallAt) {
+      alert("⚠️ You must schedule the next call before saving.")
+      return
+    }
+
     setSubmitting(true)
     try {
       const payload = {
-        notes: callForm.notes,
-        budget: callForm.budget ? parseFloat(callForm.budget) : null,
-        interested_flat: callForm.interested_flat,
-        outcome: outcome
+        outcome,
+        notes,
+        budget: budget ? parseFloat(budget) : null,
+        area: area || '',
+        interested_flat: interestedFlat || '',
+        project_id: selectedProject || null,
+        field_agent_id: selectedFieldAgent || null,
       }
-      
-      if (outcome === 'CALLBACK' && callForm.follow_up_at) {
-        payload.follow_up_at = new Date(callForm.follow_up_at).toISOString()
-        payload.follow_up_note = callForm.follow_up_note
+
+      if (outcome === 'NOT_ANSWERED') {
+        payload.next_call_at = new Date(nextCallAt).toISOString()
+      } else if (outcome !== 'LOST' && outcome !== 'WON') {
+        payload.next_call_at = new Date(nextCallAt).toISOString()
       }
-      
-      const result = await fetchWithAuth(`/leads/${selected.id}/log-call/`, {
+
+      if (outcome === 'CALLBACK') {
+        payload.follow_up_at = new Date(nextCallAt).toISOString()
+        payload.follow_up_note = "Follow up scheduled from call logger."
+      }
+
+      await fetchWithAuth(`/leads/${selectedLead.id}/log-call/`, {
         method: 'POST',
         body: JSON.stringify(payload)
       })
-      
-      alert(result.detail)
-      closeDrawer()
-      fetchDashboardData()
+
+      setSelectedLead(null)
+      fetchLeads()
+      fetchTarget() // refresh progress
     } catch (err) {
-      alert('Error: ' + err.message)
-    } finally {
-      setSubmitting(false)
-    }
+      alert("Failed: " + err.message)
+    } finally { setSubmitting(false) }
   }
 
-  const handleMarkLost = async () => {
-    if (!selected) return
-    if (!confirm('Are you sure you want to mark this lead as lost?')) return
-    setSubmitting(true)
-    try {
-      const result = await fetchWithAuth(`/leads/${selected.id}/mark-lost/`, {
-        method: 'POST',
-        body: JSON.stringify({})
-      })
-      alert(result.detail)
-      closeDrawer()
-      fetchDashboardData()
-    } catch (err) {
-      alert('Error: ' + err.message)
-    } finally {
-      setSubmitting(false)
+  const getTimelineIcon = (type) => {
+    const icons = {
+      'CALL_LOGGED': PhoneCall, 'STATUS_CHANGE': CheckCircle2, 'ASSIGNED': ChevronRight,
+      'REASSIGNED': ChevronRight, 'FOLLOW_UP_SET': Calendar, 'FOLLOW_UP_COMPLETED': Check,
+      'SITE_VISIT_SCHEDULED': MapPin, 'SITE_VISIT_COMPLETED': CheckCircle2, 'NOTE_ADDED': FileText,
+      'ESCALATED': Flame, 'IMPORTED': FileText,
     }
+    return icons[type] || Circle
   }
 
-  if (loading && !stats) return (
-    <Layout role="telecaller" pageTitle="My Dashboard">
-      <div className="py-20 text-center">
-        <RefreshCw className="animate-spin text-primary mx-auto mb-2" size={32} />
-        <p className="text-sm text-txt3 font-medium">Syncing your leads...</p>
-      </div>
-    </Layout>
-  )
+  const getTimelineColor = (type) => {
+    const colors = {
+      'CALL_LOGGED': 'text-accent bg-accent/10', 'STATUS_CHANGE': 'text-purple bg-purple/10',
+      'FOLLOW_UP_SET': 'text-amber bg-amber/10', 'FOLLOW_UP_COMPLETED': 'text-[#10B981] bg-[#10B981]/10',
+      'SITE_VISIT_SCHEDULED': 'text-accent2 bg-accent2/10', 'ESCALATED': 'text-danger bg-danger/10',
+    }
+    return colors[type] || 'text-txt3 bg-bg3'
+  }
+
+  const totalPages = Math.ceil(totalLeads / pageSize)
+  const pct = target > 0 ? Math.min(100, Math.round((progress / target) * 100)) : 0
 
   return (
     <Layout role="telecaller" pageTitle="My Dashboard">
-      {/* Performance Overview */}
-      <div className="card p-5 mb-6 border-accent/20 bg-accent/5 backdrop-blur-sm shadow-xl shadow-accent/5">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-sm font-bold text-accent uppercase tracking-widest leading-none mb-1">Performance Overview</h2>
-            <p className="text-xs text-txt3">Conversion Rate: <span className="text-success font-bold">{stats?.conversion_rate || 0}%</span></p>
+
+      {/* ═══ DAILY TARGET PROGRESS BAR ═══ */}
+      <div className="mb-6 card p-5 border-l-4 border-l-accent shadow-lg">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-accent/10 text-accent">
+              <Target size={22} />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-txt">Today's Target</h3>
+              <p className="text-[10px] text-txt3 uppercase tracking-wider font-bold">
+                {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </p>
+            </div>
           </div>
           <div className="text-right">
-            <div className="font-display font-bold text-3xl text-accent leading-none">{stats?.total_leads || 0}<span className="text-txt3 text-base font-normal"> total</span></div>
+            <span className="text-3xl font-display font-extrabold text-accent">{progress}</span>
+            <span className="text-lg text-txt3 font-bold"> / {target}</span>
+            <p className="text-[10px] text-txt3 font-bold uppercase tracking-wider mt-0.5">calls completed</p>
           </div>
         </div>
-        <ProgressBar value={stats?.status_counts?.WON || 0} max={stats?.total_leads || 1} color="#4F8EF7" height={8} />
-        <div className="flex gap-6 mt-4">
-          <div className="flex items-center gap-1.5 text-xs text-txt2"><div className="w-1.5 h-1.5 rounded-full bg-success"/> <span className="font-bold">{stats?.status_counts?.WON || 0}</span> Won</div>
-          <div className="flex items-center gap-1.5 text-xs text-txt2"><div className="w-1.5 h-1.5 rounded-full bg-amber"/> <span className="font-bold">{stats?.status_counts?.INTERESTED || 0}</span> Interested</div>
-          <div className="flex items-center gap-1.5 text-xs text-txt2"><div className="w-1.5 h-1.5 rounded-full bg-danger"/> <span className="font-bold">{stats?.status_counts?.LOST || 0}</span> Lost</div>
+        <div className="h-3 w-full bg-bg3 rounded-full overflow-hidden">
+          <div
+            className={clsx(
+              "h-full rounded-full transition-all duration-1000",
+              pct >= 100 ? "bg-[#10B981]" : pct >= 70 ? "bg-accent" : pct >= 40 ? "bg-amber" : "bg-accent/60"
+            )}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <div className="flex justify-between text-[9px] font-bold uppercase tracking-wider mt-1.5 text-txt3">
+          <span>{pct}% completed</span>
+          <span>{Math.max(0, target - progress)} remaining</span>
         </div>
       </div>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <StatCard label="My Queue" value={stats?.total_leads || 0} sub="total assigned" color="accent" icon={Phone} />
-        <StatCard label="New Leads" value={stats?.status_counts?.NEW || 0} sub="needs initial call" color="blue" icon={Plus} />
-        <StatCard label="Follow-ups" value={stats?.status_counts?.INTERESTED || 0} sub="high priority" color="amber" icon={Clock} />
-        <StatCard label="Lost" value={stats?.status_counts?.LOST || 0} sub="escalated" color="red" icon={XCircle} />
+      {/* ═══ NEW / HISTORY TABS ═══ */}
+      <div className="flex gap-2 mb-6">
+        <button
+          onClick={() => setActiveTab('new')}
+          className={clsx(
+            'flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all border',
+            activeTab === 'new'
+              ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
+              : 'bg-card text-txt2 border-border hover:bg-bg3'
+          )}>
+          <Sparkles size={16} /> New Leads
+        </button>
+        <button
+          onClick={() => setActiveTab('history')}
+          className={clsx(
+            'flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all border',
+            activeTab === 'history'
+              ? 'bg-purple text-white border-purple shadow-lg shadow-purple/20 scale-[1.02]'
+              : 'bg-card text-txt2 border-border hover:bg-bg3'
+          )}>
+          <History size={16} /> History
+        </button>
       </div>
 
-      {/* Upcoming Reminders */}
-      {reminders.length > 0 && (
-        <div className="card p-4 mb-6 border-amber/20 bg-amber/5">
-          <div className="flex items-center gap-2 mb-3">
-            <Bell size={14} className="text-amber" />
-            <span className="text-xs font-bold text-amber uppercase tracking-widest">Upcoming Follow-ups</span>
+      {/* ═══ HISTORY TAB: Date picker + status filters ═══ */}
+      {activeTab === 'history' && (
+        <div className="mb-6 space-y-4">
+          <div className="flex flex-col md:flex-row gap-3 items-start md:items-center">
+            <div className="flex items-center gap-2 bg-card rounded-xl border border-border px-4 py-2.5">
+              <Calendar size={14} className="text-purple" />
+              <input
+                type="date"
+                value={historyDate}
+                onChange={e => setHistoryDate(e.target.value)}
+                className="bg-transparent text-sm font-bold text-txt outline-none"
+              />
+            </div>
+            <div className="flex gap-1.5">
+              {['Today', 'Yesterday', '2 days ago'].map((label, i) => {
+                const d = new Date()
+                d.setDate(d.getDate() - i)
+                const val = d.toISOString().split('T')[0]
+                return (
+                  <button
+                    key={label}
+                    onClick={() => setHistoryDate(val)}
+                    className={clsx(
+                      'px-3 py-1.5 rounded-lg text-xs font-bold border transition-all',
+                      historyDate === val ? 'bg-purple/10 text-purple border-purple/30' : 'bg-bg3 text-txt3 border-border hover:text-txt'
+                    )}>
+                    {label}
+                  </button>
+                )
+              })}
+              <button
+                onClick={() => setHistoryDate('')}
+                className={clsx(
+                  'px-3 py-1.5 rounded-lg text-xs font-bold border transition-all',
+                  historyDate === '' ? 'bg-purple text-white border-purple shadow-md shadow-purple/20' : 'bg-bg3 text-txt3 border-border hover:text-txt'
+                )}>
+                All Time
+              </button>
+            </div>
           </div>
-          <div className="space-y-2">
-            {reminders.slice(0, 3).map(r => (
-              <div key={r.id} className="flex items-center justify-between bg-bg3 rounded-xl px-3 py-2 border border-border/50">
-                <div>
-                  <span className="text-sm font-bold text-txt">{r.lead_name}</span>
-                  <span className="text-xs text-txt3 ml-2">{r.note}</span>
-                </div>
-                <span className="text-[10px] font-mono text-amber font-bold">
-                  {new Date(r.scheduled_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                </span>
-              </div>
+
+          <div className="flex flex-wrap gap-2">
+            {['all', 'called', 'interested', 'not_answered', 'site_visit', 'won', 'lost'].map(s => (
+              <button key={s} onClick={() => setHistoryFilter(s)}
+                className={clsx(
+                  'px-4 py-2 rounded-xl text-xs font-bold transition-all capitalize border shadow-sm',
+                  historyFilter === s
+                    ? 'bg-purple text-white border-purple shadow-purple/20'
+                    : 'bg-card text-txt2 border-border hover:bg-bg3'
+                )}>
+                {s === 'all' ? 'All' : s.replace(/_/g, ' ')}
+              </button>
             ))}
           </div>
         </div>
       )}
 
-      {/* Lead list */}
-      <div className="card overflow-hidden shadow-lg border-border/50">
-        <div className="p-4 border-b border-border flex items-center justify-between bg-bg2/30">
-          <h2 className="text-sm font-bold text-txt">My Leads <span className="text-txt3 font-normal">({leads.length})</span></h2>
-          <button 
-            onClick={fetchDashboardData}
-            disabled={loading}
-            className="p-1.5 text-txt3 hover:text-primary transition-all"
-          >
-            <RefreshCw size={14} className={clsx(loading && "animate-spin")} />
-          </button>
-        </div>
-        <div className="divide-y divide-border max-h-[600px] overflow-y-auto custom-scrollbar">
-          {leads.length === 0 ? (
-            <div className="p-10 text-center text-txt3">No leads assigned yet.</div>
-          ) : (
-            leads.map(lead => (
-              <div
-                key={lead.id}
-                onClick={() => openDrawer(lead)}
-                className={clsx(
-                  'px-4 py-4 cursor-pointer transition-all hover:bg-bg2/50 flex items-center gap-4 group border-l-4',
-                  selected?.id === lead.id && drawerOpen ? 'bg-primary/5 border-primary shadow-inner' : 'border-transparent'
-                )}
-              >
-                <div className="w-10 h-10 rounded-full bg-bg3 border border-border flex items-center justify-center text-xs font-bold text-txt group-hover:bg-primary/10 transition-colors">
-                  {lead.first_name?.[0]}{lead.last_name?.[0] || ''}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-bold text-sm text-txt truncate group-hover:text-primary transition-colors">{lead.first_name} {lead.last_name}</span>
-                    <StatusBadge status={lead.status} />
-                    {lead.lost_count > 0 && (
-                      <span className="text-[9px] font-bold text-danger bg-danger/10 px-1.5 py-0.5 rounded">{lead.lost_count}× lost</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-[11px] font-mono text-txt3 leading-none">{lead.masked_phone || lead.phone}</span>
-                    <span className="text-[10px] text-txt3">•</span>
-                    <span className="text-[11px] text-txt2 leading-none uppercase tracking-tighter font-bold">{lead.source}</span>
-                  </div>
-                </div>
-                <ChevronRight size={16} className={clsx("transition-transform text-txt3 group-hover:translate-x-1")} />
-              </div>
-            ))
-          )}
+      {/* ═══ SEARCH BAR ═══ */}
+      <div className="mb-6">
+        <div className="relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-txt3" />
+          <input value={search} onChange={e => setSearch(e.target.value)}
+            className="input w-full pl-10 bg-card" placeholder="Search by name or phone..." />
         </div>
       </div>
 
-      {/* Slide-Over Drawer */}
-      {drawerOpen && selected && (
-        <>
-          {/* Backdrop */}
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 animate-in fade-in duration-200" onClick={closeDrawer} />
-          
-          {/* Drawer */}
-          <div className="fixed right-0 top-0 h-full w-full max-w-md bg-card border-l border-border shadow-2xl z-50 animate-in slide-in-from-right duration-300 flex flex-col overflow-hidden">
+      {/* ═══ LEADS TABLE ═══ */}
+      <div className="card overflow-hidden border border-border shadow-xl">
+        <div className="overflow-x-auto min-h-[400px]">
+          <table className="w-full text-left relative">
+            <thead>
+              <tr className="bg-bg2/50 border-b border-border">
+                <th className="th">Lead</th>
+                <th className="th">Status</th>
+                <th className="th">Project</th>
+                <th className="th">Budget</th>
+                <th className="th">Next Call</th>
+                <th className="th text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border relative">
+              {loading ? (
+                <tr><td colSpan={6} className="py-24 text-center text-txt3"><Loader2 className="animate-spin mx-auto text-accent mb-2" size={32} />Loading Leads...</td></tr>
+              ) : leads.length === 0 ? (
+                <tr><td colSpan={6} className="py-12 text-center text-txt3">
+                  {activeTab === 'new'
+                    ? "🎉 All leads have been contacted! Check History for past activity."
+                    : "No leads found for the selected date/filter."}
+                </td></tr>
+              ) : leads.map(lead => (
+                <tr key={lead.id} className="table-row group cursor-pointer" onClick={() => openLeadDetails(lead)}>
+                  <td className="td">
+                    <div className="flex items-center gap-3">
+                      <div className={clsx(
+                        "w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs border-2",
+                        lead.is_hot ? "bg-hot/10 text-hot border-hot/30 hot-glow" : "bg-accent/10 text-accent border-transparent"
+                      )}>
+                        {lead.is_hot && <Flame size={16} className="text-hot" />}
+                        {!lead.is_hot && <>{lead.first_name?.[0]}{lead.last_name?.[0] || ''}</>}
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold text-txt flex items-center gap-2 group-hover:text-accent transition-colors">
+                          {lead.first_name} {lead.last_name}
+                          {lead.is_hot && <span className="text-[8px] font-bold text-hot bg-hot/10 px-1.5 py-0.5 rounded-full uppercase">Hot</span>}
+                        </div>
+                        <div className="text-[11px] text-txt3 font-mono mt-0.5">{lead.phone}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="td"><StatusBadge status={lead.status?.toLowerCase()} /></td>
+                  <td className="td">
+                    <span className="text-xs text-txt2">{lead.project_name || '—'}</span>
+                  </td>
+                  <td className="td">
+                    <span className="text-xs font-mono text-txt2">{lead.budget ? `₹${Number(lead.budget).toLocaleString('en-IN')}` : '—'}</span>
+                  </td>
+                  <td className="td">
+                    {lead.next_call_at ? (
+                      <span className={clsx(
+                        "text-[10px] font-bold font-mono px-2 py-0.5 rounded-full",
+                        new Date(lead.next_call_at) < new Date() ? "bg-danger/10 text-danger" : "bg-accent/10 text-accent"
+                      )}>
+                        {new Date(lead.next_call_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                      </span>
+                    ) : <span className="text-txt3 text-xs">—</span>}
+                  </td>
+                  <td className="td text-right">
+                    <button className="btn-ghost text-xs group-hover:bg-accent group-hover:text-white transition-all">
+                      <PhoneCall size={14} className="mr-1 inline-block" /> Log Call
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* ═══ PAGINATION ═══ */}
+        <div className="px-5 py-4 border-t border-border bg-bg2/30 flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-txt2">Rows per page:</span>
+            <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1) }} className="bg-bg3 border border-border rounded px-2 py-1 text-xs">
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </select>
+            <span className="text-[10px] text-txt3 font-bold uppercase tracking-widest ml-4">
+              Showing {leads.length > 0 ? (page - 1) * pageSize + 1 : 0} - {Math.min(page * pageSize, totalLeads)} of {totalLeads} Total
+            </span>
+          </div>
+
+          <div className="flex gap-1">
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1 || loading} className="p-1.5 rounded-lg border border-border bg-card text-txt hover:bg-bg3 disabled:opacity-50">
+              <ChevronLeft size={16} />
+            </button>
+            <div className="flex items-center px-3 text-xs font-bold font-mono text-txt2">
+              Page {page} of {totalPages || 1}
+            </div>
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages || loading} className="p-1.5 rounded-lg border border-border bg-card text-txt hover:bg-bg3 disabled:opacity-50">
+              <ChevronRightIcon size={16} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ LEAD DETAIL DRAWER ═══ */}
+      {selectedLead && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-end animate-in fade-in">
+          <div className="bg-card w-full max-w-lg h-full shadow-2xl animate-in slide-in-from-right flex flex-col border-l border-border">
+
             {/* Header */}
-            <div className="p-6 border-b border-border bg-bg2/30">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-inner">
-                    <UserIcon size={24} />
+            <div className="px-6 py-5 border-b border-border bg-bg2/50">
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3">
+                    <h2 className="font-display font-bold text-xl text-txt">{selectedLead.first_name} {selectedLead.last_name}</h2>
+                    <button
+                      onClick={handleToggleHot}
+                      className={clsx(
+                        'p-1.5 rounded-lg transition-all border shrink-0',
+                        selectedLead.is_hot
+                          ? 'bg-hot/15 border-hot/30 text-hot shadow-md shadow-hot/20'
+                          : 'bg-bg3 border-border text-txt3 hover:text-hot hover:border-hot/30'
+                      )}
+                      title={selectedLead.is_hot ? "Remove Hot flag" : "Mark as Hot Lead"}
+                    >
+                      <Flame size={16} />
+                    </button>
+                    <a
+                      href={`tel:${selectedLead.phone}`}
+                      className="p-1.5 rounded-lg transition-all border bg-bg3 border-border text-txt3 hover:text-[#10B981] hover:border-[#10B981]/30 hover:bg-[#10B981]/10 flex items-center justify-center shrink-0"
+                      title="Call via Dialer"
+                    >
+                      <PhoneCall size={16} />
+                    </a>
                   </div>
-                  <div>
-                    <h3 className="font-display font-bold text-lg text-txt leading-none mb-1">{selected.first_name} {selected.last_name}</h3>
-                    <StatusBadge status={selected.status} />
-                  </div>
-                </div>
-                <button onClick={closeDrawer} className="p-2 hover:bg-bg3 rounded-xl text-txt3 hover:text-txt transition-all">
-                  <X size={18} />
-                </button>
-              </div>
-              
-              {/* Contact Info (Masked) */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-bg3 rounded-xl p-3 border border-border/50">
-                  <div className="text-[9px] font-bold text-txt3 uppercase tracking-widest mb-1">Phone</div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono text-txt">
-                      {revealedContacts[selected.id]?.phone || selected.masked_phone || selected.phone}
-                    </span>
-                    {!revealedContacts[selected.id] && selected.masked_phone !== selected.phone && (
-                      <button onClick={() => handleRevealContact(selected.id)} className="text-primary hover:text-accent transition-colors">
-                        <Eye size={12} />
-                      </button>
+                  <p className="text-xs text-txt3 font-mono mt-1">{selectedLead.phone}</p>
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    <StatusBadge status={selectedLead.status?.toLowerCase()} />
+                    <span className="badge badge-gray text-[9px]">{selectedLead.source}</span>
+                    {selectedLead.is_hot && (
+                      <span className="text-[9px] font-bold text-hot bg-hot/10 px-2 py-0.5 rounded-full">🔥 Hot Lead</span>
+                    )}
+                    {selectedLead.next_call_at && (
+                      <span className={clsx(
+                        "text-[9px] font-bold px-2 py-0.5 rounded-full",
+                        new Date(selectedLead.next_call_at) < new Date() ? "bg-danger/10 text-danger" : "bg-accent/10 text-accent"
+                      )}>
+                        Next: {new Date(selectedLead.next_call_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                      </span>
                     )}
                   </div>
                 </div>
-                <div className="bg-bg3 rounded-xl p-3 border border-border/50">
-                  <div className="text-[9px] font-bold text-txt3 uppercase tracking-widest mb-1">Email</div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono text-txt truncate">
-                      {revealedContacts[selected.id]?.email || selected.masked_email || selected.email || 'N/A'}
-                    </span>
-                    {!revealedContacts[selected.id] && selected.masked_email !== selected.email && selected.email && (
-                      <button onClick={() => handleRevealContact(selected.id)} className="text-primary hover:text-accent transition-colors">
-                        <Eye size={12} />
-                      </button>
-                    )}
-                  </div>
-                </div>
+                <button onClick={() => setSelectedLead(null)} className="p-2 hover:bg-bg3 rounded-xl text-txt3"><X size={20} /></button>
               </div>
             </div>
 
-            {/* Scrollable Body */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar">
-              {/* Lead Info */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-bg3 rounded-xl p-3 border border-border/50 text-center">
-                  <div className="text-[9px] font-bold text-txt3 uppercase tracking-widest mb-1">Source</div>
-                  <div className="text-xs font-bold text-txt uppercase">{selected.source}</div>
-                </div>
-                <div className="bg-bg3 rounded-xl p-3 border border-border/50 text-center">
-                  <div className="text-[9px] font-bold text-txt3 uppercase tracking-widest mb-1">Budget</div>
-                  <div className="text-xs font-bold text-txt">{selected.budget ? `₹${Number(selected.budget).toLocaleString()}` : 'N/A'}</div>
-                </div>
-                <div className="bg-bg3 rounded-xl p-3 border border-border/50 text-center">
-                  <div className="text-[9px] font-bold text-txt3 uppercase tracking-widest mb-1">Lost Count</div>
-                  <div className={clsx("text-xs font-bold", selected.lost_count >= 3 ? 'text-danger' : 'text-txt')}>{selected.lost_count}/4</div>
-                </div>
-              </div>
+            {/* Tabs */}
+            <div className="flex border-b border-border bg-card">
+              {[
+                { key: 'form', label: 'Log Call', icon: PhoneCall },
+                { key: 'timeline', label: 'History', icon: History },
+                { key: 'followups', label: 'Follow-ups', icon: Bell },
+              ].map(tab => (
+                <button key={tab.key} onClick={() => setDrawerTab(tab.key)}
+                  className={clsx(
+                    'flex-1 flex items-center justify-center gap-2 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors',
+                    drawerTab === tab.key ? 'border-accent text-accent bg-accent/5' : 'border-transparent text-txt3 hover:text-txt'
+                  )}>
+                  <tab.icon size={14} />{tab.label}
+                </button>
+              ))}
+            </div>
 
-              {/* Call Log Form */}
-              <div>
-                <div className="text-[10px] font-bold text-txt3 uppercase tracking-widest mb-3 flex items-center gap-2">
-                  <MessageSquare size={12} /> Log Call
-                </div>
-                
-                <div className="space-y-3">
-                  <textarea 
-                    rows={3}
-                    placeholder="Call notes — what was discussed…"
-                    className="input w-full bg-bg3 text-sm resize-none"
-                    value={callForm.notes}
-                    onChange={e => setCallForm({...callForm, notes: e.target.value})}
-                  />
-                  
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-[9px] font-bold text-txt3 uppercase tracking-widest ml-1">Budget (₹)</label>
-                      <input 
-                        type="number" 
-                        placeholder="25,00,000"
-                        className="input w-full bg-bg3 text-sm mt-1"
-                        value={callForm.budget}
-                        onChange={e => setCallForm({...callForm, budget: e.target.value})}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[9px] font-bold text-txt3 uppercase tracking-widest ml-1">Interested Flat</label>
-                      <input 
-                        placeholder="2BHK Tower A"
-                        className="input w-full bg-bg3 text-sm mt-1"
-                        value={callForm.interested_flat}
-                        onChange={e => setCallForm({...callForm, interested_flat: e.target.value})}
-                      />
+            {/* Tab Content */}
+            <div className="flex-1 overflow-y-auto">
+
+              {/* TAB: Log Call Form */}
+              {drawerTab === 'form' && (
+                <form onSubmit={handleLogCall} className="p-6 flex flex-col gap-5">
+
+                  {/* Outcome Grid — includes WON */}
+                  <div>
+                    <label className="text-[10px] font-bold text-txt3 uppercase tracking-wider mb-3 block">Call Outcome</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { key: 'INTERESTED', label: 'Interested', icon: Flame, activeClass: 'bg-accent2/10 border-accent2 text-accent2 shadow-md shadow-accent2/10' },
+                        { key: 'CALLBACK', label: 'Follow-up', icon: Clock, activeClass: 'bg-accent/10 border-accent text-accent shadow-md shadow-accent/10' },
+                        { key: 'CALLED', label: 'Just Called', icon: PhoneCall, activeClass: 'bg-bg3 border-txt text-txt' },
+                        { key: 'NOT_ANSWERED', label: 'No Answer', icon: PhoneOff, activeClass: 'bg-amber/10 border-amber text-amber shadow-md shadow-amber/10' },
+                        { key: 'WON', label: '🎉 Won', icon: Trophy, activeClass: 'bg-[#10B981]/10 border-[#10B981] text-[#10B981] shadow-md shadow-[#10B981]/10' },
+                        { key: 'LOST', label: 'Mark Lost', icon: X, activeClass: 'bg-danger/10 border-danger text-danger shadow-md shadow-danger/10' },
+                      ].map(opt => (
+                        <button key={opt.key} type="button" onClick={() => handleOutcomeChange(opt.key)}
+                          className={clsx(
+                            'p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all text-center',
+                            outcome === opt.key ? opt.activeClass : 'bg-card border-border hover:border-accent/30 text-txt2'
+                          )}>
+                          <opt.icon size={18} /><span className="text-[10px] font-bold">{opt.label}</span>
+                        </button>
+                      ))}
                     </div>
                   </div>
-                </div>
-              </div>
 
-              {/* Follow-up scheduler (shown always, used for CALLBACK) */}
-              <div className="bg-amber/5 rounded-2xl p-4 border border-amber/20">
-                <div className="text-[10px] font-bold text-amber uppercase tracking-widest mb-3 flex items-center gap-2">
-                  <Calendar size={12} /> Schedule Follow-up
-                </div>
-                <input 
-                  type="datetime-local"
-                  className="input w-full bg-bg3 text-sm mb-2"
-                  value={callForm.follow_up_at}
-                  onChange={e => setCallForm({...callForm, follow_up_at: e.target.value})}
-                />
-                <input 
-                  placeholder="Reminder note…"
-                  className="input w-full bg-bg3 text-sm"
-                  value={callForm.follow_up_note}
-                  onChange={e => setCallForm({...callForm, follow_up_note: e.target.value})}
-                />
-              </div>
+                  {/* Next Call Scheduling (not for LOST/WON) */}
+                  {outcome !== 'LOST' && outcome !== 'WON' && (
+                    <div className={clsx(
+                      "p-4 rounded-xl border transition-all",
+                      outcome === 'NOT_ANSWERED' ? "bg-amber/5 border-amber/20" : !nextCallAt ? "bg-danger/5 border-danger/30" : "bg-accent/5 border-accent/20"
+                    )}>
+                      <DateTimePicker
+                        label={outcome === 'CALLBACK' ? 'Follow-up Date & Time' : 'Next Call Date & Time'}
+                        required={true}
+                        value={nextCallAt}
+                        onChange={setNextCallAt}
+                        readOnly={outcome === 'NOT_ANSWERED'}
+                        accentColor={outcome === 'NOT_ANSWERED' ? 'amber' : 'accent'}
+                      />
+                      {outcome === 'NOT_ANSWERED' && (
+                        <p className="text-[9px] text-amber mt-2 font-medium">⚡ Auto-scheduled for next business day, 9:00 AM</p>
+                      )}
+                    </div>
+                  )}
 
-              {/* Outcome Actions */}
-              <div>
-                <div className="text-[10px] font-bold text-txt3 uppercase tracking-widest mb-3">Call Outcome</div>
-                <div className="grid grid-cols-2 gap-2">
-                  <button 
-                    onClick={() => handleLogCall('CALLED')}
-                    disabled={submitting}
-                    className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-bg3 hover:bg-card border border-border hover:border-accent/40 transition-all group"
-                  >
-                    <div className="p-2 rounded-lg bg-accent/10 text-accent group-hover:scale-110 transition-transform"><Phone size={16}/></div>
-                    <span className="text-[10px] font-bold text-txt uppercase tracking-tight">Called</span>
-                  </button>
-                  <button 
-                    onClick={() => handleLogCall('INTERESTED')}
-                    disabled={submitting}
-                    className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-bg3 hover:bg-card border border-border hover:border-success/40 transition-all group"
-                  >
-                    <div className="p-2 rounded-lg bg-success/10 text-success group-hover:scale-110 transition-transform"><Star size={16}/></div>
-                    <span className="text-[10px] font-bold text-txt uppercase tracking-tight">Interested</span>
-                  </button>
-                  <button
-                    onClick={() => handleLogCall('CALLBACK')}
-                    disabled={submitting}
-                    className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-bg3 hover:bg-card border border-border hover:border-amber/40 transition-all group"
-                  >
-                    <div className="p-2 rounded-lg bg-amber/10 text-amber group-hover:scale-110 transition-transform"><Clock size={16}/></div>
-                    <span className="text-[10px] font-bold text-txt uppercase tracking-tight">Callback</span>
-                  </button>
-                  <button 
-                    onClick={handleMarkLost}
-                    disabled={submitting}
-                    className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-danger/5 hover:bg-danger/10 border border-danger/20 hover:border-danger/40 transition-all group"
-                  >
-                    <div className="p-2 rounded-lg bg-danger/10 text-danger group-hover:scale-110 transition-transform"><XCircle size={16}/></div>
-                    <span className="text-[10px] font-bold text-danger uppercase tracking-tight">Mark Lost</span>
-                  </button>
+                  {/* WON celebration */}
+                  {outcome === 'WON' && (
+                    <div className="p-4 rounded-xl border border-[#10B981]/20 bg-[#10B981]/5 text-center">
+                      <Trophy size={28} className="mx-auto text-[#10B981] mb-2" />
+                      <p className="text-sm font-bold text-[#10B981]">Congratulations! 🎉</p>
+                      <p className="text-[10px] text-txt3 mt-1">This lead will be moved to the Won section.</p>
+                    </div>
+                  )}
+
+                  {/* Lead Intelligence */}
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-bold text-txt3 uppercase tracking-wider block">Lead Intelligence</label>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[10px] text-txt3 mb-1 block flex items-center gap-1"><DollarSign size={10} /> Budget (₹)</label>
+                        <input type="number" value={budget} onChange={e => setBudget(e.target.value)}
+                          placeholder="e.g. 5000000" className="input w-full bg-bg3 text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-txt3 mb-1 block flex items-center gap-1"><MapPin size={10} /> Area</label>
+                        <input value={area} onChange={e => setArea(e.target.value)}
+                          placeholder="e.g. Baner, Pune" className="input w-full bg-bg3 text-sm" />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] text-txt3 mb-1 block flex items-center gap-1"><Building2 size={10} /> Interested Project</label>
+                      <select value={selectedProject} onChange={e => setSelectedProject(e.target.value)}
+                        className="input w-full bg-bg3 text-sm">
+                        <option value="">Select a project...</option>
+                        {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] text-txt3 mb-1 block flex items-center gap-1"><Home size={10} /> Interested Flat / Unit</label>
+                      <input value={interestedFlat} onChange={e => setInterestedFlat(e.target.value)}
+                        placeholder="e.g. 2BHK Tower A" className="input w-full bg-bg3 text-sm" />
+                    </div>
+
+                    {/* Field Agent Assignment */}
+                    {(outcome === 'INTERESTED' || outcome === 'WON' || selectedLead?.status === 'INTERESTED' || selectedLead?.status === 'SITE_VISIT') && (
+                      <div className="animate-in fade-in slide-in-from-top-2">
+                        <label className="text-[10px] text-txt3 mb-1 block flex items-center gap-1"><UserCheck size={10} /> Assign Field Agent</label>
+                        <select value={selectedFieldAgent} onChange={e => setSelectedFieldAgent(e.target.value)}
+                          className="input w-full bg-bg3 text-sm">
+                          <option value="">Select field agent...</option>
+                          {fieldAgents.map(a => <option key={a.id} value={a.id}>{a.first_name} {a.last_name} ({a.email})</option>)}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Notes */}
+                  <div>
+                    <label className="text-[10px] font-bold text-txt3 uppercase tracking-wider mb-2 block flex items-center gap-2">
+                      <FileText size={12} /> Notes
+                    </label>
+                    <textarea value={notes} onChange={e => setNotes(e.target.value)}
+                      placeholder="Record conversation notes..."
+                      className="input w-full min-h-[80px] bg-bg3 text-sm resize-none" />
+                  </div>
+
+                  {/* Actions */}
+                  <div className="pt-3 border-t border-border flex gap-3 mt-auto">
+                    <button type="button" onClick={() => setSelectedLead(null)} className="btn-ghost flex-1 justify-center py-3">Cancel</button>
+                    <button type="submit" disabled={submitting} className={clsx(
+                      "flex-1 justify-center py-3 shadow-lg font-bold rounded-xl flex items-center gap-2 transition-all",
+                      outcome === 'WON'
+                        ? 'bg-[#10B981] text-white shadow-[#10B981]/20 hover:bg-[#059669]'
+                        : 'btn-primary shadow-accent/20'
+                    )}>
+                      {submitting ? <RotateCcw size={16} className="animate-spin" /> : <Check size={16} />}
+                      {outcome === 'WON' ? 'Mark as Won 🎉' : 'Save Activity'}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* TAB: Timeline */}
+              {drawerTab === 'timeline' && (
+                <div className="p-6">
+                  <h3 className="text-[10px] font-bold text-txt3 uppercase tracking-wider mb-4">Complete Lead Journey</h3>
+                  {loadingTimeline ? (
+                    <div className="py-12 text-center"><Loader2 className="animate-spin mx-auto text-accent mb-2" size={20} /><p className="text-xs text-txt3">Loading...</p></div>
+                  ) : timeline.length === 0 ? (
+                    <div className="py-12 text-center">
+                      <History size={28} className="mx-auto text-txt3 opacity-30 mb-2" />
+                      <p className="text-xs text-txt3">No activity recorded yet.</p>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <div className="absolute left-[15px] top-0 bottom-0 w-px bg-border" />
+                      <div className="space-y-4">
+                        {timeline.map((event, i) => {
+                          const Icon = getTimelineIcon(event.activity_type)
+                          const colorClass = getTimelineColor(event.activity_type)
+                          return (
+                            <div key={event.id || i} className="flex gap-4 relative">
+                              <div className={clsx('w-8 h-8 rounded-full flex items-center justify-center shrink-0 z-10', colorClass)}>
+                                <Icon size={14} />
+                              </div>
+                              <div className="flex-1 min-w-0 pb-1">
+                                <p className="text-sm font-medium text-txt">{event.title}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-[10px] text-txt3">{event.performed_by_name}</span>
+                                  <span className="text-[10px] text-txt3">•</span>
+                                  <span className="text-[10px] text-txt3 font-mono">
+                                    {new Date(event.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
+
+              {/* TAB: Follow-ups */}
+              {drawerTab === 'followups' && (
+                <div className="p-6">
+                  <h3 className="text-[10px] font-bold text-txt3 uppercase tracking-wider mb-4">Follow-ups</h3>
+                  {loadingTimeline ? (
+                    <div className="py-12 text-center"><Loader2 className="animate-spin mx-auto text-accent mb-2" size={20} /><p className="text-xs text-txt3">Loading...</p></div>
+                  ) : followUps.length === 0 ? (
+                    <div className="py-12 text-center">
+                      <Bell size={28} className="mx-auto text-txt3 opacity-30 mb-2" />
+                      <p className="text-xs text-txt3">No follow-ups scheduled.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {followUps.map((fu, i) => {
+                        const isPast = new Date(fu.scheduled_at) < new Date()
+                        return (
+                          <div key={fu.id || i} className={clsx(
+                            'p-4 rounded-xl border',
+                            fu.is_completed ? 'bg-[#10B981]/5 border-[#10B981]/20' :
+                              isPast ? 'bg-danger/5 border-danger/20' : 'bg-accent/5 border-accent/20'
+                          )}>
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                {fu.is_completed ? <CheckCircle2 size={14} className="text-[#10B981]" /> :
+                                  isPast ? <Clock size={14} className="text-danger" /> :
+                                    <Calendar size={14} className="text-accent" />}
+                                <span className="text-xs font-bold text-txt">
+                                  {new Date(fu.scheduled_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </div>
+                              <span className={clsx(
+                                'text-[9px] font-bold uppercase px-2 py-0.5 rounded-full',
+                                fu.is_completed ? 'bg-[#10B981]/10 text-[#10B981]' :
+                                  isPast ? 'bg-danger/10 text-danger' : 'bg-accent/10 text-accent'
+                              )}>
+                                {fu.is_completed ? 'Done' : isPast ? 'Overdue' : 'Upcoming'}
+                              </span>
+                            </div>
+                            {fu.note && <p className="text-xs text-txt2 mt-1">{fu.note}</p>}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
-        </>
+        </div>
       )}
     </Layout>
-  )
-}
-
-function UserIcon({ size, className }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
-    </svg>
   )
 }

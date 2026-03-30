@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import Layout from '../../components/Layout'
 import { StatusBadge } from '../../components/UI'
-import { Search, Flame, Clock, X, PhoneCall, Check, FileText, Calendar, RotateCcw, PhoneOff, DollarSign, MapPin, Home, ChevronRight, History, Bell, CheckCircle2, Circle, Loader2, UserCheck, Building2, ChevronLeft, ChevronRight as ChevronRightIcon } from 'lucide-react'
+import { Search, Flame, Clock, X, PhoneCall, Check, FileText, Calendar, RotateCcw, PhoneOff, DollarSign, MapPin, Home, ChevronRight, History, Bell, CheckCircle2, Circle, Loader2, UserCheck, Building2, ChevronLeft, ChevronRight as ChevronRightIcon, Trophy } from 'lucide-react'
 import clsx from 'clsx'
 import { fetchWithAuth } from '../../utils/api'
 import DateTimePicker from '../../components/DateTimePicker'
@@ -93,8 +93,8 @@ export default function TelecallerLeads() {
 
   const fetchFieldAgents = async () => {
     try {
-      const data = await fetchWithAuth('/accounts/employees/')
-      setFieldAgents((data.results || data || []).filter(e => e.role === 'FIELD_AGENT'))
+      const data = await fetchWithAuth('/leads/field-agents/')
+      setFieldAgents(data || [])
     } catch (err) { console.error(err) }
   }
 
@@ -151,7 +151,7 @@ export default function TelecallerLeads() {
     e.preventDefault()
 
     // Enforce mandatory next_call_at
-    if (outcome !== 'LOST' && outcome !== 'NOT_ANSWERED' && !nextCallAt) {
+    if (outcome !== 'LOST' && outcome !== 'NOT_ANSWERED' && outcome !== 'WON' && !nextCallAt) {
       alert("⚠️ You must schedule the next call before saving.")
       return
     }
@@ -171,7 +171,7 @@ export default function TelecallerLeads() {
       // next_call_at handling
       if (outcome === 'NOT_ANSWERED') {
         payload.next_call_at = new Date(nextCallAt).toISOString()
-      } else if (outcome !== 'LOST') {
+      } else if (outcome !== 'LOST' && outcome !== 'WON') {
         payload.next_call_at = new Date(nextCallAt).toISOString()
       }
 
@@ -420,6 +420,7 @@ export default function TelecallerLeads() {
                         { key: 'CALLBACK', label: 'Follow-up', icon: Clock, activeClass: 'bg-accent/10 border-accent text-accent shadow-md shadow-accent/10' },
                         { key: 'CALLED', label: 'Just Called', icon: PhoneCall, activeClass: 'bg-bg3 border-txt text-txt' },
                         { key: 'NOT_ANSWERED', label: 'No Answer', icon: PhoneOff, activeClass: 'bg-amber/10 border-amber text-amber shadow-md shadow-amber/10' },
+                        { key: 'WON', label: '🎉 Won', icon: Trophy, activeClass: 'bg-[#10B981]/10 border-[#10B981] text-[#10B981] shadow-md shadow-[#10B981]/10' },
                         { key: 'LOST', label: 'Mark Lost', icon: X, activeClass: 'bg-danger/10 border-danger text-danger shadow-md shadow-danger/10' },
                       ].map(opt => (
                         <button key={opt.key} type="button" onClick={() => handleOutcomeChange(opt.key)}
@@ -434,7 +435,7 @@ export default function TelecallerLeads() {
                   </div>
 
                   {/* ═══ MANDATORY NEXT CALL SCHEDULING ═══ */}
-                  {outcome !== 'LOST' && (
+                  {outcome !== 'LOST' && outcome !== 'WON' && (
                     <div className={clsx(
                       "p-4 rounded-xl border transition-all",
                       outcome === 'NOT_ANSWERED' ? "bg-amber/5 border-amber/20" : !nextCallAt ? "bg-danger/5 border-danger/30" : "bg-accent/5 border-accent/20"

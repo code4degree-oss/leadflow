@@ -39,7 +39,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             data['valid_until'] = str(client.valid_until) if client.valid_until else None
 
             # Apply Geofence checks purely for standard employees (not Super or Client Admins)
-            if client.geofencing_enabled and not self.user.geofencing_exempt and self.user.role not in [RoleChoices.SUPER_ADMIN, RoleChoices.CLIENT_ADMIN]:
+            if client.geofencing_enabled and not self.user.geofencing_exempt and self.user.role not in [RoleChoices.SUPER_ADMIN, RoleChoices.CLIENT_ADMIN, RoleChoices.MANAGER]:
                 request = self.context.get('request')
                 if not request:
                     raise serializers.ValidationError({"detail": "Context error: unable to process GPS coordinates."})

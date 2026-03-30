@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import Layout from '../../components/Layout'
 import { StatusBadge } from '../../components/UI'
-import { Filter, Download, Search, RefreshCw, Trash2, ChevronDown, Loader2, FileSpreadsheet, AlertTriangle, UserPlus, X, History, Calendar, PhoneCall, CheckCircle2, Circle, Flame, MapPin, FileText, ChevronRight, Clock, Bell, DollarSign, Building2, UserCheck, Layers, ChevronLeft, ChevronRight as ChevronRightIcon } from 'lucide-react'
+import { Filter, Download, Search, RefreshCw, Trash2, ChevronDown, Loader2, FileSpreadsheet, AlertTriangle, UserPlus, X, History, Calendar, PhoneCall, CheckCircle2, Circle, Flame, MapPin, FileText, ChevronRight, Clock, Bell, DollarSign, Building2, UserCheck, Layers, ChevronLeft, ChevronRight as ChevronRightIcon, Trophy, Users, Shuffle, BarChart2 } from 'lucide-react'
 import clsx from 'clsx'
 import { fetchWithAuth } from '../../utils/api'
 
@@ -17,7 +17,16 @@ export default function AdminLeads() {
   const [exporting, setExporting] = useState(false)
   const [error, setError] = useState(null)
   
-  const [activeTab, setActiveTab] = useState('all') // 'all', 'batches', 'lost'
+  const [activeTab, setActiveTab] = useState('all') // 'all', 'batches', 'lost', 'won', 'assign'
+  
+  // Won Leads
+  const [wonLeads, setWonLeads] = useState([])
+  
+  // Bulk Assign
+  const [assignMode, setAssignMode] = useState('manual') // manual, round_robin, load_balance
+  const [assignUserId, setAssignUserId] = useState('')
+  const [assignCount, setAssignCount] = useState(10)
+  const [assigning, setAssigning] = useState(false)
   
   // Filtering & Pagination
   const [statusFilter, setStatusFilter] = useState('all')
@@ -47,6 +56,7 @@ export default function AdminLeads() {
     if (activeTab === 'all') fetchLeads()
     if (activeTab === 'batches') fetchBatchProgress()
     if (activeTab === 'lost') fetchLostQueue()
+    if (activeTab === 'won') fetchWonLeads()
   }, [activeTab, page, pageSize, statusFilter, batchFilter])
 
   useEffect(() => {
@@ -99,8 +109,42 @@ export default function AdminLeads() {
   const fetchEmployees = async () => {
     try {
       const data = await fetchWithAuth('/accounts/employees/')
-      setEmployees((data.results || data || []).filter(e => e.role === 'TELECALLER'))
+      setEmployees((data.results || data || []).filter(e => e.role === 'TELECALLER' || e.role === 'FIELD_AGENT'))
     } catch (err) { /* */ }
+  }
+
+  const fetchWonLeads = async () => {
+    try {
+      setLoading(true)
+      const data = await fetchWithAuth('/leads/won-leads/')
+      setWonLeads(data || [])
+    } catch (err) { console.error(err) }
+    finally { setLoading(false) }
+  }
+
+  const handleBulkAssign = async () => {
+    if (assignMode === 'manual' && !assignUserId) {
+      alert('Please select a user to assign leads to.')
+      return
+    }
+    setAssigning(true)
+    try {
+      const payload = {
+        mode: assignMode,
+        count: assignCount,
+        status_filter: 'NEW',
+      }
+      if (assignMode === 'manual') payload.user_id = assignUserId
+      
+      const result = await fetchWithAuth('/leads/bulk-assign/', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      })
+      alert(result.detail)
+      fetchLeads()
+    } catch (err) {
+      alert('Error: ' + err.message)
+    } finally { setAssigning(false) }
   }
 
   const openDetailDrawer = async (lead) => {
@@ -194,11 +238,21 @@ export default function AdminLeads() {
     >
 
       {/* Tab Toggle */}
-      <div className="flex gap-2 mb-6 border-b border-border pb-4">
+      <div className="flex gap-2 mb-6 border-b border-border pb-4 flex-wrap">
         <button onClick={() => setActiveTab('all')}
           className={clsx('px-5 py-2.5 rounded-xl text-xs font-bold transition-all border',
             activeTab === 'all' ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20' : 'bg-card text-txt2 border-border hover:bg-bg3')}>
           All Leads
+        </button>
+        <button onClick={() => setActiveTab('assign')}
+          className={clsx('px-5 py-2.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-2',
+            activeTab === 'assign' ? 'bg-accent2 text-white border-accent2 shadow-lg shadow-accent2/20' : 'bg-card text-txt2 border-border hover:bg-bg3')}>
+          <Users size={14} /> Assign Leads
+        </button>
+        <button onClick={() => setActiveTab('won')}
+          className={clsx('px-5 py-2.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-2',
+            activeTab === 'won' ? 'bg-[#10B981] text-white border-[#10B981] shadow-lg shadow-[#10B981]/20' : 'bg-card text-txt2 border-border hover:bg-bg3')}>
+          <Trophy size={14} /> Won Leads
         </button>
         <button onClick={() => setActiveTab('batches')}
           className={clsx('px-5 py-2.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-2',
@@ -435,6 +489,178 @@ export default function AdminLeads() {
               ))}
             </div>
           )}
+        </div>
+      )}
+      {/* ═══ WON LEADS ═══ */}
+      {activeTab === 'won' && (
+        <div className="card overflow-hidden shadow-xl border-[#10B981]/20">
+          <div className="p-4 border-b border-border bg-[#10B981]/5 flex items-center gap-3">
+            <Trophy size={18} className="text-[#10B981]" />
+            <div>
+              <h2 className="text-sm font-bold text-txt">Won Leads</h2>
+              <p className="text-[10px] text-txt3">Successfully converted leads with credit attribution</p>
+            </div>
+            <span className="ml-auto text-lg font-display font-extrabold text-[#10B981]">{wonLeads.length}</span>
+          </div>
+          {loading ? (
+            <div className="py-24 text-center"><Loader2 className="animate-spin mx-auto text-[#10B981] mb-2" size={32} /></div>
+          ) : wonLeads.length === 0 ? (
+            <div className="p-16 text-center">
+              <Trophy size={40} className="mx-auto text-txt3 opacity-30 mb-3" />
+              <p className="text-sm font-bold text-txt">No won leads yet</p>
+              <p className="text-xs text-txt3 mt-1">Leads marked as WON will appear here with full credit attribution.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-bg2/50 border-b border-border">
+                    <th className="th">Lead</th>
+                    <th className="th">Project</th>
+                    <th className="th">Budget</th>
+                    <th className="th">Telecaller</th>
+                    <th className="th">Field Agent</th>
+                    <th className="th">Won Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {wonLeads.map(lead => (
+                    <tr key={lead.id} className="hover:bg-[#10B981]/5 transition-colors">
+                      <td className="td">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-[#10B981]/10 flex items-center justify-center text-[#10B981] text-xs font-bold border border-[#10B981]/20">
+                            🎉
+                          </div>
+                          <div>
+                            <div className="text-sm font-bold text-txt">{lead.first_name} {lead.last_name}</div>
+                            <div className="text-[10px] text-txt3 font-mono">{lead.phone}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="td text-xs text-txt2">{lead.project_name || '—'}</td>
+                      <td className="td text-xs font-mono text-txt2">{lead.budget ? `₹${Number(lead.budget).toLocaleString('en-IN')}` : '—'}</td>
+                      <td className="td">
+                        {lead.telecaller_name ? (
+                          <span className="text-xs font-bold text-accent bg-accent/10 px-2 py-1 rounded-lg">
+                            📞 {lead.telecaller_name}
+                          </span>
+                        ) : <span className="text-xs text-txt3">—</span>}
+                      </td>
+                      <td className="td">
+                        {lead.field_agent_name ? (
+                          <span className="text-xs font-bold text-amber bg-amber/10 px-2 py-1 rounded-lg">
+                            🏃 {lead.field_agent_name}
+                          </span>
+                        ) : <span className="text-xs text-txt3">—</span>}
+                      </td>
+                      <td className="td text-xs font-mono text-txt3">
+                        {lead.won_date ? new Date(lead.won_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ═══ ASSIGN LEADS ═══ */}
+      {activeTab === 'assign' && (
+        <div className="max-w-2xl space-y-6">
+          <div className="card p-6 shadow-xl border-accent2/20">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 bg-accent2/10 rounded-xl text-accent2">
+                <Users size={24} />
+              </div>
+              <div>
+                <h2 className="text-lg font-display font-bold text-txt">Bulk Lead Assignment</h2>
+                <p className="text-xs text-txt3 mt-1">Assign uncontacted (NEW) leads to telecallers or field agents</p>
+              </div>
+            </div>
+
+            {/* Assignment Mode */}
+            <div className="mb-6">
+              <label className="text-[10px] font-bold text-txt3 uppercase tracking-wider mb-3 block">Assignment Mode</label>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { key: 'manual', label: 'Manual', desc: 'Pick a specific person', icon: UserPlus },
+                  { key: 'round_robin', label: 'Round Robin', desc: 'Distribute equally in order', icon: Shuffle },
+                  { key: 'load_balance', label: 'Load Balance', desc: 'Assign to least loaded', icon: BarChart2 },
+                ].map(m => (
+                  <button key={m.key} onClick={() => setAssignMode(m.key)}
+                    className={clsx(
+                      'p-4 rounded-xl border text-left transition-all',
+                      assignMode === m.key
+                        ? 'bg-accent2/10 border-accent2 shadow-md shadow-accent2/10'
+                        : 'bg-card border-border hover:border-accent2/30'
+                    )}>
+                    <m.icon size={20} className={assignMode === m.key ? 'text-accent2 mb-2' : 'text-txt3 mb-2'} />
+                    <div className="text-sm font-bold text-txt">{m.label}</div>
+                    <div className="text-[10px] text-txt3 mt-0.5">{m.desc}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Target User (Manual mode) */}
+            {assignMode === 'manual' && (
+              <div className="mb-6 animate-in fade-in slide-in-from-top-2">
+                <label className="text-[10px] font-bold text-txt3 uppercase tracking-wider mb-2 block">Assign To</label>
+                <select value={assignUserId} onChange={e => setAssignUserId(e.target.value)}
+                  className="input w-full bg-bg3 text-sm">
+                  <option value="">Select employee...</option>
+                  {employees.map(emp => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.first_name} {emp.last_name} — {emp.role === 'FIELD_AGENT' ? '🏃 Field Agent' : '📞 Telecaller'} ({emp.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Count */}
+            <div className="mb-6">
+              <label className="text-[10px] font-bold text-txt3 uppercase tracking-wider mb-2 block">Number of Leads to Assign</label>
+              <div className="flex gap-2 flex-wrap">
+                {[5, 10, 20, 50, 100].map(n => (
+                  <button key={n} onClick={() => setAssignCount(n)}
+                    className={clsx(
+                      'px-4 py-2 rounded-lg border text-sm font-bold transition-all',
+                      assignCount === n ? 'bg-accent2 text-white border-accent2' : 'bg-card text-txt2 border-border hover:border-accent2/30'
+                    )}>
+                    {n}
+                  </button>
+                ))}
+                <input type="number" value={assignCount} onChange={e => setAssignCount(parseInt(e.target.value) || 0)}
+                  className="input w-20 text-sm bg-bg3 text-center" min={1} />
+              </div>
+            </div>
+
+            {/* Summary & Action */}
+            <div className="p-4 bg-bg2/50 rounded-xl border border-border mb-4">
+              <p className="text-xs text-txt2">
+                <strong className="text-txt">Summary:</strong> Assign <strong className="text-accent2">{assignCount}</strong> uncontacted leads{' '}
+                {assignMode === 'manual' ? ` to ${employees.find(e => e.id === assignUserId)?.first_name || 'selected user'}` : ` via ${assignMode.replace(/_/g, ' ')}`}
+              </p>
+            </div>
+
+            <button onClick={handleBulkAssign} disabled={assigning}
+              className="btn-primary w-full justify-center py-3.5 text-sm font-bold shadow-lg shadow-accent2/20 bg-accent2 border-accent2 hover:bg-accent2/90">
+              {assigning ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
+              {assigning ? 'Assigning...' : `Assign ${assignCount} Leads`}
+            </button>
+          </div>
+
+          <div className="p-4 bg-bg2 rounded-xl border border-border text-xs text-txt2 leading-relaxed">
+            <strong className="text-txt">💡 Lead Assignment Rules:</strong>
+            <ul className="mt-2 space-y-1 list-disc list-inside">
+              <li>Only <strong>NEW</strong> (uncontacted) leads are eligible for assignment</li>
+              <li>Leads assigned to a <strong>Field Agent</strong> bypass the telecaller pipeline</li>
+              <li>Telecaller A cannot see or transfer Telecaller B&apos;s leads</li>
+              <li>Only you (Client Admin) can reassign leads between employees</li>
+            </ul>
+          </div>
         </div>
       )}
 
