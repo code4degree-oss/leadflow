@@ -12,6 +12,7 @@ class LeadStatus(models.TextChoices):
     SITE_VISIT = "SITE_VISIT", _("Site Visit")
     WON = "WON", _("Won")
     LOST = "LOST", _("Lost")
+    INVALID_NUMBER = "INVALID_NUMBER", _("Invalid Number")
 
 class SiteVisitStatus(models.TextChoices):
     SCHEDULED = "SCHEDULED", _("Scheduled")

@@ -151,7 +151,7 @@ export default function TelecallerLeads() {
     e.preventDefault()
 
     // Enforce mandatory next_call_at
-    if (outcome !== 'LOST' && outcome !== 'NOT_ANSWERED' && outcome !== 'WON' && !nextCallAt) {
+    if (outcome !== 'LOST' && outcome !== 'INVALID_NUMBER' && outcome !== 'NOT_ANSWERED' && outcome !== 'WON' && !nextCallAt) {
       alert("⚠️ You must schedule the next call before saving.")
       return
     }
@@ -171,7 +171,7 @@ export default function TelecallerLeads() {
       // next_call_at handling
       if (outcome === 'NOT_ANSWERED') {
         payload.next_call_at = new Date(nextCallAt).toISOString()
-      } else if (outcome !== 'LOST' && outcome !== 'WON') {
+      } else if (outcome !== 'LOST' && outcome !== 'WON' && outcome !== 'INVALID_NUMBER') {
         payload.next_call_at = new Date(nextCallAt).toISOString()
       }
 
@@ -421,6 +421,7 @@ export default function TelecallerLeads() {
                         { key: 'CALLED', label: 'Just Called', icon: PhoneCall, activeClass: 'bg-bg3 border-txt text-txt' },
                         { key: 'NOT_ANSWERED', label: 'No Answer', icon: PhoneOff, activeClass: 'bg-amber/10 border-amber text-amber shadow-md shadow-amber/10' },
                         { key: 'WON', label: '🎉 Won', icon: Trophy, activeClass: 'bg-[#10B981]/10 border-[#10B981] text-[#10B981] shadow-md shadow-[#10B981]/10' },
+                        { key: 'INVALID_NUMBER', label: 'Dead No.', icon: PhoneOff, activeClass: 'bg-danger/10 border-danger text-danger shadow-md shadow-danger/10' },
                         { key: 'LOST', label: 'Mark Lost', icon: X, activeClass: 'bg-danger/10 border-danger text-danger shadow-md shadow-danger/10' },
                       ].map(opt => (
                         <button key={opt.key} type="button" onClick={() => handleOutcomeChange(opt.key)}
@@ -435,7 +436,7 @@ export default function TelecallerLeads() {
                   </div>
 
                   {/* ═══ MANDATORY NEXT CALL SCHEDULING ═══ */}
-                  {outcome !== 'LOST' && outcome !== 'WON' && (
+                  {outcome !== 'LOST' && outcome !== 'WON' && outcome !== 'INVALID_NUMBER' && (
                     <div className={clsx(
                       "p-4 rounded-xl border transition-all",
                       outcome === 'NOT_ANSWERED' ? "bg-amber/5 border-amber/20" : !nextCallAt ? "bg-danger/5 border-danger/30" : "bg-accent/5 border-accent/20"

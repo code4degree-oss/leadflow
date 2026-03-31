@@ -1,5 +1,6 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
+from rest_framework.decorators import action
 from apps.api.mixins import TenantQuerySetMixin
 from apps.api.permissions import IsClientAdmin
 from apps.accounts.models import User
@@ -59,6 +60,18 @@ class UserViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
         # Fallback for any other creation path
         client = self.request.user.client
         serializer.save(client=client)
+
+    @action(detail=True, methods=['post'], url_path='reset-password', permission_classes=[IsClientAdmin])
+    def reset_password(self, request, pk=None):
+        user = self.get_object()
+        new_password = request.data.get('password')
+        if not new_password:
+            return Response({"error": "A new password is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user.set_password(new_password)
+        user.must_change_password = True
+        user.save()
+        return Response({"detail": f"Password for {user.email} has been successfully reset."})
 
 class ClientLocationViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
     """

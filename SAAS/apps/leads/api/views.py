@@ -90,6 +90,40 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
             return Response({"detail": message})
         return Response({"error": message}, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=['post'], url_path='pull-leads', permission_classes=[IsTelecallerOrHigher])
+    def pull_leads(self, request):
+        """Telecallers can pull a batch of NEW, unassigned leads from the global pool."""
+        if request.user.role not in [RoleChoices.TELECALLER, RoleChoices.CLIENT_ADMIN, RoleChoices.SUPER_ADMIN]:
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+            
+        try:
+            count = int(request.data.get('count', 10))
+        except ValueError:
+            count = 10
+        count = min(count, 25)
+
+        unassigned_leads = Lead.objects.filter(
+            client=request.user.client,
+            assigned_to__isnull=True,
+            status=LeadStatus.NEW,
+            is_archived=False
+        ).order_by('created_at')[:count]
+
+        assigned_count = 0
+        for lead in unassigned_leads:
+            lead.assigned_to = request.user
+            lead.save(update_fields=['assigned_to'])
+            assigned_count += 1
+            
+            ActivityTimeline.objects.create(
+                client=lead.client, lead=lead, performed_by=request.user,
+                activity_type=ActivityType.ASSIGNED,
+                title=f"Lead pulled from unassigned pool",
+                metadata={'assigned_to': request.user.email}
+            )
+
+        return Response({"detail": f"Successfully pulled {assigned_count} leads.", "pulled_count": assigned_count})
+
     @action(detail=False, methods=['post'], url_path='bulk-reassign')
     def bulk_reassign(self, request):
         from_user = request.data.get('from_user')
@@ -263,6 +297,19 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
         elif outcome == 'LOST':
             return self._handle_lost(lead, request)
 
+        elif outcome == 'INVALID_NUMBER':
+            old_status = lead.status
+            lead.status = LeadStatus.LOST
+            lead.lost_count = 4 # Skip recirculation
+            lead.save()
+            ActivityTimeline.objects.create(
+                client=lead.client, lead=lead, performed_by=request.user,
+                activity_type=ActivityType.CALL_LOGGED,
+                title=f"Call logged \\u2014 marked Invalid Number (escalated to admin)",
+                metadata={'outcome': 'INVALID_NUMBER', 'old_status': old_status}
+            )
+            return Response({"detail": "Lead marked as Invalid Number (Lost).", "status": lead.status})
+
         lead.save()
         return Response({"detail": "Call logged.", "status": lead.status})
 
@@ -339,50 +386,42 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
     def _handle_lost(self, lead, request):
         """
         Lost-lead escalation logic:
-        - lost_count < 4: auto-reassign to next telecaller, reset to NEW
+        - lost_count < 4: move to unassigned pool, reset to NEW
         - lost_count >= 4: mark LOST, lands in admin review queue
         """
         lead.lost_count += 1
         lead.last_interaction_at = timezone.now()
 
         if lead.lost_count < 4:
-            # Auto-reassign to next available telecaller (excluding current)
-            telecallers = list(User.objects.filter(
-                client=lead.client,
-                role=RoleChoices.TELECALLER,
-                is_active=True
-            ).exclude(id=lead.assigned_to_id).order_by('id'))
-
-            if telecallers:
-                # Simple round-robin: pick next available
-                lead.assigned_to = telecallers[0]
-            
+            # Place it back in the unassigned pool
+            assigned_to_email = lead.assigned_to.email if lead.assigned_to else None
+            lead.assigned_to = None
             lead.status = LeadStatus.NEW
             lead.save()
 
             ActivityTimeline.objects.create(
                 client=lead.client, lead=lead, performed_by=request.user,
                 activity_type=ActivityType.CALL_LOGGED,
-                title=f"Call logged \u2014 marked Lost (auto-reassigned, count: {lead.lost_count}/4)",
-                metadata={'outcome': 'LOST', 'lost_count': lead.lost_count, 'reassigned_to': lead.assigned_to.email if lead.assigned_to else None}
+                title=f"Call logged \u2014 marked Lost (placed in unassigned pool, count: {lead.lost_count}/4)",
+                metadata={'outcome': 'LOST', 'lost_count': lead.lost_count, 'unassigned_from': assigned_to_email}
             )
 
             AuditService.record_action(
                 user=request.user,
-                action="LEAD_LOST_REASSIGN",
+                action="LEAD_LOST_UNASSIGN",
                 resource_type="Lead",
                 resource_id=lead.id,
                 changes={
                     "lost_count": lead.lost_count,
-                    "reassigned_to": lead.assigned_to.email if lead.assigned_to else None
+                    "unassigned_from": assigned_to_email
                 }
             )
 
             return Response({
-                "detail": f"Lead auto-reassigned (lost count: {lead.lost_count}/4).",
+                "detail": f"Lead moved to unassigned pool (lost count: {lead.lost_count}/4).",
                 "lost_count": lead.lost_count,
                 "status": lead.status,
-                "reassigned_to": lead.assigned_to.email if lead.assigned_to else None
+                "assigned_to": None
             })
         else:
             # Escalate to admin review queue
@@ -413,6 +452,21 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
     # ──────────────────────────────────────────────
     # Admin Lost-Leads Queue
     # ──────────────────────────────────────────────
+
+    @action(detail=False, methods=['get'], url_path='critical-followups', permission_classes=[IsClientAdmin])
+    def critical_followups(self, request):
+        """Returns hot leads whose next_call_at or followups are overdue by > 30 mins."""
+        thirty_mins_ago = timezone.now() - datetime.timedelta(minutes=30)
+        
+        overdue_leads = Lead.objects.filter(
+            client=request.user.client,
+            is_hot=True,
+            next_call_at__lt=thirty_mins_ago,
+            is_archived=False
+        ).exclude(status__in=[LeadStatus.WON, LeadStatus.LOST]).select_related('assigned_to')
+        
+        serializer = self.get_serializer(overdue_leads, many=True)
+        return Response(serializer.data)
 
     @action(detail=False, methods=['get'], url_path='lost-queue', permission_classes=[IsClientAdmin])
     def lost_queue(self, request):

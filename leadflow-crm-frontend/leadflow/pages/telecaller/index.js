@@ -62,6 +62,7 @@ export default function TelecallerDashboard() {
   const [selectedProject, setSelectedProject] = useState('')
   const [selectedFieldAgent, setSelectedFieldAgent] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [pullingLeads, setPullingLeads] = useState(false)
 
   // ═══ Reference Data ═══
   const [projects, setProjects] = useState([])
@@ -138,6 +139,23 @@ export default function TelecallerDashboard() {
     } catch (err) { console.error(err) }
   }
 
+  const handlePullLeads = async () => {
+    setPullingLeads(true)
+    try {
+      const res = await fetchWithAuth('/leads/pull-leads/', { method: 'POST', body: JSON.stringify({ count: 10 }) })
+      if (res.pulled_count > 0) {
+        alert(`Successfully pulled ${res.pulled_count} new leads!`)
+        fetchLeads()
+      } else {
+        alert("No unassigned new leads available right now.")
+      }
+    } catch (err) {
+      alert("Failed to pull leads: " + err.message)
+    } finally {
+      setPullingLeads(false)
+    }
+  }
+
   const getSmartNextCall = (outcomeKey) => {
     switch (outcomeKey) {
       case 'INTERESTED': return formatDatetimeLocal(getNextBusinessDay(2))
@@ -189,7 +207,7 @@ export default function TelecallerDashboard() {
   const handleLogCall = async (e) => {
     e.preventDefault()
 
-    if (outcome !== 'LOST' && outcome !== 'NOT_ANSWERED' && outcome !== 'WON' && !nextCallAt) {
+    if (outcome !== 'LOST' && outcome !== 'INVALID_NUMBER' && outcome !== 'NOT_ANSWERED' && outcome !== 'WON' && !nextCallAt) {
       alert("⚠️ You must schedule the next call before saving.")
       return
     }
@@ -208,7 +226,7 @@ export default function TelecallerDashboard() {
 
       if (outcome === 'NOT_ANSWERED') {
         payload.next_call_at = new Date(nextCallAt).toISOString()
-      } else if (outcome !== 'LOST' && outcome !== 'WON') {
+      } else if (outcome !== 'LOST' && outcome !== 'WON' && outcome !== 'INVALID_NUMBER') {
         payload.next_call_at = new Date(nextCallAt).toISOString()
       }
 
@@ -291,27 +309,39 @@ export default function TelecallerDashboard() {
       </div>
 
       {/* ═══ NEW / HISTORY TABS ═══ */}
-      <div className="flex gap-2 mb-6">
-        <button
-          onClick={() => setActiveTab('new')}
-          className={clsx(
-            'flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all border',
-            activeTab === 'new'
-              ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
-              : 'bg-card text-txt2 border-border hover:bg-bg3'
-          )}>
-          <Sparkles size={16} /> New Leads
-        </button>
-        <button
-          onClick={() => setActiveTab('history')}
-          className={clsx(
-            'flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all border',
-            activeTab === 'history'
-              ? 'bg-purple text-white border-purple shadow-lg shadow-purple/20 scale-[1.02]'
-              : 'bg-card text-txt2 border-border hover:bg-bg3'
-          )}>
-          <History size={16} /> History
-        </button>
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setActiveTab('new')}
+            className={clsx(
+              'flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all border',
+              activeTab === 'new'
+                ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
+                : 'bg-card text-txt2 border-border hover:bg-bg3'
+            )}>
+            <Sparkles size={16} /> New Leads
+          </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={clsx(
+              'flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all border',
+              activeTab === 'history'
+                ? 'bg-purple text-white border-purple shadow-lg shadow-purple/20 scale-[1.02]'
+                : 'bg-card text-txt2 border-border hover:bg-bg3'
+            )}>
+            <History size={16} /> History
+          </button>
+        </div>
+        
+        {activeTab === 'new' && (
+          <button
+            onClick={handlePullLeads} disabled={pullingLeads}
+            className="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-xl text-sm font-bold shadow-lg shadow-accent/20 hover:scale-[1.02] transition-all disabled:opacity-50"
+          >
+            {pullingLeads ? <Loader2 size={16} className="animate-spin" /> : <ChevronRightIcon size={16} />}
+            Pull Leads
+          </button>
+        )}
       </div>
 
       {/* ═══ HISTORY TAB: Date picker + status filters ═══ */}
@@ -565,6 +595,7 @@ export default function TelecallerDashboard() {
                         { key: 'CALLED', label: 'Just Called', icon: PhoneCall, activeClass: 'bg-bg3 border-txt text-txt' },
                         { key: 'NOT_ANSWERED', label: 'No Answer', icon: PhoneOff, activeClass: 'bg-amber/10 border-amber text-amber shadow-md shadow-amber/10' },
                         { key: 'WON', label: '🎉 Won', icon: Trophy, activeClass: 'bg-[#10B981]/10 border-[#10B981] text-[#10B981] shadow-md shadow-[#10B981]/10' },
+                        { key: 'INVALID_NUMBER', label: 'Dead No.', icon: PhoneOff, activeClass: 'bg-danger/10 border-danger text-danger shadow-md shadow-danger/10' },
                         { key: 'LOST', label: 'Mark Lost', icon: X, activeClass: 'bg-danger/10 border-danger text-danger shadow-md shadow-danger/10' },
                       ].map(opt => (
                         <button key={opt.key} type="button" onClick={() => handleOutcomeChange(opt.key)}
@@ -579,7 +610,7 @@ export default function TelecallerDashboard() {
                   </div>
 
                   {/* Next Call Scheduling (not for LOST/WON) */}
-                  {outcome !== 'LOST' && outcome !== 'WON' && (
+                  {outcome !== 'LOST' && outcome !== 'WON' && outcome !== 'INVALID_NUMBER' && (
                     <div className={clsx(
                       "p-4 rounded-xl border transition-all",
                       outcome === 'NOT_ANSWERED' ? "bg-amber/5 border-amber/20" : !nextCallAt ? "bg-danger/5 border-danger/30" : "bg-accent/5 border-accent/20"
