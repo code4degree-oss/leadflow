@@ -112,7 +112,7 @@ class UploadService:
     Handles parsing CSV/Excel files, normalizing phones, checking exact/fuzzy duplicates,
     and bulk importing valid leads.
     """
-    REQUIRED_COLUMNS = ['first_name', 'phone']
+    REQUIRED_COLUMNS = ['phone']
     OPTIONAL_COLUMNS = ['last_name', 'email']
 
     @staticmethod
@@ -202,13 +202,13 @@ class UploadService:
                 total_processed += 1
                 row_errs = []
 
-                first_name = str(row['first_name']).strip() if not pd.isna(row.get('first_name')) else ""
+                first_name = str(row['first_name']).strip() if 'first_name' in df.columns and not pd.isna(row.get('first_name')) else ""
                 last_name = str(row['last_name']).strip() if 'last_name' in df.columns and not pd.isna(row.get('last_name')) else ""
                 email = str(row['email']).strip() if 'email' in df.columns and not pd.isna(row.get('email')) else ""
                 raw_phone = str(row['phone'])
 
                 if not first_name:
-                    row_errs.append("first_name cannot be empty.")
+                    first_name = "Unknown"
                 
                 normalized_phone = cls.normalize_phone(raw_phone)
                 if not normalized_phone:
