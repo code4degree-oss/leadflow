@@ -999,14 +999,20 @@ class LeadBatchViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
             uploaded_by=request.user
         )
         # Save batch source name from upload form
-        batch.name = request.data.get('batch_name', '').strip() or 'Manual Upload'
-        batch.save(update_fields=['name'])
+        batch_name = request.data.get('batch_name', '').strip() or 'Manual Upload'
+        try:
+            batch.name = batch_name
+            batch.save(update_fields=['name'])
+        except Exception as e:
+            print(f"[BATCH UPLOAD] Warning: Could not save batch name: {e}")
 
         # Process synchronously (no Celery worker needed for dev)
         try:
             from apps.leads.services import UploadService
+            print(f"[BATCH UPLOAD] Processing batch {batch.id} with name '{batch_name}'")
             UploadService.process_batch(str(batch.id))
         except Exception as e:
+            print(f"[BATCH UPLOAD] Exception during process_batch: {e}")
             batch.refresh_from_db()
             return Response({
                 "detail": f"Upload failed: {str(e)}",
@@ -1018,14 +1024,22 @@ class LeadBatchViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
 
         # Refresh from DB to get the updated stats
         batch.refresh_from_db()
-        return Response({
+        print(f"[BATCH UPLOAD] Result: status={batch.status}, total={batch.total_rows}, imported={batch.imported_count}, failed={batch.failed_count}, errors={batch.error_log}")
+        
+        # If batch failed silently (process_batch returns without raising), report it
+        response_data = {
             "id": str(batch.id),
             "status": batch.status,
             "total_rows": batch.total_rows or 0,
             "imported_count": batch.imported_count or 0,
             "failed_count": batch.failed_count or 0,
             "error_log": batch.error_log or {},
-        }, status=status.HTTP_201_CREATED)
+        }
+        
+        if batch.status == 'FAILED':
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response(response_data, status=status.HTTP_201_CREATED)
 
 
 class SiteVisitViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
