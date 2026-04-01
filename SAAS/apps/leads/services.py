@@ -160,31 +160,66 @@ class UploadService:
 
             # Clean columns: lowercase and strip spaces
             df.columns = [str(c).lower().strip() for c in df.columns]
+            print(f"[BATCH UPLOAD] Detected columns: {list(df.columns)}")
 
-            # Flexible column mapping
+            # Flexible column mapping — covers most real-world CSV variations
             column_aliases = {
+                # Name variations
                 'name': 'first_name',
                 'full name': 'first_name',
+                'full_name': 'first_name',
                 'first name': 'first_name',
                 'firstname': 'first_name',
+                'customer name': 'first_name',
+                'customer': 'first_name',
+                'client name': 'first_name',
+                'lead name': 'first_name',
                 'last name': 'last_name',
                 'lastname': 'last_name',
+                'last_name': 'last_name',
+                'surname': 'last_name',
+                # Phone variations
                 'mobile': 'phone',
+                'mobile number': 'phone',
+                'mobile_number': 'phone',
+                'mobile no': 'phone',
+                'mobile no.': 'phone',
+                'mob': 'phone',
+                'mob no': 'phone',
                 'cell': 'phone',
+                'cell phone': 'phone',
                 'contact': 'phone',
+                'contact number': 'phone',
+                'contact_number': 'phone',
+                'contact no': 'phone',
+                'contact no.': 'phone',
                 'phone number': 'phone',
+                'phone_number': 'phone',
+                'phone no': 'phone',
+                'phone no.': 'phone',
+                'telephone': 'phone',
+                'tel': 'phone',
+                'number': 'phone',
+                'ph': 'phone',
+                # Email variations
                 'mail': 'email',
-                'email id': 'email'
+                'email id': 'email',
+                'email_id': 'email',
+                'email address': 'email',
+                'email_address': 'email',
+                'e-mail': 'email',
+                'e_mail': 'email',
             }
             
             # Rename columns based on aliases
             df.rename(columns=column_aliases, inplace=True)
+            print(f"[BATCH UPLOAD] Columns after alias mapping: {list(df.columns)}")
 
             # Validate required columns
             missing_cols = [col for col in cls.REQUIRED_COLUMNS if col not in df.columns]
             if missing_cols:
                 batch.status = LeadBatchStatus.FAILED
-                batch.error_log = {"global": f"Missing required columns: {', '.join(missing_cols)}"}
+                batch.error_log = {"global": f"Missing required columns: {', '.join(missing_cols)}. Found columns: {list(df.columns)}"}
                 batch.save()
                 return
 
