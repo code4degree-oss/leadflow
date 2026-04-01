@@ -899,19 +899,33 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
         """
         mode = request.data.get('mode', 'manual')
         user_id = request.data.get('user_id')
+        from_user_id = request.data.get('from_user_id')  # Optional: redistribute FROM this user
         count = int(request.data.get('count', 10))
         status_filter = request.data.get('status_filter', 'NEW')
         
-        # Get unassigned or all new leads
+        # Get base queryset
         base_qs = Lead.objects.filter(client=request.user.client)
         if status_filter == 'NEW':
             base_qs = base_qs.filter(status__in=[LeadStatus.NEW, 'IMPORTED'])
+        elif status_filter != 'all':
+            base_qs = base_qs.filter(status=status_filter)
         
-        unassigned = base_qs.filter(assigned_to__isnull=True).order_by('created_at')[:count]
-        leads_to_assign = list(unassigned)
+        # If redistributing from a specific user, get THEIR leads
+        if from_user_id:
+            leads_pool = base_qs.filter(assigned_to_id=from_user_id).order_by('created_at')[:count]
+        else:
+            # Default: only unassigned leads
+            leads_pool = base_qs.filter(assigned_to__isnull=True).order_by('created_at')[:count]
+        
+        leads_to_assign = list(leads_pool)
         
         if not leads_to_assign:
-            return Response({"detail": "No unassigned leads found matching criteria."}, status=status.HTTP_400_BAD_REQUEST)
+            msg = "No leads found matching criteria."
+            if from_user_id:
+                msg = "No leads found for this employee matching the selected criteria."
+            else:
+                msg = "No unassigned leads found matching criteria."
+            return Response({"detail": msg}, status=status.HTTP_400_BAD_REQUEST)
         
         if mode == 'manual':
             if not user_id:

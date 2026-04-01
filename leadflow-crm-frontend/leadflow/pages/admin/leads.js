@@ -25,6 +25,8 @@ export default function AdminLeads() {
   // Bulk Assign
   const [assignMode, setAssignMode] = useState('manual') // manual, round_robin, load_balance
   const [assignUserId, setAssignUserId] = useState('')
+  const [fromUserId, setFromUserId] = useState('')  // redistribute FROM this user
+  const [assignStatusFilter, setAssignStatusFilter] = useState('NEW') // NEW, all
   const [assignCount, setAssignCount] = useState(10)
   const [assigning, setAssigning] = useState(false)
   
@@ -132,9 +134,10 @@ export default function AdminLeads() {
       const payload = {
         mode: assignMode,
         count: assignCount,
-        status_filter: 'NEW',
+        status_filter: assignStatusFilter,
       }
       if (assignMode === 'manual') payload.user_id = assignUserId
+      if (fromUserId) payload.from_user_id = fromUserId
       
       const result = await fetchWithAuth('/leads/bulk-assign/', {
         method: 'POST',
@@ -603,6 +606,40 @@ export default function AdminLeads() {
               </div>
             </div>
 
+            {/* Redistribute FROM (optional) */}
+            <div className="mb-6">
+              <label className="text-[10px] font-bold text-txt3 uppercase tracking-wider mb-2 block">Redistribute From (Optional)</label>
+              <select value={fromUserId} onChange={e => setFromUserId(e.target.value)}
+                className="input w-full bg-bg3 text-sm">
+                <option value="">Unassigned leads (default)</option>
+                {employees.map(emp => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.first_name} {emp.last_name} — {emp.role === 'FIELD_AGENT' ? '🏃 Field Agent' : '📞 Telecaller'} ({emp.email})
+                  </option>
+                ))}
+              </select>
+              <p className="text-[10px] text-txt3 mt-1">{fromUserId ? 'Leads will be taken FROM this employee and redistributed' : 'Only unassigned leads will be used'}</p>
+            </div>
+
+            {/* Lead Status Filter */}
+            <div className="mb-6">
+              <label className="text-[10px] font-bold text-txt3 uppercase tracking-wider mb-2 block">Lead Status Filter</label>
+              <div className="flex gap-2">
+                {[
+                  { key: 'NEW', label: 'New Only' },
+                  { key: 'all', label: 'All Statuses' },
+                ].map(s => (
+                  <button key={s.key} onClick={() => setAssignStatusFilter(s.key)}
+                    className={clsx(
+                      'px-4 py-2 rounded-lg border text-sm font-bold transition-all',
+                      assignStatusFilter === s.key ? 'bg-accent2 text-white border-accent2' : 'bg-card text-txt2 border-border hover:border-accent2/30'
+                    )}>
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Target User (Manual mode) */}
             {assignMode === 'manual' && (
               <div className="mb-6 animate-in fade-in slide-in-from-top-2">
@@ -640,8 +677,13 @@ export default function AdminLeads() {
             {/* Summary & Action */}
             <div className="p-4 bg-bg2/50 rounded-xl border border-border mb-4">
               <p className="text-xs text-txt2">
-                <strong className="text-txt">Summary:</strong> Assign <strong className="text-accent2">{assignCount}</strong> uncontacted leads{' '}
-                {assignMode === 'manual' ? ` to ${employees.find(e => e.id === assignUserId)?.first_name || 'selected user'}` : ` via ${assignMode.replace(/_/g, ' ')}`}
+                <strong className="text-txt">Summary:</strong>{' '}
+                {fromUserId
+                  ? <>Take <strong className="text-accent2">{assignCount}</strong> leads from <strong className="text-accent2">{employees.find(e => e.id === fromUserId)?.first_name || 'selected user'}</strong> and </>
+                  : <>Assign <strong className="text-accent2">{assignCount}</strong> unassigned leads </>
+                }
+                {assignMode === 'manual' ? `to ${employees.find(e => e.id === assignUserId)?.first_name || 'selected user'}` : `via ${assignMode.replace(/_/g, ' ')}`}
+                {' '}({assignStatusFilter === 'NEW' ? 'NEW status only' : 'all statuses'})
               </p>
             </div>
 
@@ -655,9 +697,9 @@ export default function AdminLeads() {
           <div className="p-4 bg-bg2 rounded-xl border border-border text-xs text-txt2 leading-relaxed">
             <strong className="text-txt">💡 Lead Assignment Rules:</strong>
             <ul className="mt-2 space-y-1 list-disc list-inside">
-              <li>Only <strong>NEW</strong> (uncontacted) leads are eligible for assignment</li>
+              <li>Select <strong>"Redistribute From"</strong> to move leads from one employee to others</li>
+              <li>Leave it as <strong>"Unassigned leads"</strong> to assign fresh unassigned leads</li>
               <li>Leads assigned to a <strong>Field Agent</strong> bypass the telecaller pipeline</li>
-              <li>Telecaller A cannot see or transfer Telecaller B&apos;s leads</li>
               <li>Only you (Client Admin) can reassign leads between employees</li>
             </ul>
           </div>
