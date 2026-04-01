@@ -998,6 +998,9 @@ class LeadBatchViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
             client=request.user.client,
             uploaded_by=request.user
         )
+        # Save batch source name from upload form
+        batch.name = request.data.get('batch_name', '').strip() or 'Manual Upload'
+        batch.save(update_fields=['name'])
 
         # Process synchronously (no Celery worker needed for dev)
         try:

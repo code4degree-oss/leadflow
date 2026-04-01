@@ -231,7 +231,7 @@ class UploadService:
                             email=email,
                             phone=normalized_phone,
                             phone_hash=phone_hash,
-                            source=LeadSource.MANUAL,
+                            source=batch.name if hasattr(batch, 'name') and batch.name else LeadSource.MANUAL,
                             status=LeadStatus.NEW,
                             batch=batch
                         )
