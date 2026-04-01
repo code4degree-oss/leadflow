@@ -708,7 +708,7 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
         # 4. Employee Performance Array
         employees = User.objects.filter(
             client=client, 
-            role__in=[RoleChoices.TELECALLER, RoleChoices.FIELD_AGENT, RoleChoices.CLIENT_ADMIN], 
+            role__in=[RoleChoices.TELECALLER, RoleChoices.FIELD_AGENT], 
             is_active=True
         )
         
