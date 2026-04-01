@@ -13,19 +13,6 @@ export default function Employees() {
   const [employees, setEmployees] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [showModal, setShowModal] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [credentialsModal, setCredentialsModal] = useState({ isOpen: false, email: '', password: '' })
-  const [copied, setCopied] = useState(false)
-  
-  // Form State
-  const [formData, setFormData] = useState({
-    email: '',
-    first_name: '',
-    last_name: '',
-    role: 'TELECALLER',
-    geofencing_exempt: false
-  })
 
   useEffect(() => {
     fetchEmployees()
@@ -44,33 +31,7 @@ export default function Employees() {
     }
   }
 
-  const handleCreate = async (e) => {
-    e.preventDefault()
-    setSubmitting(true)
-    try {
-      const resp = await fetchWithAuth('/accounts/employees/', {
-        method: 'POST',
-        body: JSON.stringify(formData)
-      })
-      setShowModal(false)
-      setFormData({ email: '', first_name: '', last_name: '', role: 'TELECALLER' })
-      fetchEmployees()
-      // Show credentials modal if password was returned
-      if (resp && resp.generated_password) {
-        setCredentialsModal({ isOpen: true, email: resp.email, password: resp.generated_password })
-      }
-    } catch (err) {
-      alert(err.message)
-    } finally {
-      setSubmitting(false)
-    }
-  }
 
-  const copyCredentials = () => {
-    navigator.clipboard.writeText(`Email: ${credentialsModal.email}\nPassword: ${credentialsModal.password}`)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
 
   const handleDelete = async (id) => {
     if (!confirm('Are you sure you want to delete this employee?')) return
@@ -111,7 +72,7 @@ export default function Employees() {
   return (
     <Layout role="admin" pageTitle="Employee Management"
       actions={
-        <button className="btn-primary shadow-lg shadow-primary/20" onClick={()=>setShowModal(true)}>
+        <button className="btn-primary shadow-lg shadow-primary/20" onClick={()=>router.push('/admin/employees/add')}>
           <Plus size={14}/>Add Employee
         </button>
       }
@@ -264,152 +225,7 @@ export default function Employees() {
         </div>
       </div>
 
-      {/* Add Employee Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setShowModal(false)}>
-          <div className="bg-card w-full max-w-md p-6 rounded-2xl border border-border shadow-2xl animate-in slide-in-from-bottom-4 duration-300" onClick={e=>e.stopPropagation()}>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                <Plus size={20} />
-              </div>
-              <div>
-                <h3 className="font-display font-bold text-lg text-txt">Onboard Employee</h3>
-                <p className="text-[10px] text-txt3 font-bold uppercase tracking-widest leading-none">Adding to your client roster</p>
-              </div>
-            </div>
 
-            <form onSubmit={handleCreate} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-tighter text-txt3 ml-1">First Name</label>
-                  <input 
-                    required 
-                    className="input w-full bg-bg3" 
-                    placeholder="Enter first name"
-                    value={formData.first_name}
-                    onChange={e => setFormData({...formData, first_name: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-tighter text-txt3 ml-1">Last Name</label>
-                  <input 
-                    required 
-                    className="input w-full bg-bg3" 
-                    placeholder="Enter last name"
-                    value={formData.last_name}
-                    onChange={e => setFormData({...formData, last_name: e.target.value})}
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-tighter text-txt3 ml-1">Work Email</label>
-                <input 
-                  required 
-                  type="email" 
-                  className="input w-full bg-bg3" 
-                  placeholder="employee@company.com"
-                  value={formData.email}
-                  onChange={e => setFormData({...formData, email: e.target.value})}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-tighter text-txt3 ml-1">Access Role</label>
-                <select 
-                  className="input w-full bg-bg3"
-                  value={formData.role}
-                  onChange={e => setFormData({...formData, role: e.target.value})}
-                >
-                  <option value="TELECALLER">Telecaller</option>
-                  <option value="FIELD_AGENT">Field Agent</option>
-                  <option value="MANAGER">Manager</option>
-                  <option value="CLIENT_ADMIN">Client Admin</option>
-                </select>
-              </div>
-
-              <div className="flex items-center gap-3 p-3 bg-bg3 rounded-xl border border-border mt-2">
-                 <input 
-                     type="checkbox" 
-                     className="w-4 h-4 accent-amber-500" 
-                     checked={formData.geofencing_exempt}
-                     onChange={e => setFormData({...formData, geofencing_exempt: e.target.checked})}
-                 />
-                 <div>
-                     <p className="text-sm font-bold text-txt">Bypass Geofencing</p>
-                     <p className="text-[10px] text-txt3 leading-tight mt-0.5">Exempt this employee from organization-wide location restrictions. Necessary for remote or traveling executives.</p>
-                 </div>
-              </div>
-
-              <div className="p-3 bg-primary/5 rounded-xl border border-primary/10 flex gap-3 items-start">
-                <Shield size={16} className="text-primary mt-0.5 shrink-0" />
-                <p className="text-[10px] text-txt2 leading-relaxed">
-                  Default credentials will be sent to the employee. They will be required to change their password upon first login for security compliance.
-                </p>
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button 
-                  type="submit" 
-                  disabled={submitting}
-                  className="btn-primary flex-1 justify-center py-3"
-                >
-                  {submitting ? <RefreshCw className="animate-spin" size={16}/> : 'Register Employee'}
-                </button>
-                <button 
-                  type="button"
-                  onClick={()=>setShowModal(false)} 
-                  className="btn-ghost px-6"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Credentials Modal */}
-      <Modal 
-        isOpen={credentialsModal.isOpen} 
-        onClose={() => setCredentialsModal({ ...credentialsModal, isOpen: false })}
-        title="Employee Created Successfully"
-        footer={
-          <button onClick={() => setCredentialsModal({ ...credentialsModal, isOpen: false })} className="btn-primary px-6 py-2">Done</button>
-        }
-      >
-        <div className="space-y-4">
-          <p className="text-xs text-txt3 leading-relaxed">
-            Share these credentials with the employee. They will be required to 
-            <strong className="text-primary"> change their password</strong> on first login.
-          </p>
-          
-          <div className="p-4 bg-bg3 rounded-xl border border-border space-y-3 relative">
-            <div>
-              <div className="text-[10px] font-bold uppercase tracking-widest text-txt3 mb-0.5">Email</div>
-              <div className="text-sm font-mono text-txt font-bold">{credentialsModal.email}</div>
-            </div>
-            <div>
-              <div className="text-[10px] font-bold uppercase tracking-widest text-txt3 mb-0.5">Password</div>
-              <div className="text-sm font-mono text-primary font-bold tracking-wider">{credentialsModal.password}</div>
-            </div>
-            
-            <button 
-              onClick={copyCredentials}
-              className="absolute top-4 right-4 p-2 bg-card hover:bg-primary/10 rounded-lg text-txt3 hover:text-primary transition-all shadow-sm border border-border"
-              title="Copy Credentials"
-            >
-              {copied ? <CheckCircle2 size={14} className="text-success" /> : <Copy size={14} />}
-            </button>
-          </div>
-
-          <div className="p-3 bg-amber/5 border border-amber/20 rounded-xl">
-            <p className="text-[10px] text-amber-600 font-medium">
-              ⚠️ Copy these now. This password will not be shown again.
-            </p>
-          </div>
-        </div>
-      </Modal>
     </Layout>
   )
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useRouter } from 'next/router'
 import Layout from '../../components/Layout'
 import { SectionHeader, StatusBadge } from '../../components/UI'
 import { Plus, Edit, Trash2, Briefcase, Building2, MapPin } from 'lucide-react'
@@ -7,11 +8,11 @@ import clsx from 'clsx'
 const PROJECTS = []
 
 export default function Projects() {
-  const [showModal, setShowModal] = useState(false)
+  const router = useRouter()
 
   return (
     <Layout role="admin" pageTitle="Projects"
-      actions={<button className="btn-primary" onClick={()=>setShowModal(true)}><Plus size={14}/>Add Project</button>}>
+      actions={<button className="btn-primary" onClick={()=>router.push('/admin/projects/add')}><Plus size={14}/>Add Project</button>}>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {PROJECTS.map(p => (
@@ -57,27 +58,7 @@ export default function Projects() {
         ))}
       </div>
 
-      {showModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={()=>setShowModal(false)}>
-          <div className="card2 w-full max-w-md p-6 fade-up" onClick={e=>e.stopPropagation()}>
-            <h3 className="font-display font-bold text-base text-txt mb-5">Add New Project</h3>
-            <div className="space-y-3">
-              <div><label className="label block mb-1">Project Name</label><input className="input" placeholder="Green Valley Phase 3" /></div>
-              <div><label className="label block mb-1">Location</label><input className="input" placeholder="Pune, Maharashtra" /></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className="label block mb-1">Total Units</label><input className="input" type="number" placeholder="80" /></div>
-                <div><label className="label block mb-1">Available Units</label><input className="input" type="number" placeholder="80" /></div>
-              </div>
-              <div><label className="label block mb-1">Price Range</label><input className="input" placeholder="65L – 1.2Cr" /></div>
-              <div><label className="label block mb-1">Description</label><textarea className="input h-20 resize-none" placeholder="Project details…" /></div>
-              <div className="flex gap-2 pt-2">
-                <button className="btn-primary flex-1 justify-center"><Plus size={14}/>Create Project</button>
-                <button onClick={()=>setShowModal(false)} className="btn-ghost flex-1 justify-center">Cancel</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+
     </Layout>
   )
 }
