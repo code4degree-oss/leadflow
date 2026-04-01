@@ -6,7 +6,7 @@ class UserSerializer(serializers.ModelSerializer):
     """
     Serializer for User/Employee management.
     """
-    password = serializers.CharField(write_only=True, required=False, default='DefaultPass123!')
+    password = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = User

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Layout from '../../components/Layout'
 import { StatusBadge, ProgressBar, Modal } from '../../components/UI'
-import { Plus, Trash2, Download, KeyRound, Edit, Search, RefreshCw, AlertCircle, ToggleLeft, ToggleRight, CheckCircle2, Copy } from 'lucide-react'
+import { Plus, Trash2, Download, KeyRound, Edit, Search, RefreshCw, AlertCircle, ToggleLeft, ToggleRight, CheckCircle2, Copy, CalendarCheck } from 'lucide-react'
 import clsx from 'clsx'
 import { fetchWithAuth } from '../../utils/api'
 
@@ -14,6 +14,7 @@ export default function SuperAdminClients() {
   const [search, setSearch] = useState('')
   const [resetModal, setResetModal] = useState({ isOpen: false, email: '', password: '' })
   const [errorModal, setErrorModal] = useState({ isOpen: false, message: '' })
+  const [renewModal, setRenewModal] = useState({ isOpen: false, clientId: null, clientName: '', newDate: '' })
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
@@ -73,6 +74,29 @@ export default function SuperAdminClients() {
     }
   }
 
+  const handleRenew = async () => {
+    if (!renewModal.newDate) return
+    try {
+      await fetchWithAuth(`/superadmin/clients/clients/${renewModal.clientId}/renew/`, {
+        method: 'POST',
+        body: JSON.stringify({ valid_until: renewModal.newDate })
+      })
+      setRenewModal({ isOpen: false, clientId: null, clientName: '', newDate: '' })
+      fetchClients()
+    } catch (err) {
+      setErrorModal({ isOpen: true, message: err.message })
+    }
+  }
+
+  const getSubBadge = (c) => {
+    const st = c.subscription_status
+    const dr = c.days_remaining
+    if (st === 'expired') return { label: 'Expired', cls: 'bg-danger/10 text-danger border-danger/20' }
+    if (st === 'expiring_soon') return { label: `${dr}d left`, cls: 'bg-amber-500/10 text-amber-600 border-amber-500/20' }
+    if (st === 'active') return { label: `${dr}d left`, cls: 'bg-success/10 text-success border-success/20' }
+    return { label: 'No plan', cls: 'bg-bg3 text-txt3 border-border' }
+  }
+
   const filtered = clients.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase())
   )
@@ -129,7 +153,7 @@ export default function SuperAdminClients() {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-bg2/50 border-b border-border">
-                {['Organization','Status','User Load','Cloud Storage','Actions'].map(h=>(
+                {['Organization','Status','Subscription','User Load','Actions'].map(h=>(
                   <th key={h} className="px-5 py-4 text-[10px] font-bold text-txt3 uppercase tracking-widest">{h}</th>
                 ))}
               </tr>
@@ -145,7 +169,9 @@ export default function SuperAdminClients() {
               ) : error ? (
                 <tr><td colSpan="5" className="py-20 text-center text-danger font-bold text-sm bg-danger/5"><AlertCircle className="mx-auto mb-2" />{error}</td></tr>
               ) : (
-                filtered.map((c) => (
+                filtered.map((c) => {
+                  const badge = getSubBadge(c)
+                  return (
                   <tr key={c.id} onClick={() => router.push(`/superadmin/clients/view/${c.id}`)} className="cursor-pointer hover:bg-bg2/40 transition-colors group">
                     <td className="px-5 py-5">
                       <div className="flex items-center gap-3">
@@ -161,19 +187,24 @@ export default function SuperAdminClients() {
                     <td className="px-5 py-5"><StatusBadge status={c.is_active ? 'active' : 'inactive'} /></td>
                     <td className="px-5 py-5">
                       <div className="flex flex-col gap-1">
+                        <span className={clsx('inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase tracking-wider w-fit', badge.cls)}>
+                          {badge.label}
+                        </span>
+                        {c.valid_until && (
+                          <span className="text-[10px] text-txt3 font-mono">{c.valid_until}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-5 py-5">
+                      <div className="flex flex-col gap-1">
                         <span className="text-xs font-bold text-txt">{c.user_count} / {c.max_users}</span>
                         <ProgressBar value={c.user_count} max={c.max_users} color={c.user_count/c.max_users > 0.9 ? '#EF4444' : '#4F8EF7'} height={4} />
                       </div>
                     </td>
                     <td className="px-5 py-5">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-xs font-bold text-txt">{c.storage_quota_mb} MB</span>
-                        <div className="text-[10px] text-txt3 uppercase font-bold tracking-tighter">Allocated Quota</div>
-                      </div>
-                    </td>
-                    <td className="px-5 py-5">
                       <div className="flex gap-1">
                         <button onClick={(e) => { e.stopPropagation(); router.push(`/superadmin/clients/${c.id}`) }} className="p-2 hover:bg-primary/10 rounded-lg text-txt3 hover:text-primary transition-all" title="Edit Organization"><Edit size={14}/></button>
+                        <button onClick={(e) => { e.stopPropagation(); setRenewModal({ isOpen: true, clientId: c.id, clientName: c.name, newDate: '' }) }} className="p-2 hover:bg-success/10 rounded-lg text-txt3 hover:text-success transition-all" title="Renew Subscription"><CalendarCheck size={14}/></button>
                         <button onClick={(e) => { e.stopPropagation(); handleToggleActive(c) }} className={`p-2 rounded-lg transition-all ${c.is_active ? 'hover:bg-warning/10 text-txt3 hover:text-warning' : 'hover:bg-success/10 text-txt3 hover:text-success'}`} title={c.is_active ? 'Suspend Organization' : 'Reactivate Organization'}>
                           {c.is_active ? <ToggleRight size={14}/> : <ToggleLeft size={14}/>}
                         </button>
@@ -182,7 +213,8 @@ export default function SuperAdminClients() {
                       </div>
                     </td>
                   </tr>
-                ))
+                  )
+                })
               )}
             </tbody>
           </table>
@@ -241,6 +273,43 @@ export default function SuperAdminClients() {
         <div className="flex items-start gap-4 text-danger bg-danger/5 p-4 rounded-xl border border-danger/20">
           <AlertCircle className="shrink-0 mt-0.5" size={18} />
           <p className="text-sm font-medium leading-relaxed">{errorModal.message}</p>
+        </div>
+      </Modal>
+
+      {/* Renew Subscription Modal */}
+      <Modal
+        isOpen={renewModal.isOpen}
+        onClose={() => setRenewModal({ ...renewModal, isOpen: false })}
+        title="Renew Subscription"
+        footer={
+          <div className="flex gap-2">
+            <button onClick={() => setRenewModal({ ...renewModal, isOpen: false })} className="btn-ghost px-6 py-2 rounded-xl border border-border">Cancel</button>
+            <button onClick={handleRenew} disabled={!renewModal.newDate} className="btn-primary px-6 py-2 disabled:opacity-50">Renew Now</button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-txt2 leading-relaxed">
+            Renewing subscription for <strong className="text-txt">{renewModal.clientName}</strong>. 
+            Select the new end date below. The client will be instantly reactivated.
+          </p>
+          
+          <div className="p-4 bg-bg3 rounded-xl border border-border">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-txt3 block mb-2">New Subscription End Date</label>
+            <input 
+              type="date" 
+              className="input w-full bg-card text-sm"
+              value={renewModal.newDate}
+              min={new Date().toISOString().split('T')[0]}
+              onChange={e => setRenewModal({ ...renewModal, newDate: e.target.value })}
+            />
+          </div>
+
+          <div className="p-3 bg-accent/5 border border-accent/15 rounded-xl">
+            <p className="text-[10px] text-txt2 font-medium">
+              ✅ This will set <strong>is_active = true</strong>, update the subscription start to today, and set the end date to your selection.
+            </p>
+          </div>
         </div>
       </Modal>
     </Layout>

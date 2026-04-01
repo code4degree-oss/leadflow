@@ -177,6 +177,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.leads.tasks.reassign_stale_leads",
         "schedule": 86400.0,  # Every 24 hours
     },
+    "check-subscription-expiry-daily": {
+        "task": "apps.clients.tasks.check_subscription_expiry",
+        "schedule": 86400.0,  # Every 24 hours
+    },
 }
 
 # End of settings

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import Layout from '../../components/Layout'
 import { StatusBadge } from '../../components/UI'
-import { Flame, Phone, PhoneCall, Calendar, ArrowRight, XCircle, Loader2, DollarSign, MapPin, Building2, User } from 'lucide-react'
+import { Flame, Phone, PhoneCall, Calendar, ArrowRight, ArrowLeft, XCircle, Loader2, DollarSign, MapPin, Building2, User } from 'lucide-react'
 import clsx from 'clsx'
 import { fetchWithAuth } from '../../utils/api'
 import { useRouter } from 'next/router'
@@ -29,9 +29,16 @@ export default function HotLeads() {
       if (selected) {
         const stillHot = hotLeads.find(l => l.id === selected.id)
         if (stillHot) setSelected(stillHot)
-        else setSelected(hotLeads[0] || null)
-      } else if (hotLeads.length > 0) {
-        setSelected(hotLeads[0])
+        else setSelected(null) // Unselect on mobile if it vanishes to go back to list cleanly
+      } else {
+        // On mobile, maybe don't auto-select so the user sees the list first.
+        // On desktop, auto-select is fine. But we can't easily detect here without window.innerWidth.
+        // Let's just NOT auto-select if it's a small screen, or just let CSS handle visibility.
+        // Actually, if we auto-select, mobile users instantly see the details of the first item 
+        // without seeing the list. So let's only auto select if we are sure, or just skip auto-select 
+        // initially so mobile users see the list.
+        // We'll skip auto-select and let the user click one.
+        // setSelected(hotLeads[0])
       }
     } catch (err) {
       console.error(err)
@@ -57,8 +64,6 @@ export default function HotLeads() {
   }
 
   const navigateToLead = () => {
-    // Navigate to main leads page but user will manually open it there
-    // Alternatively, we can just log a quick call here like the main page if needed
     router.push('/telecaller/leads')
   }
 
@@ -72,9 +77,9 @@ export default function HotLeads() {
         </span>
       </div>
 
-      <div className="grid grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         {/* List */}
-        <div className="col-span-2 space-y-3 max-h-[calc(100vh-160px)] overflow-y-auto pr-2">
+        <div className={clsx("col-span-1 md:col-span-2 space-y-3 h-[calc(100vh-200px)] overflow-y-auto pr-2 pb-24 md:pb-0", selected && "hidden md:block")}>
           {loading ? (
             <div className="card p-10 text-center flex flex-col items-center">
               <Loader2 className="animate-spin text-hot mb-3" size={28} />
@@ -122,29 +127,36 @@ export default function HotLeads() {
         </div>
 
         {/* Detail */}
-        <div className="col-span-3">
+        <div className={clsx("col-span-1 md:col-span-3 pb-24 md:pb-0", !selected && "hidden md:block")}>
           {selected ? (
-            <div className="card p-6 shadow-xl sticky top-4">
+            <div className="card p-4 md:p-6 shadow-xl md:sticky top-4">
+              <button 
+                onClick={() => setSelected(null)} 
+                className="md:hidden flex items-center gap-2 mb-5 text-txt2 hover:text-txt font-medium text-sm bg-bg3 p-2 rounded-lg"
+              >
+                <ArrowLeft size={16} /> Back to List
+              </button>
+              
               <div className="flex items-start justify-between mb-6 pb-6 border-b border-border">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-hot/10 flex items-center justify-center border-2 border-hot/30 shadow-lg shadow-hot/20 relative">
+                  <div className="w-12 h-12 rounded-full bg-hot/10 flex items-center justify-center border-2 border-hot/30 shadow-lg shadow-hot/20 relative flex-shrink-0">
                     <Flame size={20} className="text-hot" />
                     <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-card flex items-center justify-center">
                       <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
                     </div>
                   </div>
                   <div>
-                    <h2 className="font-display font-bold text-2xl text-txt">{selected.first_name} {selected.last_name}</h2>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="font-mono text-sm text-txt2 bg-bg3 px-2 py-0.5 rounded">{selected.phone}</span>
+                    <h2 className="font-display font-bold text-xl md:text-2xl text-txt">{selected.first_name} {selected.last_name}</h2>
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                      <span className="font-mono text-xs md:text-sm text-txt2 bg-bg3 px-2 py-0.5 rounded">{selected.phone}</span>
                       <StatusBadge status={selected.status.toLowerCase()} />
-                      <span className="text-[10px] font-bold text-hot bg-hot/10 px-2 py-0.5 rounded-full uppercase tracking-wider border border-hot/20">Hot Prospect</span>
+                      <span className="text-[10px] font-bold text-hot bg-hot/10 px-2 py-0.5 rounded-full uppercase tracking-wider border border-hot/20 hidden sm:inline-block">Hot Prospect</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 {[
                   { label: 'Budget', value: selected.budget ? `₹${Number(selected.budget).toLocaleString('en-IN')}` : 'Not specified', icon: DollarSign },
                   { label: 'Area', value: selected.area || 'Not specified', icon: MapPin },
@@ -186,15 +198,15 @@ export default function HotLeads() {
 
               <div className="space-y-3 pt-6 border-t border-border">
                 <button onClick={navigateToLead} className="btn-primary w-full justify-center py-3.5 shadow-lg shadow-accent/20">
-                  <Phone size={16} className="mr-2" /> Open in Main Panel to Call/Log
+                  <Phone size={16} className="mr-2" /> Open in Main Panel
                 </button>
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                     {/* Hot Lead Toggle */}
                     <button
                       onClick={handleToggleHot}
                       disabled={toggling}
                       className={clsx(
-                        'p-1.5 rounded-lg transition-all border shrink-0 flex-1 flex items-center justify-center',
+                        'p-2 sm:p-1.5 rounded-lg transition-all border shrink-0 flex-1 flex items-center justify-center font-medium',
                         selected.is_hot
                           ? 'bg-hot/15 border-hot/30 text-hot shadow-md shadow-hot/20'
                           : 'bg-bg3 border-border text-txt3 hover:text-hot hover:border-hot/30'
@@ -207,7 +219,7 @@ export default function HotLeads() {
                     {/* Call Button */}
                     <a
                       href={`tel:${selected.phone}`}
-                      className="p-1.5 rounded-lg transition-all border bg-bg3 border-border text-txt3 hover:text-[#10B981] hover:border-[#10B981]/30 hover:bg-[#10B981]/10 flex items-center justify-center shrink-0 flex-1"
+                      className="p-2 sm:p-1.5 rounded-lg transition-all border bg-bg3 border-border text-txt3 hover:text-[#10B981] hover:border-[#10B981]/30 hover:bg-[#10B981]/10 flex items-center justify-center shrink-0 flex-1 font-medium"
                       title="Call via Dialer"
                     >
                       <PhoneCall size={16} className="mr-2" /> Call Prospect
@@ -217,7 +229,7 @@ export default function HotLeads() {
             </div>
           ) : (
             !loading && leads.length > 0 && (
-              <div className="card p-12 text-center h-full flex flex-col items-center justify-center">
+              <div className="card p-12 text-center h-full flex flex-col items-center justify-center hidden md:flex">
                 <User size={32} className="text-txt3 opacity-50 mb-4" />
                 <p className="text-txt font-medium">Select a hot lead</p>
                 <p className="text-xs text-txt3 mt-1">Click on any lead in the list to view their full details.</p>

@@ -19,7 +19,7 @@ const ROLE_DASHBOARD = {
 }
 
 // Pages that don't require any role check
-const PUBLIC_PATHS = ['/', '/login', '/change-password']
+const PUBLIC_PATHS = ['/', '/login', '/change-password', '/subscription-expired']
 
 export default function RouteGuard({ children }) {
   const router = useRouter()

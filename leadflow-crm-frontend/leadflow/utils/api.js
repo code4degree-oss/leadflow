@@ -27,6 +27,22 @@ export async function fetchWithAuth(url, options = {}) {
     throw new Error('Unauthorized')
   }
 
+  // Handle subscription expired — redirect to block page
+  if (response.status === 403) {
+    try {
+      const cloned = response.clone()
+      const errData = await cloned.json()
+      if (errData.code === 'subscription_expired' || (errData.detail && errData.detail.toLowerCase().includes('subscription has expired'))) {
+        localStorage.setItem('subscription_status', 'expired')
+        window.location.href = '/subscription-expired'
+        throw new Error('Subscription expired')
+      }
+    } catch (parseErr) {
+      if (parseErr.message === 'Subscription expired') throw parseErr
+      // If JSON parse fails, fall through to generic error handling
+    }
+  }
+
   if (!response.ok) {
     let errorMsg = 'An error occurred'
     try {

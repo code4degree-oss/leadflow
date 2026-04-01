@@ -153,3 +153,50 @@ class ClientViewSet(viewsets.ModelViewSet):
             return response
             
         return Response({"detail": "Export type not supported yet."}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'], url_path='renew')
+    def renew_subscription(self, request, pk=None):
+        """
+        One-click subscription renewal.
+        Super Admin picks a new end date and the client is instantly reactivated.
+        """
+        from django.utils import timezone
+
+        client = self.get_object()
+        new_valid_until = request.data.get('valid_until')
+
+        if not new_valid_until:
+            return Response(
+                {"detail": "valid_until (new end date) is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            from datetime import date
+            if isinstance(new_valid_until, str):
+                new_date = date.fromisoformat(new_valid_until)
+            else:
+                new_date = new_valid_until
+        except (ValueError, TypeError):
+            return Response(
+                {"detail": "Invalid date format. Use YYYY-MM-DD."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if new_date <= timezone.now().date():
+            return Response(
+                {"detail": "End date must be in the future."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        client.subscription_start = timezone.now().date()
+        client.valid_until = new_date
+        client.is_active = True
+        client.save(update_fields=['subscription_start', 'valid_until', 'is_active', 'updated_at'])
+
+        serializer = self.get_serializer(client)
+        return Response({
+            "detail": f"Subscription renewed until {new_date}.",
+            "client": serializer.data
+        })
+

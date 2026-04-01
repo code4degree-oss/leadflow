@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import SubscriptionBanner from './SubscriptionBanner'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import {
@@ -21,8 +22,6 @@ const navConfig = {
       { icon: CreditCard,      label: 'Billing & Plans',  href: '/superadmin/billing' },
       { icon: Database,        label: 'Storage & Quotas', href: '/superadmin/storage' },
       { icon: Globe,           label: 'Feature Flags',    href: '/superadmin/features' },
-      { icon: BarChart2,       label: 'Analytics',        href: '/superadmin/analytics' },
-      { icon: ShieldCheck,     label: 'Security & Audit', href: '/superadmin/security' },
       { icon: FileText,        label: 'Data Exports',     href: '/superadmin/exports' },
       { icon: Settings,        label: 'System Config',    href: '/superadmin/system-config' },
     ]
@@ -38,7 +37,7 @@ const navConfig = {
       { icon: Users,           label: 'Employees',        href: '/admin/employees' },
       { icon: Briefcase,       label: 'Projects',         href: '/admin/projects' },
       { icon: BarChart2,       label: 'Performance',      href: '/admin/performance' },
-      { icon: Activity,        label: 'Audit Trail',      href: '/admin/audit' },
+      { icon: Activity,        label: 'Login Activity',   href: '/admin/audit' },
       { icon: Settings,        label: 'Settings',         href: '/admin/settings' },
     ]
   },
@@ -71,6 +70,7 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
   const config = navConfig[role]
   const [notifOpen, setNotifOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
   const [isInactive, setIsInactive] = useState(false)
   const [userName, setUserName] = useState('')
   const [userEmail, setUserEmail] = useState('')
@@ -102,7 +102,7 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
   }
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen bg-bg pb-16 md:pb-0">
       {/* Inactive Account Overlay */}
       {isInactive && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-md">
@@ -210,13 +210,63 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
           <Bell size={16} />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-accent2 rounded-full pulse-dot" />
         </button>
+
+        {/* Mobile Profile Toggle */}
+        <div className="relative md:hidden ml-1">
+          <button 
+            onClick={() => setProfileOpen(!profileOpen)}
+            className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-accent text-xs font-bold border border-accent/20"
+          >
+            {userName ? userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'U'}
+          </button>
+          
+          {profileOpen && (
+            <>
+              <div className="fixed inset-0 z-[40]" onClick={() => setProfileOpen(false)} />
+              <div className="absolute right-0 top-full mt-2 w-48 bg-card border border-border rounded-xl shadow-xl z-[50] py-2 animate-in fade-in slide-in-from-top-2">
+                <div className="px-4 py-2 border-b border-border">
+                  <div className="text-sm font-bold text-txt truncate">{userName || 'User'}</div>
+                  <div className="text-xs text-txt3 truncate mt-0.5">{userEmail}</div>
+                </div>
+                <div className="p-1.5">
+                  <button 
+                    onClick={handleLogout} 
+                    className="w-full text-left px-3 py-2 text-sm font-medium text-danger hover:bg-danger/10 rounded-lg transition-colors flex items-center gap-2"
+                  >
+                    <LogOut size={15} /> Log Out
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
         {actions && <div className="flex items-center gap-2">{actions}</div>}
       </header>
 
       {/* Page content */}
       <main className="page">
+        <SubscriptionBanner />
         <div className="p-6 fade-up">{children}</div>
       </main>
+
+      {/* Bottom Navigation (Mobile) */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-40 flex justify-around items-center h-16 px-1 md:hidden pb-safe">
+        {config.items.slice(0, 5).map((item) => {
+          const active = router.pathname === item.href
+          return (
+            <Link key={item.href} href={item.href} className="flex-1 flex flex-col items-center justify-center h-full text-txt3 hover:text-txt transition-colors">
+              <div className={clsx('flex flex-col items-center gap-1 w-full', active && 'text-accent')}>
+                <div className={clsx('p-1.5 rounded-full transition-colors', active && 'bg-accent/10')}>
+                  <item.icon size={20} className={clsx(active ? 'text-accent' : 'text-txt3')} />
+                </div>
+                <span className="text-[10px] font-medium tracking-tight truncate w-full text-center px-1">
+                  {item.label}
+                </span>
+              </div>
+            </Link>
+          )
+        })}
+      </nav>
     </div>
   )
 }

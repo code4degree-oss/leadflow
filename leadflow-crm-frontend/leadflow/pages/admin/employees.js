@@ -94,6 +94,20 @@ export default function Employees() {
       }
   }
 
+  const handleToggleActive = async (e) => {
+      const action = e.is_active ? 'suspend' : 'activate'
+      if (!confirm(`Are you sure you want to ${action} this employee?`)) return
+      try {
+          await fetchWithAuth(`/accounts/employees/${e.id}/`, {
+              method: 'PATCH',
+              body: JSON.stringify({ is_active: !e.is_active })
+          })
+          fetchEmployees()
+      } catch (err) {
+          alert(`Failed to ${action} employee: ` + err.message)
+      }
+  }
+
   return (
     <Layout role="admin" pageTitle="Employee Management"
       actions={
@@ -164,22 +178,32 @@ export default function Employees() {
                 </tr>
               ) : (
                 employees.map(e => (
-                  <tr key={e.id} className="hover:bg-bg2/30 transition-colors group">
+                  <tr key={e.id} className={clsx("hover:bg-bg2/30 transition-colors group", !e.is_active && "opacity-80")}>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-xs font-bold shadow-inner">
+                        <div className={clsx(
+                          "w-9 h-9 rounded-full border flex items-center justify-center text-xs font-bold shadow-inner flex-shrink-0",
+                          e.is_active ? "bg-primary/10 border-primary/20 text-primary" : "bg-danger/10 border-danger/20 text-danger"
+                        )}>
                           {e.first_name[0]}{e.last_name[0]}
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-sm font-bold text-txt leading-tight">{e.first_name} {e.last_name}</span>
+                          <span className={clsx("text-sm font-bold leading-tight", !e.is_active && "text-danger")}>{e.first_name} {e.last_name}</span>
                           <span className="text-[10px] text-txt3 font-mono">{e.email}</span>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-4">
-                      <span className={clsx('badge px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tighter', roleColors[e.role.toLowerCase()] || 'badge-gray')}>
-                        {e.role}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={clsx('badge px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tighter flex-shrink-0', roleColors[e.role.toLowerCase()] || 'badge-gray')}>
+                          {e.role}
+                        </span>
+                        {!e.is_active && (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tighter bg-danger/10 text-danger border border-danger/20 flex-shrink-0">
+                            Suspended
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-4 text-center">
                         {e.role === 'CLIENT_ADMIN' ? (
@@ -203,21 +227,34 @@ export default function Employees() {
                         )}
                     </td>
                     <td className="px-4 py-4">
-                      <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => router.push(`/admin/employees/${e.id}`)} className="p-2 hover:bg-bg3 rounded-lg text-txt3 hover:text-accent transition-all" title="View Profile">
-                          <Eye size={14}/>
-                        </button>
-                        <button className="p-2 hover:bg-bg3 rounded-lg text-txt3 hover:text-primary transition-all" title="Edit Profile">
-                          <Edit size={14}/>
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(e.id)}
-                          className="p-2 hover:bg-danger/10 rounded-lg text-txt3 hover:text-danger transition-all" 
-                          title="Delete Employee"
-                        >
-                          <Trash2 size={14}/>
-                        </button>
-                      </div>
+                      {e.role === 'CLIENT_ADMIN' ? (
+                        <div className="flex items-center justify-center">
+                          <span className="text-[10px] text-accent2 font-bold uppercase tracking-widest bg-accent2/10 px-2 py-0.5 rounded" title="Actions locked for organization admins">N/A</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center gap-1 transition-opacity">
+                          <button onClick={() => router.push(`/admin/employees/${e.id}`)} className="p-2 hover:bg-bg3 rounded-lg text-txt3 hover:text-accent transition-all" title="View Profile">
+                            <Eye size={14}/>
+                          </button>
+                          <button className="p-2 hover:bg-bg3 rounded-lg text-txt3 hover:text-primary transition-all" title="Edit Profile">
+                            <Edit size={14}/>
+                          </button>
+                          <button 
+                            onClick={() => handleToggleActive(e)}
+                            className={clsx("p-2 rounded-lg transition-all", e.is_active ? "text-txt3 hover:bg-danger/10 hover:text-danger" : "text-[#10B981] bg-[#10B981]/10 hover:bg-[#10B981]/20 hover:text-[#059669]")} 
+                            title={e.is_active ? "Suspend Employee" : "Activate Employee"}
+                          >
+                            {e.is_active ? <Ban size={14}/> : <CheckCircle2 size={14}/>}
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(e.id)}
+                            className="p-2 hover:bg-danger/10 rounded-lg text-txt3 hover:text-danger transition-all" 
+                            title="Delete Employee"
+                          >
+                            <Trash2 size={14}/>
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))

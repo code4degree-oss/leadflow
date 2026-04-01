@@ -22,10 +22,32 @@ class ClientAccount(models.Model):
 
     plan = models.CharField(max_length=20, choices=[('basic','Basic'),('pro','Pro'),('enterprise','Enterprise')], default='basic')
     trial_days = models.IntegerField(default=14, help_text="Number of trial days")
+    subscription_start = models.DateField(null=True, blank=True, help_text="Subscription/trial start date")
     valid_until = models.DateField(null=True, blank=True, help_text="Subscription valid until date")
 
     created_at = models.DateTimeField(default=timezone.now, editable=False)
     updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def subscription_status(self):
+        """Returns: 'active', 'expiring_soon', 'expired', or 'no_plan'"""
+        from datetime import timedelta
+        if not self.valid_until:
+            return 'no_plan'
+        today = timezone.now().date()
+        days_remaining = (self.valid_until - today).days
+        if days_remaining > 7:
+            return 'active'
+        elif days_remaining >= 0:
+            return 'expiring_soon'
+        else:
+            return 'expired'
+
+    @property
+    def days_remaining(self):
+        if not self.valid_until:
+            return None
+        return (self.valid_until - timezone.now().date()).days
 
     def __str__(self):
         return self.name

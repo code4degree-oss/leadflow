@@ -1,4 +1,3 @@
-from datetime import timedelta
 
 from django.utils import timezone
 from rest_framework import permissions
@@ -17,7 +16,7 @@ class IsAccountActive(permissions.BasePermission):
     """
     Global guard that blocks requests when:
     1. The user must change their password first (must_change_password=True).
-    2. The user's client subscription has expired beyond the 3-day grace period.
+    2. The user's client subscription has expired (valid_until < today).
 
     Super Admins are exempt from all these checks.
     """
@@ -28,8 +27,6 @@ class IsAccountActive(permissions.BasePermission):
         '/api/v1/auth/refresh/',
         '/api/v1/auth/me/',
     )
-
-    GRACE_PERIOD_DAYS = 3
 
     def has_permission(self, request, view):
         user = request.user
@@ -50,17 +47,15 @@ class IsAccountActive(permissions.BasePermission):
                     code="password_change_required",
                 )
 
-        # --- Subscription / trial expiry check ---
+        # --- Subscription / trial expiry check (no grace period) ---
         client = getattr(user, 'client', None)
         if client and client.valid_until:
-            deadline = client.valid_until + timedelta(days=self.GRACE_PERIOD_DAYS)
-            if timezone.now().date() > deadline:
-                if not client.is_active:
-                    from rest_framework.exceptions import PermissionDenied
-                    raise PermissionDenied(
-                        detail="Your subscription has expired. Please contact your administrator.",
-                        code="subscription_expired",
-                    )
+            if timezone.now().date() > client.valid_until:
+                from rest_framework.exceptions import PermissionDenied
+                raise PermissionDenied(
+                    detail="Your subscription has expired. Please contact your administrator to renew.",
+                    code="subscription_expired",
+                )
 
         return True
 

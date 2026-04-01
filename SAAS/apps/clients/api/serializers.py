@@ -9,14 +9,18 @@ class ClientAccountSerializer(serializers.ModelSerializer):
     admin_phone = serializers.CharField(write_only=True, required=False, allow_blank=True, default='')
     
     storage_used_mb = serializers.SerializerMethodField()
+    subscription_status = serializers.CharField(read_only=True)
+    days_remaining = serializers.IntegerField(read_only=True)
     
     class Meta:
         model = ClientAccount
         fields = [
             'id', 'name', 'is_active', 'geofencing_enabled',
-            'max_users', 'storage_quota_mb', 'plan', 'trial_days', 'valid_until',
+            'max_users', 'storage_quota_mb', 'plan', 'trial_days',
+            'subscription_start', 'valid_until',
             'created_at', 'user_count', 'admin_email',
-            'admin_first_name', 'admin_last_name', 'admin_phone', 'storage_used_mb'
+            'admin_first_name', 'admin_last_name', 'admin_phone', 'storage_used_mb',
+            'subscription_status', 'days_remaining'
         ]
         read_only_fields = ['id', 'created_at']
 

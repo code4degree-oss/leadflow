@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
-import { Eye, EyeOff, AlertCircle, MapPin, CheckCircle2 } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle, MapPin, CheckCircle2, Ban } from 'lucide-react'
 import ThemeToggle from '../components/ThemeToggle'
 
 export default function LoginPage() {
@@ -75,6 +75,17 @@ export default function LoginPage() {
       
       if (!response.ok) {
         const msg = data.detail || 'Invalid email or password'
+        const lowerMsg = msg.toLowerCase()
+        
+        // Django SimpleJWT returns "No active account found with the given credentials"
+        // for BOTH wrong passwords AND inactive accounts. Treat it as a credentials error.
+        if (lowerMsg.includes('no active account')) {
+          throw new Error('Invalid email or password. Please check your credentials and try again.')
+        }
+        // Only show suspended for explicit suspension messages from our custom permission
+        if (lowerMsg.includes('suspended') || lowerMsg.includes('subscription has expired')) {
+          throw new Error('🚫 Your account has been suspended. Please contact your organization administrator.')
+        }
         if (msg.includes('Location coordinates are required') || msg.includes('outside your organization')) {
           throw new Error('📍 ' + msg + ' Please enable location access and try again.')
         }
@@ -90,6 +101,8 @@ export default function LoginPage() {
       localStorage.setItem('user_last_name', data.last_name || '')
       localStorage.setItem('must_change_password', data.must_change_password ? 'true' : 'false')
       localStorage.setItem('subscription_active', data.subscription_active !== false ? 'true' : 'false')
+      localStorage.setItem('subscription_status', data.subscription_status || 'active')
+      localStorage.setItem('days_remaining', data.days_remaining != null ? String(data.days_remaining) : '')
       
       // If user must change password, redirect
       if (data.must_change_password) {
@@ -195,8 +208,14 @@ export default function LoginPage() {
 
             {errorMsg && (
               <div className="mb-6 p-4 bg-danger/5 border border-danger/20 rounded-xl flex items-start gap-3 text-danger text-sm shadow-sm ring-1 ring-danger/10">
-                {errorMsg.includes('📍') ? <MapPin size={18} className="shrink-0 mt-0.5" /> : <AlertCircle size={18} className="shrink-0 mt-0.5" />}
-                <span className="font-medium">{errorMsg}</span>
+                {errorMsg.includes('📍') ? (
+                  <MapPin size={18} className="shrink-0 mt-0.5" />
+                ) : errorMsg.includes('🚫') ? (
+                  <Ban size={18} className="shrink-0 mt-0.5 flex-shrink-0" />
+                ) : (
+                  <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                )}
+                <span className="font-medium">{errorMsg.replace('🚫 ', '')}</span>
               </div>
             )}
 

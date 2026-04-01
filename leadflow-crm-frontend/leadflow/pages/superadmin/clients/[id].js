@@ -22,6 +22,7 @@ export default function NewClientPage() {
     storage_quota_mb: 1024,
     plan: 'basic',
     trial_days: 14,
+    subscription_start: new Date().toISOString().split('T')[0],
     valid_until: '',
     is_active: true,
     admin_email: '',
@@ -29,6 +30,16 @@ export default function NewClientPage() {
     admin_last_name: '',
     admin_phone: ''
   })
+
+  // Auto-calculate valid_until when subscription_start or trial_days change (only for new orgs)
+  useEffect(() => {
+    if (!isEditing && formData.subscription_start && formData.trial_days > 0) {
+      const start = new Date(formData.subscription_start)
+      start.setDate(start.getDate() + formData.trial_days)
+      const autoEnd = start.toISOString().split('T')[0]
+      setFormData(prev => ({ ...prev, valid_until: autoEnd }))
+    }
+  }, [formData.subscription_start, formData.trial_days, isEditing])
 
   // Load existing client data if editing
   useEffect(() => {
@@ -242,11 +253,11 @@ export default function NewClientPage() {
               </div>
             )}
 
-            {/* Plan & Limits Section */}
+            {/* Plan & Billing Section */}
             <div>
               <h4 className="text-xs font-bold uppercase tracking-widest text-txt3 mb-3 flex items-center gap-2">
                 <div className="w-5 h-5 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-[10px] font-bold">{isEditing ? '2' : '3'}</div>
-                Plan & Limits
+                Plan & Billing
               </h4>
               <div className="space-y-4 pl-7">
                 <div className="grid grid-cols-2 gap-4">
@@ -273,7 +284,7 @@ export default function NewClientPage() {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold uppercase tracking-tighter text-txt3 ml-1">Plan</label>
                     <select 
@@ -287,18 +298,29 @@ export default function NewClientPage() {
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-tighter text-txt3 ml-1">Trial Days</label>
+                    <label className="text-[10px] font-bold uppercase tracking-tighter text-txt3 ml-1">Trial / Billing Cycle (Days)</label>
                     <input 
                       required 
                       type="number" 
                       className="input w-full bg-bg3 text-sm" 
                       placeholder="14" 
                       value={formData.trial_days}
-                      onChange={e => setFormData({...formData, trial_days: parseInt(e.target.value)})}
+                      onChange={e => setFormData({...formData, trial_days: parseInt(e.target.value) || 0})}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-tighter text-txt3 ml-1">Start Date</label>
+                    <input 
+                      type="date" 
+                      className="input w-full bg-bg3 text-sm" 
+                      value={formData.subscription_start || ''}
+                      onChange={e => setFormData({...formData, subscription_start: e.target.value})}
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-tighter text-txt3 ml-1">Valid Until</label>
+                    <label className="text-[10px] font-bold uppercase tracking-tighter text-txt3 ml-1">End Date (Valid Until)</label>
                     <input 
                       type="date" 
                       className="input w-full bg-bg3 text-sm" 
@@ -307,6 +329,12 @@ export default function NewClientPage() {
                     />
                   </div>
                 </div>
+                {!isEditing && formData.subscription_start && formData.valid_until && (
+                  <p className="text-[10px] text-txt3 ml-1 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent2 inline-block"></span>
+                    Auto-calculated: {formData.trial_days} day trial from {formData.subscription_start} → expires {formData.valid_until}
+                  </p>
+                )}
               </div>
             </div>
 

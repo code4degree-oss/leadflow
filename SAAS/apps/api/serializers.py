@@ -37,6 +37,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         if client:
             data['subscription_active'] = client.is_active
             data['valid_until'] = str(client.valid_until) if client.valid_until else None
+            data['subscription_status'] = client.subscription_status
+            data['days_remaining'] = client.days_remaining
 
             # Apply Geofence checks purely for standard employees (not Super or Client Admins)
             if client.geofencing_enabled and not self.user.geofencing_exempt and self.user.role not in [RoleChoices.SUPER_ADMIN, RoleChoices.CLIENT_ADMIN, RoleChoices.MANAGER]:
