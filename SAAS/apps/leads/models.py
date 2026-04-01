@@ -42,7 +42,6 @@ class LeadBatch(BaseModel):
         null=True,
         related_name="uploaded_lead_batches"
     )
-    name = models.CharField(max_length=255, blank=True, default='', help_text="Batch source name provided during upload")
     file = models.FileField(upload_to="lead_uploads/%Y/%m/")
     status = models.CharField(
         max_length=20,
@@ -106,7 +105,7 @@ class Lead(BaseModel):
     )
     
     source = models.CharField(
-        max_length=255,
+        max_length=20,
         choices=LeadSource.choices,
         default=LeadSource.OTHER
     )

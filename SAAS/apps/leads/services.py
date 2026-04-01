@@ -231,7 +231,7 @@ class UploadService:
                             email=email,
                             phone=normalized_phone,
                             phone_hash=phone_hash,
-                            source=batch.name or LeadSource.MANUAL,
+                            source=LeadSource.MANUAL,
                             status=LeadStatus.NEW,
                             batch=batch
                         )
