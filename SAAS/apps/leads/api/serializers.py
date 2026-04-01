@@ -155,7 +155,7 @@ class CallLogSerializer(serializers.Serializer):
     budget = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
     interested_flat = serializers.CharField(required=False, allow_blank=True, default='')
     area = serializers.CharField(required=False, allow_blank=True, default='')
-    outcome = serializers.ChoiceField(choices=['INTERESTED', 'CALLBACK', 'LOST', 'CALLED', 'NOT_ANSWERED', 'WON'], required=True)
+    outcome = serializers.ChoiceField(choices=['INTERESTED', 'CALLBACK', 'LOST', 'CALLED', 'NOT_ANSWERED', 'WON', 'INVALID_NUMBER'], required=True)
     next_call_at = serializers.DateTimeField(required=False, allow_null=True)
     follow_up_at = serializers.DateTimeField(required=False, allow_null=True)
     follow_up_note = serializers.CharField(required=False, allow_blank=True, default='')
@@ -165,7 +165,7 @@ class CallLogSerializer(serializers.Serializer):
     def validate(self, data):
         outcome = data.get('outcome')
         # Mandatory next-call for all outcomes except LOST
-        if outcome not in ('LOST', 'WON') and not data.get('next_call_at'):
+        if outcome not in ('LOST', 'WON', 'INVALID_NUMBER') and not data.get('next_call_at'):
             # NOT_ANSWERED is auto-set by the view, so allow it through
             if outcome != 'NOT_ANSWERED':
                 raise serializers.ValidationError({

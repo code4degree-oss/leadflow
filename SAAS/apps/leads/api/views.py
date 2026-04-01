@@ -299,16 +299,16 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
 
         elif outcome == 'INVALID_NUMBER':
             old_status = lead.status
-            lead.status = LeadStatus.LOST
+            lead.status = LeadStatus.INVALID_NUMBER
             lead.lost_count = 4 # Skip recirculation
             lead.save()
             ActivityTimeline.objects.create(
                 client=lead.client, lead=lead, performed_by=request.user,
                 activity_type=ActivityType.CALL_LOGGED,
-                title=f"Call logged \\u2014 marked Invalid Number (escalated to admin)",
+                title=f"Call logged — marked Invalid Number (dead number)",
                 metadata={'outcome': 'INVALID_NUMBER', 'old_status': old_status}
             )
-            return Response({"detail": "Lead marked as Invalid Number (Lost).", "status": lead.status})
+            return Response({"detail": "Lead marked as Invalid Number.", "status": lead.status})
 
         lead.save()
         return Response({"detail": "Call logged.", "status": lead.status})
@@ -597,7 +597,7 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
 
         status_counts = queryset.values('status').annotate(count=Count('id'))
         stats_map = {item['status']: item['count'] for item in status_counts}
-        lead_statuses = ['NEW', 'CALLED', 'NOT_ANSWERED', 'INTERESTED', 'SITE_VISIT', 'WON', 'LOST']
+        lead_statuses = ['NEW', 'CALLED', 'NOT_ANSWERED', 'INTERESTED', 'SITE_VISIT', 'WON', 'LOST', 'INVALID_NUMBER']
         formatted_stats = {s: stats_map.get(s, 0) for s in lead_statuses}
         total_leads = sum(formatted_stats.values())
         
@@ -644,7 +644,7 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
             activity_type=ActivityType.CALL_LOGGED,
             created_at__gte=today_start,
             created_at__lt=today_end
-        ).count()
+        ).values('lead_id').distinct().count()
 
         return Response({
             "status_counts": formatted_stats,
@@ -724,10 +724,14 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
             "last_login": emp.last_login.strftime("%I:%M %p") if emp.last_login else "N/A"
         } for emp in employees}
 
+        user_called_leads = {}
         for call in todays_calls:
             uid = call.performed_by_id
             if uid in user_stats:
-                user_stats[uid]["calls_today"] += 1
+                if call.lead_id not in user_called_leads.setdefault(uid, set()):
+                    user_stats[uid]["calls_today"] += 1
+                    user_called_leads[uid].add(call.lead_id)
+                    
                 outcome = call.metadata.get('outcome', '') if call.metadata else ''
                 if outcome == 'WON':
                     user_stats[uid]["won_today"] += 1
@@ -804,7 +808,7 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
             activity_type=ActivityType.CALL_LOGGED,
             created_at__gte=today_start,
             created_at__lt=today_end
-        ).count()
+        ).values('lead_id').distinct().count()
         
         target = client.daily_telecaller_target if request.user.role == RoleChoices.TELECALLER else client.daily_field_agent_target
         
