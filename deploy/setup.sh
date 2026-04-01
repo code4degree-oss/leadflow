@@ -126,7 +126,7 @@ User=$TARGET_USER
 Group=www-data
 WorkingDirectory=$PROJECT_DIR/SAAS
 Environment="DJANGO_SETTINGS_MODULE=config.settings.production"
-ExecStart=$PROJECT_DIR/SAAS/venv/bin/gunicorn --access-logfile - --workers 3 --bind unix:$PROJECT_DIR/SAAS/gunicorn.sock config.wsgi:application
+ExecStart=$PROJECT_DIR/SAAS/venv/bin/gunicorn --access-logfile - --workers 3 --timeout 300 --bind unix:$PROJECT_DIR/SAAS/gunicorn.sock config.wsgi:application
 
 [Install]
 WantedBy=multi-user.target
@@ -188,6 +188,10 @@ server {
     location ~ ^/(api|leadflow-backend-admin) {
         include proxy_params;
         proxy_pass http://unix:$PROJECT_DIR/SAAS/gunicorn.sock;
+        proxy_read_timeout 300s;
+        proxy_connect_timeout 300s;
+        proxy_send_timeout 300s;
+        client_max_body_size 50M;
     }
 
     # Next.js Frontend (everything else)
