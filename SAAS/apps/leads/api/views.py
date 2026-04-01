@@ -559,9 +559,9 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
         # Group by 'source' and annotate counts
         batch_counts = qs.values('source').annotate(
             total=Count('id'),
-            new_leads=Count('id', filter=Q(status__in=[LeadStatus.NEW, LeadStatus.IMPORTED])),
-            in_progress=Count('id', filter=Q(status__in=[LeadStatus.CALLED, LeadStatus.CALLBACK, LeadStatus.INTERESTED, LeadStatus.SITE_VISIT, LeadStatus.NOT_ANSWERED])),
-            covered=Count('id', filter=~Q(status__in=[LeadStatus.NEW, LeadStatus.IMPORTED])),
+            new_leads=Count('id', filter=Q(status__in=[LeadStatus.NEW, 'IMPORTED'])),
+            in_progress=Count('id', filter=Q(status__in=[LeadStatus.CALLED, 'CALLBACK', LeadStatus.INTERESTED, LeadStatus.SITE_VISIT, LeadStatus.NOT_ANSWERED])),
+            covered=Count('id', filter=~Q(status__in=[LeadStatus.NEW, 'IMPORTED'])),
             won=Count('id', filter=Q(status=LeadStatus.WON)),
             lost=Count('id', filter=Q(status=LeadStatus.LOST))
         ).order_by('-total')
