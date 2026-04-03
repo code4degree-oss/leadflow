@@ -340,10 +340,14 @@ export default function TelecallerLeads() {
             {/* Header */}
             <div className="px-6 py-5 border-b border-border bg-bg2/50">
               <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3">
-                    <h2 className="font-display font-bold text-xl text-txt">{selectedLead.first_name} {selectedLead.last_name}</h2>
-                    {/* Hot Lead Toggle */}
+                <div className="flex-1 min-w-0 pr-4">
+                  <h2 className="text-xl font-display font-extrabold text-txt truncate">
+                    {selectedLead.first_name} {selectedLead.last_name}
+                  </h2>
+                  <p className="text-xs text-txt3 font-mono mt-1">{selectedLead.phone}</p>
+                  
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-2 mt-3">
                     <button
                       onClick={handleToggleHot}
                       className={clsx(
@@ -356,7 +360,6 @@ export default function TelecallerLeads() {
                     >
                       <Flame size={16} /> {selectedLead.is_hot ? "Hot Lead" : "Mark as hot lead"}
                     </button>
-                    {/* Call Button */}
                     <a
                       href={`tel:${selectedLead.phone}`}
                       className="p-1.5 px-3 rounded-lg transition-all border bg-[#10B981]/10 border-[#10B981]/30 text-[#10B981] hover:bg-[#10B981] hover:text-white flex items-center gap-2 text-xs font-bold shrink-0"
@@ -365,8 +368,8 @@ export default function TelecallerLeads() {
                       <PhoneCall size={16} /> Call now
                     </a>
                   </div>
-                  <p className="text-xs text-txt3 font-mono mt-1">{selectedLead.phone}</p>
-                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+
+                  <div className="flex items-center gap-2 mt-3 flex-wrap">
                     <StatusBadge status={selectedLead.status.toLowerCase()} />
                     <span className="badge badge-gray text-[9px]">{selectedLead.source}</span>
                     {selectedLead.is_hot && (

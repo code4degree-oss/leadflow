@@ -388,11 +388,14 @@ export default function Reminders() {
             {/* Drawer Header */}
             <div className="px-6 py-5 border-b border-border bg-bg2/50">
               <div className="flex justify-between items-start">
-                <div>
-                  <div className="flex items-center gap-3">
-                    <h2 className="text-xl font-display font-extrabold text-txt">
-                      {selectedLead.first_name} {selectedLead.last_name}
-                    </h2>
+                <div className="flex-1 min-w-0 pr-4">
+                  <h2 className="text-xl font-display font-extrabold text-txt truncate">
+                    {selectedLead.first_name} {selectedLead.last_name}
+                  </h2>
+                  <p className="text-xs text-txt3 font-mono mt-1">{selectedLead.phone}</p>
+                  
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-2 mt-3">
                     <button
                       onClick={handleToggleHot}
                       className={clsx(
@@ -413,8 +416,8 @@ export default function Reminders() {
                       <PhoneCall size={16} /> Call now
                     </a>
                   </div>
-                  <p className="text-xs text-txt3 font-mono mt-1">{selectedLead.phone}</p>
-                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+
+                  <div className="flex items-center gap-2 mt-3 flex-wrap">
                     <StatusBadge status={selectedLead.status?.toLowerCase()} />
                     {selectedLead.is_hot && (
                       <span className="text-[9px] font-bold text-hot bg-hot/10 px-2 py-0.5 rounded-full">🔥 Hot Lead</span>
