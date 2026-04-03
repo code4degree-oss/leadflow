@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/router'
 import { Eye, EyeOff, AlertCircle, MapPin, CheckCircle2, Ban } from 'lucide-react'
 import ThemeToggle from '../components/ThemeToggle'
@@ -12,70 +12,39 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState('')
   const [authStatus, setAuthStatus] = useState('Sign In to Dashboard')
 
-  // Store geolocation in a ref so it's available when login fires
-  const geoRef = useRef({ lat: null, lng: null, resolved: false })
-
-  // Pre-fetch geolocation silently in background on page load
-  useEffect(() => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          geoRef.current = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            resolved: true
-          }
-        },
-        () => {
-          // Silently handle denial — admins won't need it
-          geoRef.current = { lat: null, lng: null, resolved: true }
-        },
-        { enableHighAccuracy: true, timeout: 8000 }
-      )
-    } else {
-      geoRef.current = { lat: null, lng: null, resolved: true }
-    }
-  }, [])
-
   const handleLogin = async (e) => {
     if (e) e.preventDefault()
     if (!email || !password) return
     
     setLoading(true)
     setErrorMsg('')
+    setAuthStatus('Checking location...')
+
+    // Always request fresh GPS coordinates when user clicks login
+    let lat = null
+    let lng = null
+    
+    try {
+      const position = await new Promise((resolve, reject) => {
+        if (!("geolocation" in navigator)) {
+          reject(new Error('Geolocation not supported'))
+          return
+        }
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0  // Force fresh reading, don't use cache
+        })
+      })
+      lat = position.coords.latitude
+      lng = position.coords.longitude
+      console.log('[LOGIN] GPS acquired:', lat, lng)
+    } catch (geoErr) {
+      console.warn('[LOGIN] GPS failed:', geoErr.message)
+      // Continue with null — backend will decide if this is allowed
+    }
+
     setAuthStatus('Authenticating...')
-
-    // Helper: Actively request geo if not resolved or null
-    const waitForGeo = () => new Promise((resolve) => {
-      if (geoRef.current.resolved && geoRef.current.lat !== null) {
-        return resolve()
-      }
-      
-      setAuthStatus('Checking location...')
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            geoRef.current = {
-              lat: position.coords.latitude,
-              lng: position.coords.longitude,
-              resolved: true
-            }
-            resolve()
-          },
-          (error) => {
-            console.warn("Geolocation failed:", error)
-            geoRef.current = { lat: null, lng: null, resolved: true }
-            resolve()
-          },
-          { enableHighAccuracy: true, timeout: 15000 }
-        )
-      } else {
-        geoRef.current = { lat: null, lng: null, resolved: true }
-        resolve()
-      }
-    })
-
-    await waitForGeo()
 
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/auth/login/`, {
@@ -84,15 +53,17 @@ export default function LoginPage() {
         body: JSON.stringify({ 
           email: email.trim(), 
           password,
-          latitude: geoRef.current.lat,
-          longitude: geoRef.current.lng
+          latitude: lat,
+          longitude: lng
         })
       })
     
       const data = await response.json()
       
       if (!response.ok) {
-        const msg = data.detail || 'Invalid email or password'
+        // Extract error message — handle both string and array formats
+        let msg = data.detail || data.non_field_errors || 'Invalid email or password'
+        if (Array.isArray(msg)) msg = msg.join(' ')
         const lowerMsg = msg.toLowerCase()
         
         // Django SimpleJWT returns "No active account found with the given credentials"
@@ -100,12 +71,13 @@ export default function LoginPage() {
         if (lowerMsg.includes('no active account')) {
           throw new Error('Invalid email or password. Please check your credentials and try again.')
         }
-        // Only show suspended for explicit suspension messages from our custom permission
+        // Suspended accounts
         if (lowerMsg.includes('suspended') || lowerMsg.includes('subscription has expired')) {
           throw new Error('🚫 Your account has been suspended. Please contact your organization administrator.')
         }
-        if (msg.includes('Location coordinates are required') || msg.includes('outside your organization')) {
-          throw new Error('📍 ' + msg + ' Please enable location access and try again.')
+        // Geofencing blocks (403)
+        if (response.status === 403 || lowerMsg.includes('location') || lowerMsg.includes('geofence') || lowerMsg.includes('outside')) {
+          throw new Error('📍 ' + msg)
         }
         throw new Error(msg)
       }
