@@ -290,7 +290,7 @@ export default function Reminders() {
                      
                      return (
                        <div key={item.id} 
-                         onClick={() => item.is_lead ? openLeadDetails({id: item.lead}) : openDrawerForReminder(item.lead)}
+                         onClick={() => openDrawerForReminder(item.lead)}
                          className="px-4 py-3.5 flex items-center justify-between hover:bg-card/50 transition-colors cursor-pointer group">
                          <div className="flex items-center gap-3">
                            <div className={clsx('w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0', isPast ? 'bg-danger/15' : 'bg-accent/15')}>
