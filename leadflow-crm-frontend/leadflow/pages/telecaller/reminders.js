@@ -259,8 +259,9 @@ export default function Reminders() {
   ].sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at))
 
   return (
-    <Layout role="telecaller" pageTitle="Call Reminders">
-      <div className="max-w-2xl space-y-5">
+    <>
+      <Layout activePage="reminders" pageTitle="Call Reminders">
+        <div className="px-6 py-6 pb-20 max-w-2xl space-y-5">
 
         {loading ? (
           <div className="card p-16 flex flex-col items-center justify-center text-center">
@@ -379,6 +380,7 @@ export default function Reminders() {
           </>
         )}
       </div>
+      </Layout>
 
       {/* ═══ DETAIL DRAWER ═══ */}
       {selectedLead && (
@@ -604,6 +606,6 @@ export default function Reminders() {
           </div>
         </div>
       )}
-    </Layout>
+    </>
   )
 }

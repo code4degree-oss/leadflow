@@ -215,9 +215,10 @@ export default function TelecallerLeads() {
   const totalPages = Math.ceil(totalLeads / pageSize)
 
   return (
-    <Layout role="telecaller" pageTitle="My Assigned Leads">
-      
-      {/* Filters */}
+    <>
+      <Layout role="telecaller" pageTitle="My Assigned Leads">
+        
+        {/* Filters */}
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="flex flex-wrap gap-2">
           {['all', 'new', 'called', 'not_answered', 'interested', 'site_visit', 'lost'].map(s => (
@@ -331,6 +332,7 @@ export default function TelecallerLeads() {
           </div>
         </div>
       </div>
+      </Layout>
 
       {/* ═══ LEAD DETAIL DRAWER ═══ */}
       {selectedLead && (
@@ -622,6 +624,6 @@ export default function TelecallerLeads() {
           </div>
         </div>
       )}
-    </Layout>
+    </>
   )
 }

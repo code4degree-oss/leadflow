@@ -272,9 +272,10 @@ export default function TelecallerDashboard() {
   const pct = target > 0 ? Math.min(100, Math.round((progress / target) * 100)) : 0
 
   return (
-    <Layout role="telecaller" pageTitle="My Dashboard">
+    <>
+      <Layout role="telecaller" pageTitle="My Dashboard">
 
-      {/* ═══ DAILY TARGET PROGRESS BAR ═══ */}
+        {/* ═══ DAILY TARGET PROGRESS BAR ═══ */}
       <div className="mb-6 card p-5 border-l-4 border-l-accent shadow-lg">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
@@ -506,6 +507,7 @@ export default function TelecallerDashboard() {
           </div>
         </div>
       </div>
+      </Layout>
 
       {/* ═══ LEAD DETAIL DRAWER ═══ */}
       {selectedLead && (
@@ -803,6 +805,6 @@ export default function TelecallerDashboard() {
           </div>
         </div>
       )}
-    </Layout>
+    </>
   )
 }
