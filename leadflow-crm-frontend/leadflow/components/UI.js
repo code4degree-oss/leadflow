@@ -134,7 +134,10 @@ export function StatusBadge({ status }) {
     ready:          'badge-green',
     expired:        'badge-gray',
   }
-  const label = status?.replace(/_/g, ' ')
+  let label = status?.replace(/_/g, ' ')
+  if (status === 'called') {
+    label = 'follow up'
+  }
   return <span className={clsx('badge capitalize', map[status] || 'badge-gray')}>{label}</span>
 }
 

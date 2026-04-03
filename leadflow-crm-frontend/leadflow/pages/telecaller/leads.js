@@ -34,7 +34,7 @@ export default function TelecallerLeads() {
   // Drawer State
   const [selectedLead, setSelectedLead] = useState(null)
   const [drawerTab, setDrawerTab] = useState('form')
-  const [outcome, setOutcome] = useState('CALLED')
+  const [outcome, setOutcome] = useState('CALLBACK')
   const [notes, setNotes] = useState('')
   const [budget, setBudget] = useState('')
   const [area, setArea] = useState('')
@@ -117,8 +117,8 @@ export default function TelecallerLeads() {
     setInterestedFlat(lead.interested_flat || '')
     setSelectedProject(lead.project || '')
     setSelectedFieldAgent(lead.field_agent || '')
-    setOutcome('CALLED')
-    setNextCallAt(getSmartNextCall('CALLED'))
+    setOutcome('CALLBACK')
+    setNextCallAt(getSmartNextCall('CALLBACK'))
     setDrawerTab('form')
 
     setLoadingTimeline(true)
@@ -226,7 +226,7 @@ export default function TelecallerLeads() {
                 'px-4 py-2 rounded-xl text-xs font-bold transition-all capitalize border shadow-sm',
                 statusFilter === s ? 'bg-accent text-white border-accent' : 'bg-card text-txt2 hover:bg-bg2 border-border'
               )}>
-              {s === 'all' ? 'All' : s.replace(/_/g,' ')}
+              {s === 'all' ? 'All' : s === 'called' ? 'follow up' : s.replace(/_/g,' ')}
             </button>
           ))}
         </div>
@@ -347,22 +347,22 @@ export default function TelecallerLeads() {
                     <button
                       onClick={handleToggleHot}
                       className={clsx(
-                        'p-1.5 rounded-lg transition-all border shrink-0',
+                        'p-1.5 px-3 rounded-lg transition-all border shrink-0 flex items-center gap-2 text-xs font-bold',
                         selectedLead.is_hot
                           ? 'bg-hot/15 border-hot/30 text-hot shadow-md shadow-hot/20'
                           : 'bg-bg3 border-border text-txt3 hover:text-hot hover:border-hot/30'
                       )}
                       title={selectedLead.is_hot ? "Remove Hot flag" : "Mark as Hot Lead"}
                     >
-                      <Flame size={16} />
+                      <Flame size={16} /> {selectedLead.is_hot ? "Hot Lead" : "Mark as hot lead"}
                     </button>
                     {/* Call Button */}
                     <a
                       href={`tel:${selectedLead.phone}`}
-                      className="p-1.5 rounded-lg transition-all border bg-bg3 border-border text-txt3 hover:text-[#10B981] hover:border-[#10B981]/30 hover:bg-[#10B981]/10 flex items-center justify-center shrink-0"
+                      className="p-1.5 px-3 rounded-lg transition-all border bg-[#10B981]/10 border-[#10B981]/30 text-[#10B981] hover:bg-[#10B981] hover:text-white flex items-center gap-2 text-xs font-bold shrink-0"
                       title="Call via Dialer"
                     >
-                      <PhoneCall size={16} />
+                      <PhoneCall size={16} /> Call now
                     </a>
                   </div>
                   <p className="text-xs text-txt3 font-mono mt-1">{selectedLead.phone}</p>
@@ -418,7 +418,6 @@ export default function TelecallerLeads() {
                       {[
                         { key: 'INTERESTED', label: 'Interested', icon: Flame, activeClass: 'bg-accent2/10 border-accent2 text-accent2 shadow-md shadow-accent2/10' },
                         { key: 'CALLBACK', label: 'Follow-up', icon: Clock, activeClass: 'bg-accent/10 border-accent text-accent shadow-md shadow-accent/10' },
-                        { key: 'CALLED', label: 'Just Called', icon: PhoneCall, activeClass: 'bg-bg3 border-txt text-txt' },
                         { key: 'NOT_ANSWERED', label: 'No Answer', icon: PhoneOff, activeClass: 'bg-amber/10 border-amber text-amber shadow-md shadow-amber/10' },
                         { key: 'WON', label: '🎉 Won', icon: Trophy, activeClass: 'bg-[#10B981]/10 border-[#10B981] text-[#10B981] shadow-md shadow-[#10B981]/10' },
                         { key: 'INVALID_NUMBER', label: 'Dead No.', icon: PhoneOff, activeClass: 'bg-danger/10 border-danger text-danger shadow-md shadow-danger/10' },

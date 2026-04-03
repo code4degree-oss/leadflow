@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Layout from '../../components/Layout'
 import { StatusBadge } from '../../components/UI'
 import {
@@ -32,6 +32,7 @@ function todayStr() {
 export default function TelecallerDashboard() {
   // ═══ Tab state: 'new' or 'history' ═══
   const [activeTab, setActiveTab] = useState('new')
+  const dateInputRef = useRef(null)
 
   // ═══ Daily Target ═══
   const [target, setTarget] = useState(0)
@@ -53,7 +54,7 @@ export default function TelecallerDashboard() {
   // ═══ Lead Drawer ═══
   const [selectedLead, setSelectedLead] = useState(null)
   const [drawerTab, setDrawerTab] = useState('form')
-  const [outcome, setOutcome] = useState('CALLED')
+  const [outcome, setOutcome] = useState('CALLBACK')
   const [notes, setNotes] = useState('')
   const [budget, setBudget] = useState('')
   const [area, setArea] = useState('')
@@ -174,8 +175,8 @@ export default function TelecallerDashboard() {
     setInterestedFlat(lead.interested_flat || '')
     setSelectedProject(lead.project || '')
     setSelectedFieldAgent(lead.field_agent || '')
-    setOutcome('CALLED')
-    setNextCallAt(getSmartNextCall('CALLED'))
+    setOutcome('CALLBACK')
+    setNextCallAt(getSmartNextCall('CALLBACK'))
     setDrawerTab('form')
 
     setLoadingTimeline(true)
@@ -333,28 +334,25 @@ export default function TelecallerDashboard() {
           </button>
         </div>
         
-        {activeTab === 'new' && (
-          <button
-            onClick={handlePullLeads} disabled={pullingLeads}
-            className="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-xl text-sm font-bold shadow-lg shadow-accent/20 hover:scale-[1.02] transition-all disabled:opacity-50"
-          >
-            {pullingLeads ? <Loader2 size={16} className="animate-spin" /> : <ChevronRightIcon size={16} />}
-            Pull Leads
-          </button>
-        )}
+        {/* removed pull leads */}
       </div>
 
       {/* ═══ HISTORY TAB: Date picker + status filters ═══ */}
       {activeTab === 'history' && (
         <div className="mb-6 space-y-4">
           <div className="flex flex-col md:flex-row gap-3 items-start md:items-center">
-            <div className="flex items-center gap-2 bg-card rounded-xl border border-border px-4 py-2.5">
-              <Calendar size={14} className="text-purple" />
+            <div 
+              onClick={() => dateInputRef.current?.showPicker()}
+              className="flex items-center gap-2 bg-card rounded-xl border border-border px-4 py-2.5 cursor-pointer relative"
+            >
+              <Calendar size={14} className="text-purple pointer-events-none" />
               <input
+                ref={dateInputRef}
                 type="date"
                 value={historyDate}
                 onChange={e => setHistoryDate(e.target.value)}
-                className="bg-transparent text-sm font-bold text-txt outline-none"
+                className="bg-transparent text-sm font-bold text-txt outline-none cursor-pointer"
+                onClick={e => e.stopPropagation()}
               />
             </div>
             <div className="flex gap-1.5">
@@ -394,7 +392,7 @@ export default function TelecallerDashboard() {
                     ? 'bg-purple text-white border-purple shadow-purple/20'
                     : 'bg-card text-txt2 border-border hover:bg-bg3'
                 )}>
-                {s === 'all' ? 'All' : s.replace(/_/g, ' ')}
+                {s === 'all' ? 'All' : s === 'called' ? 'follow up' : s.replace(/_/g, ' ')}
               </button>
             ))}
           </div>
@@ -523,21 +521,21 @@ export default function TelecallerDashboard() {
                     <button
                       onClick={handleToggleHot}
                       className={clsx(
-                        'p-1.5 rounded-lg transition-all border shrink-0',
+                        'p-1.5 px-3 rounded-lg transition-all border shrink-0 flex items-center gap-2 text-xs font-bold',
                         selectedLead.is_hot
                           ? 'bg-hot/15 border-hot/30 text-hot shadow-md shadow-hot/20'
                           : 'bg-bg3 border-border text-txt3 hover:text-hot hover:border-hot/30'
                       )}
                       title={selectedLead.is_hot ? "Remove Hot flag" : "Mark as Hot Lead"}
                     >
-                      <Flame size={16} />
+                      <Flame size={16} /> {selectedLead.is_hot ? "Hot Lead" : "Mark as hot lead"}
                     </button>
                     <a
                       href={`tel:${selectedLead.phone}`}
-                      className="p-1.5 rounded-lg transition-all border bg-bg3 border-border text-txt3 hover:text-[#10B981] hover:border-[#10B981]/30 hover:bg-[#10B981]/10 flex items-center justify-center shrink-0"
+                      className="p-1.5 px-3 rounded-lg transition-all border bg-[#10B981]/10 border-[#10B981]/30 text-[#10B981] hover:bg-[#10B981] hover:text-white flex items-center gap-2 text-xs font-bold shrink-0"
                       title="Call via Dialer"
                     >
-                      <PhoneCall size={16} />
+                      <PhoneCall size={16} /> Call now
                     </a>
                   </div>
                   <p className="text-xs text-txt3 font-mono mt-1">{selectedLead.phone}</p>
@@ -592,7 +590,6 @@ export default function TelecallerDashboard() {
                       {[
                         { key: 'INTERESTED', label: 'Interested', icon: Flame, activeClass: 'bg-accent2/10 border-accent2 text-accent2 shadow-md shadow-accent2/10' },
                         { key: 'CALLBACK', label: 'Follow-up', icon: Clock, activeClass: 'bg-accent/10 border-accent text-accent shadow-md shadow-accent/10' },
-                        { key: 'CALLED', label: 'Just Called', icon: PhoneCall, activeClass: 'bg-bg3 border-txt text-txt' },
                         { key: 'NOT_ANSWERED', label: 'No Answer', icon: PhoneOff, activeClass: 'bg-amber/10 border-amber text-amber shadow-md shadow-amber/10' },
                         { key: 'WON', label: '🎉 Won', icon: Trophy, activeClass: 'bg-[#10B981]/10 border-[#10B981] text-[#10B981] shadow-md shadow-[#10B981]/10' },
                         { key: 'INVALID_NUMBER', label: 'Dead No.', icon: PhoneOff, activeClass: 'bg-danger/10 border-danger text-danger shadow-md shadow-danger/10' },
