@@ -76,8 +76,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                     inside = False
                     j = n - 1
                     for i in range(n):
-                        yi, xi = polygon_coords[i]['lat'], polygon_coords[i]['lng']
-                        yj, xj = polygon_coords[j]['lat'], polygon_coords[j]['lng']
+                        yi, xi = float(polygon_coords[i]['lat']), float(polygon_coords[i]['lng'])
+                        yj, xj = float(polygon_coords[j]['lat']), float(polygon_coords[j]['lng'])
                         if ((yi > lat) != (yj > lat)) and (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi):
                             inside = not inside
                         j = i

@@ -45,16 +45,34 @@ export default function LoginPage() {
     setErrorMsg('')
     setAuthStatus('Authenticating...')
 
-    // Helper: wait for geo if not resolved yet (max 3 seconds)
+    // Helper: Actively request geo if not resolved or null
     const waitForGeo = () => new Promise((resolve) => {
-      if (geoRef.current.resolved) return resolve()
-      const start = Date.now()
-      const interval = setInterval(() => {
-        if (geoRef.current.resolved || Date.now() - start > 3000) {
-          clearInterval(interval)
-          resolve()
-        }
-      }, 200)
+      if (geoRef.current.resolved && geoRef.current.lat !== null) {
+        return resolve()
+      }
+      
+      setAuthStatus('Checking location...')
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            geoRef.current = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+              resolved: true
+            }
+            resolve()
+          },
+          (error) => {
+            console.warn("Geolocation failed:", error)
+            geoRef.current = { lat: null, lng: null, resolved: true }
+            resolve()
+          },
+          { enableHighAccuracy: true, timeout: 15000 }
+        )
+      } else {
+        geoRef.current = { lat: null, lng: null, resolved: true }
+        resolve()
+      }
     })
 
     await waitForGeo()
