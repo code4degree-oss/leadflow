@@ -38,17 +38,29 @@ export default function ReminderPopup() {
 
       setPopups(upcoming)
 
-      // Try browser notification API for each upcoming reminder
-      if (upcoming.length > 0 && 'Notification' in window && Notification.permission === 'granted') {
+      // Play sound and show browser notification for each upcoming reminder
+      if (upcoming.length > 0) {
+        let soundPlayed = false;
+
         upcoming.forEach(r => {
           const notifKey = `notif_sent_${r.id}`
           if (!sessionStorage.getItem(notifKey)) {
-            const mins = Math.max(0, Math.round((new Date(r.scheduled_at) - now) / 60000))
-            new Notification('📞 Upcoming Follow-up', {
-              body: `${r.lead_name || 'Lead'} — ${r.note || 'Scheduled call'} (${mins} min${mins !== 1 ? 's' : ''} away)`,
-              icon: '/favicon.ico',
-              tag: `reminder-${r.id}`
-            })
+            // Play notification sound once per check
+            if (!soundPlayed) {
+              const audio = new Audio('/pop.mp3');
+              audio.play().catch(e => console.warn('Audio play failed:', e));
+              soundPlayed = true;
+            }
+
+            // Show native browser notification
+            if ('Notification' in window && Notification.permission === 'granted') {
+              const mins = Math.max(0, Math.round((new Date(r.scheduled_at) - now) / 60000))
+              new Notification('📞 Upcoming Follow-up', {
+                body: `${r.lead_name || 'Lead'} — ${r.note || 'Scheduled call'} (${mins} min${mins !== 1 ? 's' : ''} away)`,
+                icon: '/favicon.ico',
+                tag: `reminder-${r.id}`
+              })
+            }
             sessionStorage.setItem(notifKey, '1')
           }
         })
