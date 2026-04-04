@@ -1,1 +1,15 @@
 mobile-app/
+
+# Firebase secrets — NEVER commit these
+*firebase-adminsdk*
+firebase-service-account.json
+google-services.json
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Python
+__pycache__/
+*.pyc
