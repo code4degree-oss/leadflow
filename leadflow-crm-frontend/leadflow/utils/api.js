@@ -52,6 +52,11 @@ export async function fetchWithAuth(url, options = {}) {
 
     // If refresh fails or we don't have a refresh token, log out
     localStorage.clear() // clear everything safely
+    if (typeof document !== 'undefined') {
+      document.cookie = "cap_access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = "cap_refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = "cap_user_role=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    }
     window.location.href = '/'
     // We don't throw an error to prevent React crash, the redirect will handle it
     return new Promise(() => {}) 

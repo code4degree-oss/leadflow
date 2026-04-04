@@ -11,6 +11,22 @@ const ROOT_PAGES = ['/login', '/telecaller', '/admin', '/fieldagent', '/superadm
 export default function App({ Component, pageProps }) {
   const router = useRouter()
 
+  // Capacitor WebView Session Persistence Fix:
+  // Android aggressively clears localStorage when swiping the app away, but it persists cookies.
+  // This safely restores the tokens back to localStorage from cookies exactly when the app loads.
+  if (typeof window !== 'undefined') {
+    const backupTokenMatch = document.cookie.match(/(?:^|; )cap_access_token=([^;]*)/);
+    const backupRefreshMatch = document.cookie.match(/(?:^|; )cap_refresh_token=([^;]*)/);
+    const backupRoleMatch = document.cookie.match(/(?:^|; )cap_user_role=([^;]*)/);
+    
+    if (backupTokenMatch && !localStorage.getItem('access_token')) {
+      localStorage.setItem('access_token', backupTokenMatch[1]);
+      if (backupRefreshMatch) localStorage.setItem('refresh_token', backupRefreshMatch[1]);
+      if (backupRoleMatch) localStorage.setItem('user_role', backupRoleMatch[1]);
+      console.log('Restored Capacitor session from cookies.');
+    }
+  }
+
   useEffect(() => {
     // Only run in Capacitor (native app) context
     let cleanup = null

@@ -115,6 +115,13 @@ export default function LoginPage() {
       localStorage.setItem('subscription_status', data.subscription_status || 'active')
       localStorage.setItem('days_remaining', data.days_remaining != null ? String(data.days_remaining) : '')
       
+      // Capacitor WebView Persistent Sessions Backup
+      // Cookies reliably survive app kills on Android WebViews, whereas localStorage can be aggressively purged.
+      const expiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString(); // 30 days
+      document.cookie = `cap_access_token=${data.access}; expires=${expiry}; path=/; SameSite=Strict`;
+      document.cookie = `cap_refresh_token=${data.refresh}; expires=${expiry}; path=/; SameSite=Strict`;
+      document.cookie = `cap_user_role=${data.role}; expires=${expiry}; path=/; SameSite=Strict`;
+      
       // If user must change password, redirect
       if (data.must_change_password) {
         router.push('/change-password')
