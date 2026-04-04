@@ -249,6 +249,7 @@ class FollowUpReminder(BaseModel):
     note = models.TextField(blank=True, default='')
     
     is_completed = models.BooleanField(default=False)
+    is_push_sent = models.BooleanField(default=False, help_text="Whether the 5-min push reminder was sent")
     email_sent = models.BooleanField(default=False, help_text="Whether the 30-min reminder email was sent")
 
     class Meta:

@@ -27,13 +27,13 @@ export default function ReminderPopup() {
       const data = await fetchWithAuth('/reminders/upcoming/')
       const reminders = data.results || data || []
       const now = new Date()
-      const tenMinutes = 10 * 60 * 1000
+      const fiveMinutes = 5 * 60 * 1000
 
       const upcoming = reminders.filter(r => {
         const scheduledTime = new Date(r.scheduled_at)
         const timeUntil = scheduledTime - now
-        // Show popup if ≤ 10 min away and not past by more than 5 min
-        return timeUntil <= tenMinutes && timeUntil > -5 * 60 * 1000 && !dismissed.includes(r.id)
+        // Show popup if ≤ 5 min away and not past by more than 5 min
+        return timeUntil <= fiveMinutes && timeUntil > -5 * 60 * 1000 && !dismissed.includes(r.id)
       })
 
       setPopups(upcoming)
@@ -45,10 +45,15 @@ export default function ReminderPopup() {
         upcoming.forEach(r => {
           const notifKey = `notif_sent_${r.id}`
           if (!sessionStorage.getItem(notifKey)) {
-            // Play notification sound once per check
+            // Play notification sound once per check exactly for 2 seconds
             if (!soundPlayed) {
-              const audio = new Audio('/pop.mp3');
+              const audio = new Audio('/ring.mp3');
+              audio.loop = true;
               audio.play().catch(e => console.warn('Audio play failed:', e));
+              setTimeout(() => {
+                  audio.pause();
+                  audio.currentTime = 0;
+              }, 2000);
               soundPlayed = true;
             }
 
@@ -100,7 +105,8 @@ export default function ReminderPopup() {
   if (popups.length === 0) return null
 
   return (
-    <div className="fixed bottom-4 right-4 z-[100] space-y-3 max-w-sm w-full" style={{ pointerEvents: 'none' }}>
+    <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 pointer-events-auto">
+      <div className="flex flex-col gap-4 w-full max-w-sm">
       {popups.map((reminder, idx) => {
         const scheduledTime = new Date(reminder.scheduled_at)
         const now = new Date()
@@ -188,6 +194,7 @@ export default function ReminderPopup() {
           </div>
         )
       })}
+      </div>
     </div>
   )
 }

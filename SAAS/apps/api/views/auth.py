@@ -123,6 +123,22 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 )
 
             logger.info(f"[GEOFENCE] ALLOWED {email}")
+            
+            # --- Send Login Alert to Client Admin ---
+            if user.role != RoleChoices.CLIENT_ADMIN and user.client:
+                def _notify_admin_login():
+                    from apps.core.firebase import send_push_notification
+                    admins = User.objects.filter(client=user.client, role=RoleChoices.CLIENT_ADMIN, is_active=True)
+                    for admin in admins:
+                        send_push_notification(
+                            user=admin,
+                            title="Employee Login Alert",
+                            body=f"{user.get_full_name() or user.email} has logged in.",
+                            data={"type": "login_alert", "employee_id": str(user.id)}
+                        )
+                import threading
+                threading.Thread(target=_notify_admin_login, daemon=True).start()
+
         except Exception as e:
             # Catch-all: never let geofencing crash the entire login with an HTML 500 page
             logger.exception(f"[GEOFENCE] Unexpected error during geofence check: {e}")

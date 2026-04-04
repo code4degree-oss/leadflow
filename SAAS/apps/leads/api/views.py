@@ -296,6 +296,19 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
             lead_name = f"{lead.first_name} {lead.last_name}".strip()
             tc_name = f"{request.user.first_name} {request.user.last_name}".strip()
             admins = User.objects.filter(client=lead.client, role=RoleChoices.CLIENT_ADMIN, is_active=True)
+            
+            def _send_won_push_notif():
+                from apps.core.firebase import send_push_notification
+                for admin in admins:
+                    send_push_notification(
+                        user=admin,
+                        title=f"🎉 Lead {lead_name} won!",
+                        body=f"Converted by {tc_name}",
+                        data={"type": "lead_won", "lead_id": str(lead.id)}
+                    )
+            import threading
+            threading.Thread(target=_send_won_push_notif, daemon=True).start()
+
             for admin in admins:
                 Notification.objects.create(
                     client=lead.client, user=admin,

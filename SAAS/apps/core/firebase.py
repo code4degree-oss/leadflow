@@ -48,6 +48,17 @@ def send_push_notification(user, title, body, data=None):
             title=title,
             body=body,
         ),
+        android=messaging.AndroidConfig(
+            notification=messaging.AndroidNotification(
+                sound='default',
+                channel_id='leadflow_notifications'
+            )
+        ),
+        apns=messaging.APNSConfig(
+            payload=messaging.APNSPayload(
+                aps=messaging.Aps(sound='default')
+            )
+        ),
         data=data,
         tokens=tokens,
     )
