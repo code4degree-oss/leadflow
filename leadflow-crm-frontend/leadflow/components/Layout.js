@@ -93,6 +93,17 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
     // Register Push Notifications
     const setupNotifications = async () => {
       try {
+        // Check for native Android FCM token (injected by Capacitor MainActivity)
+        if (window.nativeFCMToken) {
+          await fetchWithAuth('/accounts/device-token/', {
+            method: 'POST',
+            body: JSON.stringify({ token: window.nativeFCMToken, device_type: 'android' })
+          });
+          console.log('Registered native Android FCM token');
+          return; // Native push is handled by Android OS, no need for web push
+        }
+
+        // Fallback to web push for browsers
         const token = await requestForToken();
         if (token) {
           await fetchWithAuth('/accounts/device-token/', {
@@ -101,7 +112,6 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
           });
           onMessageListener().then(payload => {
             console.log('Received foreground message: ', payload);
-            // Optionally, we could show a toast here in the future
           }).catch(err => console.log('failed: ', err));
         }
       } catch (err) {
@@ -109,9 +119,10 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
       }
     };
     
-    // Only ask if they are logged in and it's a browser
+    // Only ask if they are logged in
     if (localStorage.getItem('access_token')) {
-      setupNotifications();
+      // Delay slightly on Android to let native token injection happen
+      setTimeout(() => setupNotifications(), 1500);
     }
 
   }, [role])
