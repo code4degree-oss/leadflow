@@ -22,9 +22,39 @@ export async function fetchWithAuth(url, options = {}) {
 
   // Handle unauthorized/expired token
   if (response.status === 401) {
-    localStorage.removeItem('access_token')
+    const refreshToken = localStorage.getItem('refresh_token')
+    
+    // Attempt to silently refresh token
+    if (refreshToken && !url.includes('/auth/refresh/')) {
+      try {
+        const refreshRes = await fetch(`${API_BASE}/auth/refresh/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh: refreshToken })
+        });
+        
+        if (refreshRes.ok) {
+          const newData = await refreshRes.json();
+          localStorage.setItem('access_token', newData.access);
+          // Retry original request with new token
+          options.headers = options.headers || {};
+          options.headers['Authorization'] = `Bearer ${newData.access}`;
+          const retryRes = await fetch(`${API_BASE}${url}`, options);
+          
+          if (!retryRes.ok) throw new Error('Retry failed');
+          if (retryRes.status === 204) return null;
+          return retryRes.json();
+        }
+      } catch (e) {
+        console.error('Token refresh failed', e);
+      }
+    }
+
+    // If refresh fails or we don't have a refresh token, log out
+    localStorage.clear() // clear everything safely
     window.location.href = '/'
-    throw new Error('Unauthorized')
+    // We don't throw an error to prevent React crash, the redirect will handle it
+    return new Promise(() => {}) 
   }
 
   // Handle subscription expired — redirect to block page
