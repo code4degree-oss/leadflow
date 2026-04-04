@@ -44,8 +44,41 @@ export default function RouteGuard({ children }) {
       return
     }
 
-    const token = localStorage.getItem('access_token')
-    const role  = localStorage.getItem('user_role')
+    let token = localStorage.getItem('access_token')
+    let role  = localStorage.getItem('user_role')
+
+    // Capacitor Native/Cookie Resurrection:
+    // If memory was cleared by Android OS, reconstruct it BEFORE rejecting auth
+    if (!token && typeof window !== 'undefined') {
+        let nToken = null;
+        let nRefresh = null;
+        let nRole = null;
+
+        if (window.NativeStorage) {
+            nToken = window.NativeStorage.getItem('access_token');
+            nRefresh = window.NativeStorage.getItem('refresh_token');
+            nRole = window.NativeStorage.getItem('user_role');
+        }
+
+        if (!nToken) {
+            const bToken = document.cookie.match(/(?:^|; )cap_access_token=([^;]*)/);
+            const bRef = document.cookie.match(/(?:^|; )cap_refresh_token=([^;]*)/);
+            const bRole = document.cookie.match(/(?:^|; )cap_user_role=([^;]*)/);
+            nToken = bToken ? bToken[1] : null;
+            nRefresh = bRef ? bRef[1] : null;
+            nRole = bRole ? bRole[1] : null;
+        }
+
+        if (nToken) {
+            localStorage.setItem('access_token', nToken);
+            if (nRefresh) localStorage.setItem('refresh_token', nRefresh);
+            if (nRole) localStorage.setItem('user_role', nRole);
+            
+            token = nToken;
+            role = nRole;
+            console.log('Restored Capacitor session perfectly in RouteGuard!');
+        }
+    }
 
     // Not logged in → redirect to login
     if (!token) {
