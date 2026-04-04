@@ -183,4 +183,7 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
+# Firebase Configuration
+FIREBASE_SERVICE_ACCOUNT_PATH = env("FIREBASE_SERVICE_ACCOUNT_PATH", default=os.path.join(BASE_DIR, "firebase-service-account.json"))
+
 # End of settings

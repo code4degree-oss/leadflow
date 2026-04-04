@@ -39,6 +39,7 @@ export default function TelecallerLeads() {
   const [budget, setBudget] = useState('')
   const [area, setArea] = useState('')
   const [interestedFlat, setInterestedFlat] = useState('')
+  const [bhkPreference, setBhkPreference] = useState('')
   const [nextCallAt, setNextCallAt] = useState('')
   const [selectedProject, setSelectedProject] = useState('')
   const [selectedFieldAgent, setSelectedFieldAgent] = useState('')
@@ -84,9 +85,11 @@ export default function TelecallerLeads() {
     finally { setLoading(false) }
   }
 
-  const fetchProjects = async () => {
+  const fetchProjects = async (bhk = '') => {
     try {
-      const data = await fetchWithAuth('/projects/')
+      let url = '/projects/'
+      if (bhk) url += `?bhk=${bhk}`
+      const data = await fetchWithAuth(url)
       setProjects(data.results || data || [])
     } catch (err) { console.error(err) }
   }
@@ -114,8 +117,11 @@ export default function TelecallerLeads() {
     setNotes(lead.notes || '')
     setBudget(lead.budget || '')
     setArea(lead.area || '')
-    setInterestedFlat(lead.interested_flat || '')
+    const leadBhk = lead.interested_flat || ''
+    setInterestedFlat(leadBhk)
+    setBhkPreference(leadBhk)
     setSelectedProject(lead.project || '')
+    if (leadBhk) fetchProjects(leadBhk.replace('BHK', ''))
     setSelectedFieldAgent(lead.field_agent || '')
     setOutcome('CALLBACK')
     setNextCallAt(getSmartNextCall('CALLBACK'))
@@ -482,20 +488,38 @@ export default function TelecallerLeads() {
                       </div>
                     </div>
 
-                    {/* Project Dropdown */}
+                    {/* BHK Requirement */}
+                    <div>
+                      <label className="text-[10px] text-txt3 mb-1 block flex items-center gap-1"><Home size={10} /> Requirement (BHK)</label>
+                      <select value={interestedFlat} onChange={e => {
+                        const val = e.target.value
+                        setInterestedFlat(val)
+                        setBhkPreference(val)
+                        setSelectedProject('')
+                        if (val) {
+                          fetchProjects(val.replace('BHK', ''))
+                        } else {
+                          fetchProjects()
+                        }
+                      }} className="input w-full bg-bg3 text-sm">
+                        <option value="">Select requirement...</option>
+                        <option value="1BHK">1 BHK</option>
+                        <option value="2BHK">2 BHK</option>
+                        <option value="3BHK">3 BHK</option>
+                      </select>
+                    </div>
+
+                    {/* Project Dropdown — filtered by BHK */}
                     <div>
                       <label className="text-[10px] text-txt3 mb-1 block flex items-center gap-1"><Building2 size={10} /> Interested Project</label>
                       <select value={selectedProject} onChange={e => setSelectedProject(e.target.value)}
                         className="input w-full bg-bg3 text-sm">
-                        <option value="">Select a project...</option>
-                        {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                        <option value="">{bhkPreference ? `Projects with ${bhkPreference} available...` : 'Select a project...'}</option>
+                        {projects.map(p => <option key={p.id} value={p.id}>{p.name}{p.location ? ` — ${p.location}` : ''}</option>)}
                       </select>
-                    </div>
-
-                    <div>
-                      <label className="text-[10px] text-txt3 mb-1 block flex items-center gap-1"><Home size={10} /> Interested Flat / Unit</label>
-                      <input value={interestedFlat} onChange={e => setInterestedFlat(e.target.value)}
-                        placeholder="e.g. 2BHK Tower A" className="input w-full bg-bg3 text-sm" />
+                      {bhkPreference && projects.length === 0 && (
+                        <p className="text-[9px] text-amber mt-1">⚠ No projects with {bhkPreference} available</p>
+                      )}
                     </div>
 
                     {/* Field Agent Assignment */}

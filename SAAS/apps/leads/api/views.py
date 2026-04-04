@@ -8,9 +8,9 @@ from apps.api.permissions import IsClientAdmin, IsTelecallerOrHigher
 from apps.leads.api.serializers import (
     LeadSerializer, LeadBatchSerializer, SiteVisitSerializer,
     FollowUpReminderSerializer, CallLogSerializer, ActivityTimelineSerializer,
-    ProjectSerializer
+    ProjectSerializer, NotificationSerializer
 )
-from apps.leads.models import Lead, LeadBatch, SiteVisit, LeadStatus, FollowUpReminder, ActivityTimeline, ActivityType, Project
+from apps.leads.models import Lead, LeadBatch, SiteVisit, LeadStatus, FollowUpReminder, ActivityTimeline, ActivityType, Project, Notification, NotificationType
 import datetime
 from apps.leads.tasks import process_lead_batch
 from apps.leads.services import LeadDistributionService, LeadOperationService
@@ -292,6 +292,17 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
                 changes={'old_status': old_status, 'telecaller': request.user.email,
                          'field_agent': lead.field_agent.email if lead.field_agent else None}
             )
+            # Notify all admins of this client
+            lead_name = f"{lead.first_name} {lead.last_name}".strip()
+            tc_name = f"{request.user.first_name} {request.user.last_name}".strip()
+            admins = User.objects.filter(client=lead.client, role=RoleChoices.CLIENT_ADMIN, is_active=True)
+            for admin in admins:
+                Notification.objects.create(
+                    client=lead.client, user=admin,
+                    title=f"🎉 Lead {lead_name} won!",
+                    message=f"Converted by {tc_name}",
+                    notif_type=NotificationType.WON, lead=lead,
+                )
             return Response({"detail": "🎉 Lead marked as WON!", "status": lead.status})
 
         elif outcome == 'LOST':
@@ -385,69 +396,48 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
 
     def _handle_lost(self, lead, request):
         """
-        Lost-lead escalation logic:
-        - lost_count < 4: move to unassigned pool, reset to NEW
-        - lost_count >= 4: mark LOST, lands in admin review queue
+        Marks the lead as LOST. It will appear in the Telecaller's "Lost" tab 
+        and in the Admin's "Lost Review Queue" for manual reassignment.
         """
         lead.lost_count += 1
         lead.last_interaction_at = timezone.now()
+        lead.status = LeadStatus.LOST
+        lead.save()
 
-        if lead.lost_count < 4:
-            # Place it back in the unassigned pool
-            assigned_to_email = lead.assigned_to.email if lead.assigned_to else None
-            lead.assigned_to = None
-            lead.status = LeadStatus.NEW
-            lead.save()
+        ActivityTimeline.objects.create(
+            client=lead.client, lead=lead, performed_by=request.user,
+            activity_type=ActivityType.CALL_LOGGED,
+            title=f"Call logged \u2014 marked Lost",
+            metadata={'outcome': 'LOST', 'lost_count': lead.lost_count}
+        )
 
-            ActivityTimeline.objects.create(
-                client=lead.client, lead=lead, performed_by=request.user,
-                activity_type=ActivityType.CALL_LOGGED,
-                title=f"Call logged \u2014 marked Lost (placed in unassigned pool, count: {lead.lost_count}/4)",
-                metadata={'outcome': 'LOST', 'lost_count': lead.lost_count, 'unassigned_from': assigned_to_email}
-            )
-
-            AuditService.record_action(
-                user=request.user,
-                action="LEAD_LOST_UNASSIGN",
-                resource_type="Lead",
-                resource_id=lead.id,
-                changes={
-                    "lost_count": lead.lost_count,
-                    "unassigned_from": assigned_to_email
-                }
-            )
-
-            return Response({
-                "detail": f"Lead moved to unassigned pool (lost count: {lead.lost_count}/4).",
+        AuditService.record_action(
+            user=request.user,
+            action="LEAD_LOST",
+            resource_type="Lead",
+            resource_id=lead.id,
+            changes={
                 "lost_count": lead.lost_count,
-                "status": lead.status,
-                "assigned_to": None
-            })
-        else:
-            # Escalate to admin review queue
-            lead.status = LeadStatus.LOST
-            lead.save()
+            }
+        )
 
-            ActivityTimeline.objects.create(
-                client=lead.client, lead=lead, performed_by=request.user,
-                activity_type=ActivityType.CALL_LOGGED,
-                title=f"Call logged \u2014 marked Lost (escalated to admin, count: {lead.lost_count})",
-                metadata={'outcome': 'LOST', 'lost_count': lead.lost_count}
+        # Notify admins
+        lead_name = f"{lead.first_name} {lead.last_name}".strip()
+        tc_name = f"{request.user.first_name} {request.user.last_name}".strip()
+        admins = User.objects.filter(client=lead.client, role=RoleChoices.CLIENT_ADMIN, is_active=True)
+        for admin in admins:
+            Notification.objects.create(
+                client=lead.client, user=admin,
+                title=f"Lead {lead_name} marked lost",
+                message=f"By {tc_name} (Lost count: {lead.lost_count})",
+                notif_type=NotificationType.LOST, lead=lead,
             )
 
-            AuditService.record_action(
-                user=request.user,
-                action="LEAD_ESCALATED",
-                resource_type="Lead",
-                resource_id=lead.id,
-                changes={"lost_count": lead.lost_count}
-            )
-
-            return Response({
-                "detail": "Lead escalated to admin review (lost 4+ times).",
-                "lost_count": lead.lost_count,
-                "status": lead.status
-            })
+        return Response({
+            "detail": "Lead marked as Lost.",
+            "lost_count": lead.lost_count,
+            "status": lead.status
+        })
 
     # ──────────────────────────────────────────────
     # Admin Lost-Leads Queue
@@ -470,10 +460,9 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='lost-queue', permission_classes=[IsClientAdmin])
     def lost_queue(self, request):
-        """Returns leads that have been lost 4+ times for admin review."""
+        """Returns all leads marked as LOST for admin review."""
         qs = Lead.objects.filter(
             client=request.user.client,
-            lost_count__gte=4,
             status=LeadStatus.LOST,
             is_archived=False
         ).select_related('assigned_to')
@@ -1129,6 +1118,16 @@ class ProjectViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
         # Only show active projects for non-admin users
         if self.request.user.role in (RoleChoices.TELECALLER, RoleChoices.FIELD_AGENT):
             qs = qs.filter(is_active=True)
+
+        # Optional BHK filter: ?bhk=1 or ?bhk=2 or ?bhk=3
+        bhk = self.request.query_params.get('bhk')
+        if bhk == '1':
+            qs = qs.filter(has_1bhk=True, available_1bhk__gt=0)
+        elif bhk == '2':
+            qs = qs.filter(has_2bhk=True, available_2bhk__gt=0)
+        elif bhk == '3':
+            qs = qs.filter(has_3bhk=True, available_3bhk__gt=0)
+
         return qs
 
     def perform_create(self, serializer):
@@ -1138,3 +1137,80 @@ class ProjectViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
         if self.action in ('create', 'update', 'partial_update', 'destroy'):
             return [IsClientAdmin()]
         return super().get_permissions()
+
+
+class NotificationViewSet(TenantQuerySetMixin, viewsets.GenericViewSet):
+    """
+    In-app notifications. All authenticated users see their own notifications.
+    """
+    serializer_class = NotificationSerializer
+    permission_classes = [IsTelecallerOrHigher]
+    queryset = Notification.objects.all()
+
+    def get_queryset(self):
+        return super().get_queryset().filter(user=self.request.user)
+
+    def list(self, request):
+        qs = self.get_queryset()[:30]
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def unread_count(self, request):
+        count = self.get_queryset().filter(is_read=False).count()
+        return Response({'count': count})
+
+    @action(detail=True, methods=['post'])
+    def read(self, request, pk=None):
+        notif = self.get_object()
+        notif.is_read = True
+        notif.save(update_fields=['is_read'])
+        return Response({'status': 'ok'})
+
+    @action(detail=False, methods=['post'])
+    def read_all(self, request):
+        self.get_queryset().filter(is_read=False).update(is_read=True)
+        return Response({'status': 'ok'})
+
+    @action(detail=False, methods=['post'])
+    def check_reminders(self, request):
+        """
+        Called periodically to generate reminder notifications for upcoming calls.
+        Creates notifications for follow-ups due within the next 5 minutes.
+        """
+        now = timezone.now()
+        window = now + datetime.timedelta(minutes=5)
+
+        # Find reminders due in the next 5 minutes that haven't been notified
+        upcoming = FollowUpReminder.objects.filter(
+            client=request.user.client,
+            scheduled_at__gte=now,
+            scheduled_at__lte=window,
+            is_completed=False
+        ).select_related('lead', 'created_by')
+
+        created = 0
+        for reminder in upcoming:
+            if not reminder.created_by:
+                continue
+            # Don't duplicate
+            exists = Notification.objects.filter(
+                user=reminder.created_by,
+                lead=reminder.lead,
+                notif_type=NotificationType.REMINDER,
+                created_at__gte=now - datetime.timedelta(minutes=10)
+            ).exists()
+            if not exists:
+                lead_name = f"{reminder.lead.first_name} {reminder.lead.last_name}".strip()
+                mins = max(1, int((reminder.scheduled_at - now).total_seconds() // 60))
+                Notification.objects.create(
+                    client=request.user.client,
+                    user=reminder.created_by,
+                    title=f"📞 Call {lead_name} in {mins} min",
+                    message=reminder.note or f"Scheduled follow-up with {lead_name}",
+                    notif_type=NotificationType.REMINDER,
+                    lead=reminder.lead,
+                )
+                created += 1
+
+        return Response({'created': created})

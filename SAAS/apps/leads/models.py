@@ -77,7 +77,25 @@ class Project(BaseModel):
     Telecallers select from dropdown when logging calls.
     """
     name = models.CharField(max_length=255)
+    location = models.CharField(max_length=255, blank=True, default='')
+    description = models.TextField(blank=True, default='')
+    price_range = models.CharField(max_length=100, blank=True, default='', help_text="e.g. 65L – 1.2Cr")
     is_active = models.BooleanField(default=True)
+
+    # 1BHK inventory
+    has_1bhk = models.BooleanField(default=False)
+    total_1bhk = models.IntegerField(default=0)
+    available_1bhk = models.IntegerField(default=0)
+
+    # 2BHK inventory
+    has_2bhk = models.BooleanField(default=False)
+    total_2bhk = models.IntegerField(default=0)
+    available_2bhk = models.IntegerField(default=0)
+
+    # 3BHK inventory
+    has_3bhk = models.BooleanField(default=False)
+    total_3bhk = models.IntegerField(default=0)
+    available_3bhk = models.IntegerField(default=0)
 
     class Meta:
         ordering = ['name']
@@ -327,3 +345,85 @@ class ActivityTimeline(BaseModel):
 
     def __str__(self):
         return f"[{self.activity_type}] {self.lead} - {self.title}"
+
+
+class NotificationType(models.TextChoices):
+    WON = "WON", _("Lead Won")
+    LOST = "LOST", _("Lead Lost")
+    REMINDER = "REMINDER", _("Call Reminder")
+    ASSIGNMENT = "ASSIGNMENT", _("Lead Assigned")
+    VISIT = "VISIT", _("Site Visit")
+    UPLOAD = "UPLOAD", _("Leads Uploaded")
+    INFO = "INFO", _("General Info")
+
+
+class Notification(BaseModel):
+    """
+    In-app notification for all user roles.
+    """
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE,
+        related_name='lead_notifications',
+        help_text="The recipient of this notification"
+    )
+    title = models.CharField(max_length=255)
+    message = models.TextField(blank=True, default='')
+    notif_type = models.CharField(
+        max_length=20,
+        choices=NotificationType.choices,
+        default=NotificationType.INFO,
+        db_index=True,
+    )
+    is_read = models.BooleanField(default=False, db_index=True)
+
+    # Optional links to related objects for "View" action
+    lead = models.ForeignKey(
+        'Lead', on_delete=models.CASCADE,
+        null=True, blank=True,
+        related_name='notifications',
+    )
+    site_visit = models.ForeignKey(
+        'SiteVisit', on_delete=models.CASCADE,
+        null=True, blank=True,
+        related_name='notifications',
+    )
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'is_read', 'created_at']),
+            models.Index(fields=['client', 'user']),
+        ]
+
+    def __str__(self):
+        return f"[{self.notif_type}] {self.user} - {self.title}"
+
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+@receiver(post_save, sender=Notification)
+def send_push_on_notification(sender, instance, created, **kwargs):
+    """
+    Listens for new in-app notifications and triggers an FCM Push Notification.
+    """
+    if created:
+        from apps.core.firebase import send_push_notification
+        
+        # Prepare custom data payload
+        data = {
+            'notif_id': str(instance.id),
+            'notif_type': instance.notif_type,
+        }
+        if instance.lead_id:
+            data['lead_id'] = str(instance.lead_id)
+            
+        # Push notification sent asynchronously via Firebase Admin (fire-and-forget for now, 
+        # normally you might use Celery here, but this works for lightweight initial implementation)
+        send_push_notification(
+            user=instance.user,
+            title=instance.title,
+            body=instance.message,
+            data=data
+        )
+

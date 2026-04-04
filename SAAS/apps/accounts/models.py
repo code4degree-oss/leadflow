@@ -156,3 +156,22 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.type}: {self.title} → {self.user.email}"
+
+
+class FCMDevice(models.Model):
+    """
+    Stores Firebase Cloud Messaging (FCM) push tokens for users.
+    A user can have multiple devices (web, android, ios).
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='fcm_devices')
+    registration_id = models.CharField(max_length=512, unique=True, help_text="The FCM registration token")
+    device_type = models.CharField(max_length=20, default='web', help_text="web, android, or ios")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return f"{self.user.email} - {self.device_type} (Active: {self.is_active})"

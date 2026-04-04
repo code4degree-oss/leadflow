@@ -8,7 +8,7 @@ from django.db import transaction
 from django.db.models import F
 from django.contrib.postgres.search import TrigramSimilarity
 
-from apps.leads.models import Lead, LeadStatus, LeadBatch, LeadBatchStatus, LeadSource
+from apps.leads.models import Lead, LeadStatus, LeadBatch, LeadBatchStatus, LeadSource, Notification, NotificationType
 from apps.accounts.models import User, RoleChoices
 
 class LeadDistributionService:
@@ -34,6 +34,7 @@ class LeadDistributionService:
             )
             
             return True, f"Lead assigned to {user.email}"
+            # Note: Notification for manual assign happens in the view layer
             
         except User.DoesNotExist:
             return False, "Valid User not found for this client."

@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
+import { requestForToken, onMessageListener } from '../utils/firebase'
+import { fetchWithAuth } from '../utils/api'
 import SubscriptionBanner from './SubscriptionBanner'
+import NotificationDropdown from './NotificationDropdown'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import {
@@ -68,7 +71,6 @@ const navConfig = {
 export default function Layout({ children, role = 'admin', pageTitle = '', actions }) {
   const router = useRouter()
   const config = navConfig[role]
-  const [notifOpen, setNotifOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [isInactive, setIsInactive] = useState(false)
@@ -87,6 +89,31 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
       const subActive = localStorage.getItem('subscription_active')
       setIsInactive(subActive === 'false')
     }
+
+    // Register Push Notifications
+    const setupNotifications = async () => {
+      try {
+        const token = await requestForToken();
+        if (token) {
+          await fetchWithAuth('/accounts/device-token/', {
+            method: 'POST',
+            body: JSON.stringify({ token, device_type: 'web' })
+          });
+          onMessageListener().then(payload => {
+            console.log('Received foreground message: ', payload);
+            // Optionally, we could show a toast here in the future
+          }).catch(err => console.log('failed: ', err));
+        }
+      } catch (err) {
+        console.log('Error registering push notifications:', err);
+      }
+    };
+    
+    // Only ask if they are logged in and it's a browser
+    if (localStorage.getItem('access_token')) {
+      setupNotifications();
+    }
+
   }, [role])
 
   const handleLogout = () => {
@@ -199,17 +226,8 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
         <div className="flex-1 flex items-center gap-3 min-w-0">
           <h1 className="font-display font-bold text-base md:text-lg text-txt truncate">{pageTitle}</h1>
         </div>
-        <div className="relative hidden md:block">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-txt3" />
-          <input className="input pl-8 w-52 h-8 text-xs" placeholder="Search leads, employees…" />
-        </div>
-        <button
-          onClick={() => setNotifOpen(!notifOpen)}
-          className="relative w-8 h-8 flex items-center justify-center rounded-lg hover:bg-card2 transition-colors text-txt2"
-        >
-          <Bell size={16} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-accent2 rounded-full pulse-dot" />
-        </button>
+
+        <NotificationDropdown role={role} />
 
         {/* Mobile Profile Toggle */}
         <div className="relative md:hidden ml-1">

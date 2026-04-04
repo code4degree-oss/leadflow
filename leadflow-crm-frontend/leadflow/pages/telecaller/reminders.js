@@ -62,6 +62,7 @@ export default function Reminders() {
   const [budget, setBudget] = useState('')
   const [area, setArea] = useState('')
   const [interestedFlat, setInterestedFlat] = useState('')
+  const [bhkPreference, setBhkPreference] = useState('')
   const [nextCallAt, setNextCallAt] = useState('')
   const [selectedProject, setSelectedProject] = useState('')
   const [selectedFieldAgent, setSelectedFieldAgent] = useState('')
@@ -80,9 +81,11 @@ export default function Reminders() {
     fetchFieldAgents()
   }, [])
 
-  const fetchProjects = async () => {
+  const fetchProjects = async (bhk = '') => {
     try {
-      const data = await fetchWithAuth('/projects/')
+      let url = '/projects/'
+      if (bhk) url += `?bhk=${bhk}`
+      const data = await fetchWithAuth(url)
       setProjects(data.results || data || [])
     } catch (err) { console.error(err) }
   }
@@ -153,8 +156,11 @@ export default function Reminders() {
     setNotes(lead.notes || '')
     setBudget(lead.budget || '')
     setArea(lead.area || '')
-    setInterestedFlat(lead.interested_flat || '')
+    const leadBhk = lead.interested_flat || ''
+    setInterestedFlat(leadBhk)
+    setBhkPreference(leadBhk)
     setSelectedProject(lead.project || '')
+    if (leadBhk) fetchProjects(leadBhk.replace('BHK', ''))
     setSelectedFieldAgent(lead.field_agent || '')
     setOutcome('CALLBACK')
     setNextCallAt(getSmartNextCall('CALLBACK'))
@@ -260,7 +266,7 @@ export default function Reminders() {
 
   return (
     <>
-      <Layout activePage="reminders" pageTitle="Call Reminders">
+      <Layout role="telecaller" activePage="reminders" pageTitle="Call Reminders">
         <div className="px-6 py-6 pb-20 max-w-2xl space-y-5">
 
         {loading ? (
@@ -518,17 +524,36 @@ export default function Reminders() {
                         <input type="text" className="input text-sm w-full bg-bg3 py-2" placeholder="e.g. Baner, Pune" value={area} onChange={e => setArea(e.target.value)} />
                       </div>
                     </div>
+                    {/* BHK Requirement */}
+                    <div className="mb-3">
+                      <label className="text-[9px] font-medium text-txt3 mb-1 block flex items-center gap-1"><Home size={10} />Requirement (BHK)</label>
+                      <select className="input text-sm w-full bg-bg3 py-2" value={interestedFlat} onChange={e => {
+                        const val = e.target.value
+                        setInterestedFlat(val)
+                        setBhkPreference(val)
+                        setSelectedProject('')
+                        if (val) {
+                          fetchProjects(val.replace('BHK', ''))
+                        } else {
+                          fetchProjects()
+                        }
+                      }}>
+                        <option value="">Select requirement...</option>
+                        <option value="1BHK">1 BHK</option>
+                        <option value="2BHK">2 BHK</option>
+                        <option value="3BHK">3 BHK</option>
+                      </select>
+                    </div>
+                    {/* Project Dropdown — filtered by BHK */}
                     <div className="mb-3">
                       <label className="text-[9px] font-medium text-txt3 mb-1 block flex items-center gap-1"><Building2 size={10} />Interested Project</label>
                       <select className="input text-sm w-full bg-bg3 py-2" value={selectedProject} onChange={e => setSelectedProject(e.target.value)}>
-                        <option value="">Select a project...</option>
-                        {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                        <option value="">{bhkPreference ? `Projects with ${bhkPreference}...` : 'Select a project...'}</option>
+                        {projects.map(p => <option key={p.id} value={p.id}>{p.name}{p.location ? ` — ${p.location}` : ''}</option>)}
                       </select>
-                    </div>
-                    {/* Interested Flat */}
-                    <div className="mb-3">
-                      <label className="text-[9px] font-medium text-txt3 mb-1 block flex items-center gap-1"><Home size={10} />Interested Flat / Unit</label>
-                      <input type="text" className="input text-sm w-full bg-bg3 py-2" placeholder="e.g. A-402, 2BHK" value={interestedFlat} onChange={e => setInterestedFlat(e.target.value)} />
+                      {bhkPreference && projects.length === 0 && (
+                        <p className="text-[9px] text-amber mt-1">⚠ No projects with {bhkPreference} available</p>
+                      )}
                     </div>
                     {/* Field Agent Assignment */}
                     <div className="mb-3">

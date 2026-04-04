@@ -448,7 +448,7 @@ export default function AdminLeads() {
               <AlertTriangle size={16} className="text-danger" />
               <div>
                 <h2 className="text-sm font-bold text-txt">Lost Leads Review Queue</h2>
-                <p className="text-[10px] text-txt3">Leads marked lost 4+ times.</p>
+                <p className="text-[10px] text-txt3">Leads marked as Lost by employees.</p>
               </div>
             </div>
           </div>

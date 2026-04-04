@@ -85,43 +85,114 @@ class ClientLocationViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
         serializer.save(client=self.request.user.client)
 
 
-class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
+class NotificationViewSet(viewsets.GenericViewSet):
     """
     API endpoint for users to view their in-app notifications.
+    Uses Notification model from leads app.
     """
     from rest_framework.permissions import IsAuthenticated
     permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
-        from rest_framework import serializers as drf_serializers
-        from apps.accounts.models import Notification
-
-        class NotificationSerializer(drf_serializers.ModelSerializer):
-            class Meta:
-                model = Notification
-                fields = ['id', 'type', 'title', 'message', 'is_read', 'created_at']
-                read_only_fields = fields
-
+        from apps.leads.api.serializers import NotificationSerializer
         return NotificationSerializer
 
     def get_queryset(self):
-        from apps.accounts.models import Notification
-        return Notification.objects.filter(user=self.request.user)
+        from apps.leads.models import Notification
+        return Notification.objects.filter(user=self.request.user, client=self.request.user.client)
 
-    @action(detail=False, methods=['post'], url_path='mark-read')
-    def mark_read(self, request):
-        """Mark all notifications as read, or specific IDs if provided."""
-        from apps.accounts.models import Notification
-        ids = request.data.get('ids', None)
-        qs = Notification.objects.filter(user=request.user, is_read=False)
-        if ids:
-            qs = qs.filter(id__in=ids)
-        count = qs.update(is_read=True)
-        return Response({"detail": f"{count} notifications marked as read."})
+    def list(self, request):
+        qs = self.get_queryset()[:30]
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def read(self, request, pk=None):
+        from apps.leads.models import Notification
+        try:
+            notif = Notification.objects.get(id=pk, user=request.user)
+            notif.is_read = True
+            notif.save(update_fields=['is_read'])
+        except Notification.DoesNotExist:
+            pass
+        return Response({'status': 'ok'})
+
+    @action(detail=False, methods=['post'], url_path='read-all')
+    def read_all(self, request):
+        self.get_queryset().filter(is_read=False).update(is_read=True)
+        return Response({'status': 'ok'})
 
     @action(detail=False, methods=['get'], url_path='unread-count')
     def unread_count(self, request):
-        from apps.accounts.models import Notification
-        count = Notification.objects.filter(user=request.user, is_read=False).count()
-        return Response({"unread_count": count})
+        count = self.get_queryset().filter(is_read=False).count()
+        return Response({'count': count})
 
+    @action(detail=False, methods=['post'], url_path='check-reminders')
+    def check_reminders(self, request):
+        """Generate reminder notifications for upcoming calls (within 5 min)."""
+        from apps.leads.models import FollowUpReminder, Notification, NotificationType
+        from django.utils import timezone
+        import datetime
+
+        now = timezone.now()
+        window = now + datetime.timedelta(minutes=5)
+
+        upcoming = FollowUpReminder.objects.filter(
+            client=request.user.client,
+            scheduled_at__gte=now,
+            scheduled_at__lte=window,
+            is_completed=False
+        ).select_related('lead', 'created_by')
+
+        created = 0
+        for reminder in upcoming:
+            if not reminder.created_by:
+                continue
+            exists = Notification.objects.filter(
+                user=reminder.created_by,
+                lead=reminder.lead,
+                notif_type=NotificationType.REMINDER,
+                created_at__gte=now - datetime.timedelta(minutes=10)
+            ).exists()
+            if not exists:
+                lead_name = f"{reminder.lead.first_name} {reminder.lead.last_name}".strip()
+                mins = max(1, int((reminder.scheduled_at - now).total_seconds() // 60))
+                Notification.objects.create(
+                    client=request.user.client,
+                    user=reminder.created_by,
+                    title=f"📞 Call {lead_name} in {mins} min",
+                    message=reminder.note or f"Scheduled follow-up with {lead_name}",
+                    notif_type=NotificationType.REMINDER,
+                    lead=reminder.lead,
+                )
+                created += 1
+
+        return Response({'created': created})
+
+
+class FCMDeviceViewSet(viewsets.ViewSet):
+    """
+    Registers a Firebase Cloud Messaging device token for push notifications.
+    """
+    from rest_framework.permissions import IsAuthenticated
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request):
+        from apps.accounts.models import FCMDevice
+        token = request.data.get('token')
+        device_type = request.data.get('device_type', 'web')
+
+        if not token:
+            return Response({"error": "Token is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update or create
+        device, created = FCMDevice.objects.update_or_create(
+            registration_id=token,
+            defaults={
+                'user': request.user,
+                'device_type': device_type,
+                'is_active': True
+            }
+        )
+
+        return Response({"message": "Device token accepted", "created": created})

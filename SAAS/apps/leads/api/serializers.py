@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.leads.models import Lead, LeadStatus, LeadBatch, SiteVisit, FollowUpReminder, ActivityTimeline, ActivityType, Project
+from apps.leads.models import Lead, LeadStatus, LeadBatch, SiteVisit, FollowUpReminder, ActivityTimeline, ActivityType, Project, Notification
 from apps.accounts.models import RoleChoices
 
 class LeadSerializer(serializers.ModelSerializer):
@@ -179,7 +179,14 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ['id', 'name', 'is_active', 'lead_count', 'created_at']
+        fields = [
+            'id', 'name', 'location', 'description', 'price_range',
+            'is_active',
+            'has_1bhk', 'total_1bhk', 'available_1bhk',
+            'has_2bhk', 'total_2bhk', 'available_2bhk',
+            'has_3bhk', 'total_3bhk', 'available_3bhk',
+            'lead_count', 'created_at'
+        ]
         read_only_fields = ['created_at']
 
     def get_lead_count(self, obj):
@@ -203,3 +210,37 @@ class ActivityTimelineSerializer(serializers.ModelSerializer):
             return name if name else obj.performed_by.email
         return 'System'
 
+
+class NotificationSerializer(serializers.ModelSerializer):
+    lead_name = serializers.SerializerMethodField(read_only=True)
+    time_ago = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Notification
+        fields = [
+            'id', 'title', 'message', 'notif_type', 'is_read',
+            'lead', 'lead_name', 'site_visit',
+            'created_at', 'time_ago'
+        ]
+        read_only_fields = ['id', 'title', 'message', 'notif_type', 'lead', 'site_visit', 'created_at']
+
+    def get_lead_name(self, obj):
+        if obj.lead:
+            return f"{obj.lead.first_name} {obj.lead.last_name}".strip()
+        return None
+
+    def get_time_ago(self, obj):
+        from django.utils import timezone
+        delta = timezone.now() - obj.created_at
+        seconds = int(delta.total_seconds())
+        if seconds < 60:
+            return 'just now'
+        elif seconds < 3600:
+            m = seconds // 60
+            return f'{m}m ago'
+        elif seconds < 86400:
+            h = seconds // 3600
+            return f'{h}h ago'
+        else:
+            d = seconds // 86400
+            return f'{d}d ago'
