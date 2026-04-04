@@ -47,23 +47,27 @@ export default function LoginPage() {
     setAuthStatus('Authenticating...')
 
     try {
+      const requestBody = { 
+        email: email.trim(), 
+        password,
+        latitude: lat,
+        longitude: lng
+      }
+      console.log('[LOGIN] Sending request with coords:', { latitude: lat, longitude: lng })
+
       let response
       try {
         response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/auth/login/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            email: email.trim(), 
-            password,
-            latitude: lat,
-            longitude: lng
-          })
+          body: JSON.stringify(requestBody)
         })
       } catch (networkErr) {
         // Network failure (DNS, CORS, server down, SSL issues, etc.)
         console.error('[LOGIN] Network error:', networkErr)
         throw new Error('Unable to reach the server. Please check your internet connection and try again.')
       }
+      console.log('[LOGIN] Response status:', response.status)
 
       // Safely parse JSON — production servers (nginx/gunicorn) may return HTML error pages
       let data
@@ -92,7 +96,7 @@ export default function LoginPage() {
         if (lowerMsg.includes('suspended') || lowerMsg.includes('subscription has expired')) {
           throw new Error('🚫 Your account has been suspended. Please contact your organization administrator.')
         }
-        // Geofencing blocks (403)
+        // Geofencing blocks (403 from view layer, 400 from serializer layer)
         if (response.status === 403 || lowerMsg.includes('location') || lowerMsg.includes('geofence') || lowerMsg.includes('outside')) {
           throw new Error('📍 ' + msg)
         }
