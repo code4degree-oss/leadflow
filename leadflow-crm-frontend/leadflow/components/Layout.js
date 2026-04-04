@@ -132,6 +132,9 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
     document.cookie = "cap_access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     document.cookie = "cap_refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     document.cookie = "cap_user_role=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    if (typeof window !== 'undefined' && window.NativeStorage) {
+        window.NativeStorage.clear();
+    }
     router.push('/login')
   }
 

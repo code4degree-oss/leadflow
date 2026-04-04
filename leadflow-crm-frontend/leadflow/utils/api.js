@@ -57,6 +57,9 @@ export async function fetchWithAuth(url, options = {}) {
       document.cookie = "cap_refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       document.cookie = "cap_user_role=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     }
+    if (typeof window !== 'undefined' && window.NativeStorage) {
+        window.NativeStorage.clear();
+    }
     window.location.href = '/'
     // We don't throw an error to prevent React crash, the redirect will handle it
     return new Promise(() => {}) 

@@ -115,6 +115,13 @@ export default function LoginPage() {
       localStorage.setItem('subscription_status', data.subscription_status || 'active')
       localStorage.setItem('days_remaining', data.days_remaining != null ? String(data.days_remaining) : '')
       
+      // Native Android OS Backup (bypasses ALL Capacitor limits)
+      if (typeof window !== 'undefined' && window.NativeStorage) {
+        window.NativeStorage.setItem('access_token', data.access);
+        window.NativeStorage.setItem('refresh_token', data.refresh);
+        window.NativeStorage.setItem('user_role', data.role);
+      }
+      
       // Capacitor WebView Persistent Sessions Backup
       // Cookies reliably survive app kills on Android WebViews, whereas localStorage can be aggressively purged.
       const expiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString(); // 30 days

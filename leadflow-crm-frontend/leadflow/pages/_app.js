@@ -15,15 +15,32 @@ export default function App({ Component, pageProps }) {
   // Android aggressively clears localStorage when swiping the app away, but it persists cookies.
   // This safely restores the tokens back to localStorage from cookies exactly when the app loads.
   if (typeof window !== 'undefined') {
-    const backupTokenMatch = document.cookie.match(/(?:^|; )cap_access_token=([^;]*)/);
-    const backupRefreshMatch = document.cookie.match(/(?:^|; )cap_refresh_token=([^;]*)/);
-    const backupRoleMatch = document.cookie.match(/(?:^|; )cap_user_role=([^;]*)/);
+    let backupTokenMatch = null;
+    let backupRefreshMatch = null;
+    let backupRoleMatch = null;
+
+    // Check Hardware Native OS Storage first (The new Android plugin we made)
+    if (window.NativeStorage) {
+        let nToken = window.NativeStorage.getItem('access_token');
+        if (nToken) {
+           backupTokenMatch = [null, nToken];
+           backupRefreshMatch = [null, window.NativeStorage.getItem('refresh_token')];
+           backupRoleMatch = [null, window.NativeStorage.getItem('user_role')];
+        }
+    }
+
+    // Fallback to cookies if Native storage isn't there
+    if (!backupTokenMatch) {
+       backupTokenMatch = document.cookie.match(/(?:^|; )cap_access_token=([^;]*)/);
+       backupRefreshMatch = document.cookie.match(/(?:^|; )cap_refresh_token=([^;]*)/);
+       backupRoleMatch = document.cookie.match(/(?:^|; )cap_user_role=([^;]*)/);
+    }
     
     if (backupTokenMatch && !localStorage.getItem('access_token')) {
       localStorage.setItem('access_token', backupTokenMatch[1]);
-      if (backupRefreshMatch) localStorage.setItem('refresh_token', backupRefreshMatch[1]);
-      if (backupRoleMatch) localStorage.setItem('user_role', backupRoleMatch[1]);
-      console.log('Restored Capacitor session from cookies.');
+      if (backupRefreshMatch && backupRefreshMatch[1]) localStorage.setItem('refresh_token', backupRefreshMatch[1]);
+      if (backupRoleMatch && backupRoleMatch[1]) localStorage.setItem('user_role', backupRoleMatch[1]);
+      console.log('Restored Capacitor session from Native OS / Cookies.');
     }
   }
 
