@@ -47,18 +47,35 @@ export default function LoginPage() {
     setAuthStatus('Authenticating...')
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/auth/login/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          email: email.trim(), 
-          password,
-          latitude: lat,
-          longitude: lng
+      let response
+      try {
+        response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/auth/login/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            email: email.trim(), 
+            password,
+            latitude: lat,
+            longitude: lng
+          })
         })
-      })
-    
-      const data = await response.json()
+      } catch (networkErr) {
+        // Network failure (DNS, CORS, server down, SSL issues, etc.)
+        console.error('[LOGIN] Network error:', networkErr)
+        throw new Error('Unable to reach the server. Please check your internet connection and try again.')
+      }
+
+      // Safely parse JSON — production servers (nginx/gunicorn) may return HTML error pages
+      let data
+      try {
+        data = await response.json()
+      } catch (parseErr) {
+        console.error('[LOGIN] JSON parse failed, status:', response.status, parseErr)
+        if (response.status >= 500) {
+          throw new Error('Server is temporarily unavailable. Please try again in a moment.')
+        }
+        throw new Error(`Unexpected server response (${response.status}). Please try again.`)
+      }
       
       if (!response.ok) {
         // Extract error message — handle both string and array formats

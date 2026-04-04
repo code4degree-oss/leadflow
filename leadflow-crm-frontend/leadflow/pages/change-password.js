@@ -31,16 +31,29 @@ export default function ChangePasswordPage() {
 
     try {
       const token = localStorage.getItem('access_token')
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/auth/change-password/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ old_password: oldPassword, new_password: newPassword })
-      })
+      let response
+      try {
+        response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'}/auth/change-password/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ old_password: oldPassword, new_password: newPassword })
+        })
+      } catch (networkErr) {
+        throw new Error('Unable to reach the server. Please check your connection and try again.')
+      }
 
-      const data = await response.json()
+      let data
+      try {
+        data = await response.json()
+      } catch (parseErr) {
+        if (response.status >= 500) {
+          throw new Error('Server is temporarily unavailable. Please try again in a moment.')
+        }
+        throw new Error(`Unexpected server response (${response.status}). Please try again.`)
+      }
 
       if (!response.ok) {
         throw new Error(data.detail || 'Failed to change password')

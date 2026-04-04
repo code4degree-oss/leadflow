@@ -8,6 +8,7 @@ DEBUG = False
 ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS')
 
 CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS')
+CORS_ALLOW_CREDENTIALS = True
 
 # Security Settings (Set to False since we are accessing via Raw IP without SSL)
 SECURE_SSL_REDIRECT = False
