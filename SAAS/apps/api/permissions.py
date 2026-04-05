@@ -111,7 +111,7 @@ class IsTelecallerOrHigher(BaseRolePermission):
 
 class IsFieldAgentOrHigher(BaseRolePermission):
     """
-    Allows access to Field Agents and all higher roles.
+    Allows access to Field Agents and all higher roles (including Telecallers).
     """
     def has_permission(self, request, view):
         is_authenticated = super().has_permission(request, view)
@@ -119,5 +119,6 @@ class IsFieldAgentOrHigher(BaseRolePermission):
             RoleChoices.SUPER_ADMIN,
             RoleChoices.CLIENT_ADMIN,
             RoleChoices.MANAGER,
+            RoleChoices.TELECALLER,
             RoleChoices.FIELD_AGENT
         ]
