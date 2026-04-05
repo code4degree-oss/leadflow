@@ -1,4 +1,5 @@
 from rest_framework import viewsets, permissions, status
+from rest_framework.views import APIView
 from apps.api.permissions import IsSuperAdmin
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -199,4 +200,66 @@ class ClientViewSet(viewsets.ModelViewSet):
             "detail": f"Subscription renewed until {new_date}.",
             "client": serializer.data
         })
+
+
+class BroadcastNotificationView(APIView):
+    """
+    Super Admin endpoint to broadcast a custom notification to ALL users
+    across ALL tenants (client admins + employees). Creates in-app notifications
+    AND sends FCM push to every registered device (mobile app + browser).
+    
+    POST /api/v1/superadmin/clients/broadcast/
+    Body: { "title": "Happy New Year!", "message": "Wishing everyone a prosperous 2026!" }
+    """
+    permission_classes = [IsSuperAdmin]
+
+    def post(self, request):
+        title = request.data.get('title', '').strip()
+        message = request.data.get('message', '').strip()
+
+        if not title:
+            return Response(
+                {"detail": "Title is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if not message:
+            return Response(
+                {"detail": "Message is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        from apps.accounts.models import User
+        from apps.leads.models import Notification, NotificationType
+
+        # Get ALL active users in the system (every tenant + super admins)
+        all_users = User.objects.filter(is_active=True)
+        user_count = all_users.count()
+
+        # Create in-app notification for each user
+        notifications = []
+        for user in all_users:
+            notifications.append(Notification(
+                client=user.client,  # Will be None for super admins — that's OK
+                user=user,
+                title=title,
+                message=message,
+                notif_type=NotificationType.BROADCAST,
+            ))
+        Notification.objects.bulk_create(notifications)
+
+        # Send push notification to all devices
+        from apps.core.firebase import send_broadcast_notification
+        push_success, push_failure = send_broadcast_notification(
+            title=title,
+            body=message,
+            data={'notif_type': 'BROADCAST'}
+        )
+
+        return Response({
+            "detail": f"Broadcast sent to {user_count} users.",
+            "users_notified": user_count,
+            "push_sent": push_success,
+            "push_failed": push_failure,
+        })
+
 

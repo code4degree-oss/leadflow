@@ -25,20 +25,36 @@ export default function LoginPage() {
     let lng = null
     
     try {
-      const position = await new Promise((resolve, reject) => {
-        if (!("geolocation" in navigator)) {
-          reject(new Error('Geolocation not supported'))
-          return
+      try {
+        const { Geolocation } = await import('@capacitor/geolocation');
+        const perm = await Geolocation.checkPermissions();
+        if (perm.location !== 'granted') {
+           const req = await Geolocation.requestPermissions();
+           if (req.location !== 'granted') {
+              throw new Error('Location permission denied');
+           }
         }
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 0  // Force fresh reading, don't use cache
-        })
-      })
-      lat = position.coords.latitude
-      lng = position.coords.longitude
-      console.log('[LOGIN] GPS acquired:', lat, lng)
+        const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
+        lat = position.coords.latitude;
+        lng = position.coords.longitude;
+        console.log('[LOGIN] Capacitor GPS acquired:', lat, lng);
+      } catch (capErr) {
+        console.warn('[LOGIN] Capacitor GPS failed, falling back to HTML5:', capErr.message);
+        const position = await new Promise((resolve, reject) => {
+          if (!("geolocation" in navigator)) {
+            reject(new Error('Geolocation not supported'));
+            return;
+          }
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0  // Force fresh reading, don't use cache
+          });
+        });
+        lat = position.coords.latitude;
+        lng = position.coords.longitude;
+        console.log('[LOGIN] Browser GPS acquired:', lat, lng);
+      }
     } catch (geoErr) {
       console.warn('[LOGIN] GPS failed:', geoErr.message)
       // Continue with null — backend will decide if this is allowed

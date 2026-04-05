@@ -77,3 +77,69 @@ def send_push_notification(user, title, body, data=None):
     except Exception as e:
         print(f"[FIREBASE] Send Error: {e}")
         return False
+
+
+def send_broadcast_notification(title, body, data=None):
+    """
+    Sends an FCM push notification to ALL active device tokens in the system.
+    Used by Super Admin for platform-wide announcements (e.g. Happy New Year).
+    FCM multicast limit is 500 tokens per call, so we batch them.
+    Returns (success_count, failure_count).
+    """
+    init_firebase()
+    if not _firebase_initialized:
+        return 0, 0
+
+    if data is None:
+        data = {}
+
+    from apps.accounts.models import FCMDevice
+    all_devices = FCMDevice.objects.filter(is_active=True)
+    all_tokens = list(all_devices.values_list('registration_id', flat=True))
+
+    if not all_tokens:
+        return 0, 0
+
+    total_success = 0
+    total_failure = 0
+
+    # Process in batches of 500 (FCM multicast limit)
+    for i in range(0, len(all_tokens), 500):
+        batch_tokens = all_tokens[i:i + 500]
+
+        message = messaging.MulticastMessage(
+            notification=messaging.Notification(
+                title=title,
+                body=body,
+            ),
+            android=messaging.AndroidConfig(
+                notification=messaging.AndroidNotification(
+                    sound='default',
+                    channel_id='leadflow_notifications'
+                )
+            ),
+            apns=messaging.APNSConfig(
+                payload=messaging.APNSPayload(
+                    aps=messaging.Aps(sound='default')
+                )
+            ),
+            data=data,
+            tokens=batch_tokens,
+        )
+
+        try:
+            response = messaging.send_each_for_multicast(message)
+            total_success += response.success_count
+            total_failure += response.failure_count
+
+            # Deactivate invalid tokens
+            if response.failure_count > 0:
+                for idx, resp in enumerate(response.responses):
+                    if not resp.success and resp.exception:
+                        all_devices.filter(registration_id=batch_tokens[idx]).update(is_active=False)
+        except Exception as e:
+            print(f"[FIREBASE] Broadcast batch error: {e}")
+            total_failure += len(batch_tokens)
+
+    print(f"[FIREBASE] Broadcast complete: {total_success} sent, {total_failure} failed out of {len(all_tokens)} total")
+    return total_success, total_failure

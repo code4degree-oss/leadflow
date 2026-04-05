@@ -356,6 +356,7 @@ class NotificationType(models.TextChoices):
     VISIT = "VISIT", _("Site Visit")
     UPLOAD = "UPLOAD", _("Leads Uploaded")
     INFO = "INFO", _("General Info")
+    BROADCAST = "BROADCAST", _("Broadcast")
 
 
 class Notification(BaseModel):

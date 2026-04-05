@@ -38,12 +38,6 @@ export default function RouteGuard({ children }) {
   function authCheck(url) {
     const path = url.split('?')[0] // strip query params
 
-    // Allow public paths
-    if (PUBLIC_PATHS.some(p => path === p)) {
-      setAuthorized(true)
-      return
-    }
-
     let token = localStorage.getItem('access_token')
     let role  = localStorage.getItem('user_role')
 
@@ -78,6 +72,19 @@ export default function RouteGuard({ children }) {
             role = nRole;
             console.log('Restored Capacitor session perfectly in RouteGuard!');
         }
+    }
+
+    // Allow public paths, but redirect if already logged in
+    if (PUBLIC_PATHS.some(p => path === p)) {
+      if (token && role && (path === '/' || path === '/login')) {
+         // User is authenticated but on login/root -> bounce to dashboard
+         setAuthorized(false)
+         const correctDashboard = ROLE_DASHBOARD[role] || '/'
+         router.push(correctDashboard)
+         return
+      }
+      setAuthorized(true)
+      return
     }
 
     // Not logged in → redirect to login

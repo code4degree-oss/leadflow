@@ -10,7 +10,7 @@ import {
   Bell, Search, ChevronDown, LogOut, Building2,
   Phone, MapPin, ShieldCheck, Database, CreditCard,
   Briefcase, Calendar, Activity, FileText, Flame, Globe,
-  Menu, X, Ban, Mail
+  Menu, X, Ban, Mail, Megaphone
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -26,6 +26,7 @@ const navConfig = {
       { icon: Database,        label: 'Storage & Quotas', href: '/superadmin/storage' },
       { icon: Globe,           label: 'Feature Flags',    href: '/superadmin/features' },
       { icon: FileText,        label: 'Data Exports',     href: '/superadmin/exports' },
+      { icon: Megaphone,       label: 'Broadcast',        href: '/superadmin/broadcast' },
       { icon: Settings,        label: 'System Config',    href: '/superadmin/system-config' },
     ]
   },

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Bell, Check, CheckCheck, Flame, Phone, UserPlus, MapPin, Upload, Info, X, Eye } from 'lucide-react'
+import { Bell, Check, CheckCheck, Flame, Phone, UserPlus, MapPin, Upload, Info, X, Eye, Megaphone } from 'lucide-react'
 import clsx from 'clsx'
 import { fetchWithAuth } from '../utils/api'
 import { useRouter } from 'next/router'
@@ -11,6 +11,7 @@ const typeConfig = {
   VISIT:      { icon: MapPin,   color: 'text-accent2',   bg: 'bg-accent2/10',   label: 'Visit' },
   UPLOAD:     { icon: Upload,   color: 'text-purple',    bg: 'bg-purple/10',    label: 'Upload' },
   INFO:       { icon: Info,     color: 'text-txt3',      bg: 'bg-bg3',          label: 'Info' },
+  BROADCAST:  { icon: Megaphone,color: 'text-[#8B6CF7]', bg: 'bg-[#8B6CF7]/10', label: 'Broadcast' },
 }
 
 export default function NotificationDropdown({ role }) {
