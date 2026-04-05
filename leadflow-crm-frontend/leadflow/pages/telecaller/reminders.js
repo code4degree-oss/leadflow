@@ -246,16 +246,16 @@ export default function Reminders() {
     ...overdueLeads
       .filter(lead => !pendingReminderLeadIds.has(lead.id))
       .map(lead => ({
-      id: `lead_${lead.id}`,
-      is_lead: true,
-      lead: lead.id,
-      lead_name: `${lead.first_name} ${lead.last_name}`,
-      phone: lead.phone,
-      scheduled_at: lead.next_call_at,
-      status: lead.status,
-      note: new Date(lead.next_call_at) < now ? 'Overdue regular call' : 'Scheduled regular call',
-      isOverdue: new Date(lead.next_call_at) < now
-    })),
+        id: `lead_${lead.id}`,
+        is_lead: true,
+        lead: lead.id,
+        lead_name: `${lead.first_name} ${lead.last_name}`,
+        phone: lead.phone,
+        scheduled_at: lead.next_call_at,
+        status: lead.status,
+        note: new Date(lead.next_call_at) < now ? 'Overdue regular call' : 'Scheduled regular call',
+        isOverdue: new Date(lead.next_call_at) < now
+      })),
     // Map reminders
     ...pendingReminders.map(r => ({
       ...r,
@@ -269,117 +269,117 @@ export default function Reminders() {
       <Layout role="telecaller" activePage="reminders" pageTitle="Call Reminders">
         <div className="px-6 py-6 pb-20 max-w-2xl space-y-5">
 
-        {loading ? (
-          <div className="card p-16 flex flex-col items-center justify-center text-center">
-            <Loader2 size={32} className="animate-spin text-accent mb-3" />
-            <div className="text-txt2 font-medium text-sm">Loading reminders...</div>
-          </div>
-        ) : (
-          <>
-            {/* UPCOMING / PENDING SECTION */}
-            <h2 className="text-sm font-bold text-txt uppercase tracking-wider mb-2">Upcoming & Overdue</h2>
-            
-            {unifiedPending.length === 0 ? (
-               <div className="card p-16 flex flex-col items-center justify-center text-center">
-                 <div className="w-16 h-16 rounded-full bg-[#10B981]/10 flex items-center justify-center mx-auto mb-4 border border-[#10B981]/20">
-                   <CheckCircle size={32} className="text-[#10B981]" />
-                 </div>
-                 <div className="text-txt font-display font-bold text-lg mb-1">All caught up!</div>
-                 <div className="text-txt3 text-xs">No pending call reminders or overdue follow-ups</div>
-               </div>
-            ) : (
-               <div className="card overflow-hidden border border-border">
-                 <div className="divide-y divide-border">
-                   {unifiedPending.map((item) => {
-                     const scheduledDate = new Date(item.scheduled_at)
-                     const isPast = scheduledDate < now
-                     const daysAgo = Math.floor((now - scheduledDate) / (1000 * 60 * 60 * 24))
-                     
-                     return (
-                       <div key={item.id} 
-                         onClick={() => openDrawerForReminder(item.lead)}
-                         className="px-4 py-3.5 flex items-center justify-between hover:bg-card/50 transition-colors cursor-pointer group">
-                         <div className="flex items-center gap-3">
-                           <div className={clsx('w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0', isPast ? 'bg-danger/15' : 'bg-accent/15')}>
-                             {isPast ? <Clock size={14} className="text-danger" /> : <Bell size={14} className="text-accent" />}
-                           </div>
-                           <div>
-                             <div className="text-sm font-bold text-txt group-hover:text-accent transition-colors">{item.lead_name || 'Lead'}</div>
-                             <div className="flex items-center gap-2 mt-0.5">
-                               <span className={clsx('text-[10px] font-bold', isPast ? 'text-danger' : 'text-accent')}>
-                                 {isPast && daysAgo > 0 ? `${daysAgo}d overdue` : ''}
-                                 {!isPast ? scheduledDate.toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
-                                 {isPast && daysAgo === 0 ? `${item.is_lead ? 'Due' : 'Scheduled'} earlier today` : ''}
-                               </span>
-                               {isPast && daysAgo > 0 && (
-                                 <>
-                                   <span className="text-[10px] text-txt3">·</span>
-                                   <span className="text-[10px] text-txt3 font-mono">
-                                     was {item.is_lead ? 'due' : 'scheduled'} {scheduledDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                                   </span>
-                                 </>
-                               )}
-                             </div>
-                             {item.note && <p className="text-[10px] text-txt3 mt-0.5 truncate max-w-[250px]">{item.note}</p>}
-                           </div>
-                         </div>
-                         <div className="flex items-center gap-2">
-                           {/* (Check button removed as requested) */}
-                           <div className="btn-primary text-[10px] py-1.5 px-3 shadow-sm">
-                             <PhoneCall size={11} className="mr-1 inline" /> Log
-                           </div>
-                         </div>
-                       </div>
-                     )
-                   })}
-                 </div>
-               </div>
-            )}
+          {loading ? (
+            <div className="card p-16 flex flex-col items-center justify-center text-center">
+              <Loader2 size={32} className="animate-spin text-accent mb-3" />
+              <div className="text-txt2 font-medium text-sm">Loading reminders...</div>
+            </div>
+          ) : (
+            <>
+              {/* UPCOMING / PENDING SECTION */}
+              <h2 className="text-sm font-bold text-txt uppercase tracking-wider mb-2">Upcoming & Overdue</h2>
 
-            {/* Completed Section (collapsible) */}
-            {completedReminders.length > 0 && (
-              <div className="mt-8">
-                <button
-                  onClick={() => setShowCompleted(!showCompleted)}
-                  className="flex items-center gap-2 text-xs text-txt3 font-bold uppercase tracking-wider mb-3 hover:text-txt transition-colors"
-                >
-                  <ChevronDown size={14} className={clsx('transition-transform', showCompleted && 'rotate-180')} />
-                  Completed ({completedReminders.length})
-                </button>
-                {showCompleted && (
-                  <div className="card overflow-hidden border border-[#10B981]/20 bg-[#10B981]/5 animate-in fade-in slide-in-from-top-2">
-                    <div className="divide-y divide-[#10B981]/10">
-                      {completedReminders.slice(0, 20).map((r) => (
-                        <div key={r.id} className="px-4 py-3 flex items-center justify-between opacity-60">
+              {unifiedPending.length === 0 ? (
+                <div className="card p-16 flex flex-col items-center justify-center text-center">
+                  <div className="w-16 h-16 rounded-full bg-[#10B981]/10 flex items-center justify-center mx-auto mb-4 border border-[#10B981]/20">
+                    <CheckCircle size={32} className="text-[#10B981]" />
+                  </div>
+                  <div className="text-txt font-display font-bold text-lg mb-1">All caught up!</div>
+                  <div className="text-txt3 text-xs">No pending call reminders or overdue follow-ups</div>
+                </div>
+              ) : (
+                <div className="card overflow-hidden border border-border">
+                  <div className="divide-y divide-border">
+                    {unifiedPending.map((item) => {
+                      const scheduledDate = new Date(item.scheduled_at)
+                      const isPast = scheduledDate < now
+                      const daysAgo = Math.floor((now - scheduledDate) / (1000 * 60 * 60 * 24))
+
+                      return (
+                        <div key={item.id}
+                          onClick={() => openDrawerForReminder(item.lead)}
+                          className="px-4 py-3.5 flex items-center justify-between hover:bg-card/50 transition-colors cursor-pointer group">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-[#10B981]/10 flex items-center justify-center flex-shrink-0">
-                              <CheckCircle size={14} className="text-[#10B981]" />
+                            <div className={clsx('w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0', isPast ? 'bg-danger/15' : 'bg-accent/15')}>
+                              {isPast ? <Clock size={14} className="text-danger" /> : <Bell size={14} className="text-accent" />}
                             </div>
                             <div>
-                              <div className="text-sm font-medium text-txt line-through">{r.lead_name || 'Lead'}</div>
-                              <div className="text-[10px] text-txt3 font-mono">
-                                {new Date(r.scheduled_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                              <div className="text-sm font-bold text-txt group-hover:text-accent transition-colors">{item.lead_name || 'Lead'}</div>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className={clsx('text-[10px] font-bold', isPast ? 'text-danger' : 'text-accent')}>
+                                  {isPast && daysAgo > 0 ? `${daysAgo}d overdue` : ''}
+                                  {!isPast ? scheduledDate.toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
+                                  {isPast && daysAgo === 0 ? `${item.is_lead ? 'Due' : 'Scheduled'} earlier today` : ''}
+                                </span>
+                                {isPast && daysAgo > 0 && (
+                                  <>
+                                    <span className="text-[10px] text-txt3">·</span>
+                                    <span className="text-[10px] text-txt3 font-mono">
+                                      was {item.is_lead ? 'due' : 'scheduled'} {scheduledDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                                    </span>
+                                  </>
+                                )}
                               </div>
+                              {item.note && <p className="text-[10px] text-txt3 mt-0.5 truncate max-w-[250px]">{item.note}</p>}
                             </div>
                           </div>
-                          <span className="text-[9px] font-bold uppercase text-[#10B981] bg-[#10B981]/10 px-2 py-0.5 rounded-full">Done</span>
+                          <div className="flex items-center gap-2">
+                            {/* (Check button removed as requested) */}
+                            <div className="btn-primary text-[10px] py-1.5 px-3 shadow-sm">
+                              <PhoneCall size={11} className="mr-1 inline" /> Log
+                            </div>
+                          </div>
                         </div>
-                      ))}
-                    </div>
+                      )
+                    })}
                   </div>
-                )}
-              </div>
-            )}
-          </>
-        )}
-      </div>
+                </div>
+              )}
+
+              {/* Completed Section (collapsible) */}
+              {completedReminders.length > 0 && (
+                <div className="mt-8">
+                  <button
+                    onClick={() => setShowCompleted(!showCompleted)}
+                    className="flex items-center gap-2 text-xs text-txt3 font-bold uppercase tracking-wider mb-3 hover:text-txt transition-colors"
+                  >
+                    <ChevronDown size={14} className={clsx('transition-transform', showCompleted && 'rotate-180')} />
+                    Completed ({completedReminders.length})
+                  </button>
+                  {showCompleted && (
+                    <div className="card overflow-hidden border border-[#10B981]/20 bg-[#10B981]/5 animate-in fade-in slide-in-from-top-2">
+                      <div className="divide-y divide-[#10B981]/10">
+                        {completedReminders.slice(0, 20).map((r) => (
+                          <div key={r.id} className="px-4 py-3 flex items-center justify-between opacity-60">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-[#10B981]/10 flex items-center justify-center flex-shrink-0">
+                                <CheckCircle size={14} className="text-[#10B981]" />
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium text-txt line-through">{r.lead_name || 'Lead'}</div>
+                                <div className="text-[10px] text-txt3 font-mono">
+                                  {new Date(r.scheduled_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                </div>
+                              </div>
+                            </div>
+                            <span className="text-[9px] font-bold uppercase text-[#10B981] bg-[#10B981]/10 px-2 py-0.5 rounded-full">Done</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </Layout>
 
       {/* ═══ DETAIL DRAWER ═══ */}
       {selectedLead && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-end animate-in fade-in" onClick={() => setSelectedLead(null)}>
           <div className="bg-card w-full max-w-md h-full shadow-2xl animate-in slide-in-from-right flex flex-col border-l border-border" onClick={e => e.stopPropagation()}>
-            
+
             {/* Drawer Header */}
             <div className="px-6 py-5 border-b border-border bg-bg2/50">
               <div className="flex justify-between items-start">
@@ -388,7 +388,7 @@ export default function Reminders() {
                     {selectedLead.first_name} {selectedLead.last_name}
                   </h2>
                   <p className="text-xs text-txt3 font-mono mt-1">{selectedLead.phone}</p>
-                  
+
                   {/* Action Buttons */}
                   <div className="flex items-center gap-2 mt-3">
                     <button

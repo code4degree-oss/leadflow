@@ -105,7 +105,7 @@ export default function NotificationDropdown({ role }) {
       } else if (role === 'telecaller') {
         router.push(`/telecaller/leads?highlight=${notif.lead}`)
       } else if (role === 'fieldagent') {
-        router.push(`/fieldagent/visits`)
+        router.push(`/fieldagent`)
       }
     }
   }
@@ -116,7 +116,7 @@ export default function NotificationDropdown({ role }) {
     if (role === 'telecaller') {
       router.push(`/telecaller/leads?highlight=${notif.lead}`)
     } else if (role === 'fieldagent') {
-      router.push(`/fieldagent/visits`)
+      router.push(`/fieldagent`)
     }
   }
 

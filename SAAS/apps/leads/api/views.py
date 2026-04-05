@@ -39,9 +39,9 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
         # Telecaller isolation: only see own assigned leads
         if self.request.user.role == RoleChoices.TELECALLER:
             qs = qs.filter(assigned_to=self.request.user)
-        # Field Agent isolation: only see leads assigned for site visits
+        # Field Agent hybrid: see leads assigned directly (telecaller work) OR as field agent (site visits)
         elif self.request.user.role == RoleChoices.FIELD_AGENT:
-            qs = qs.filter(field_agent=self.request.user)
+            qs = qs.filter(Q(assigned_to=self.request.user) | Q(field_agent=self.request.user)).distinct()
         
         # Date filter for history view — filter by last_interaction_at date
         date_param = self.request.query_params.get('date')
@@ -599,7 +599,7 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
         is_admin = request.user.role in [RoleChoices.CLIENT_ADMIN, RoleChoices.SUPER_ADMIN] or request.user.is_superuser
         if not is_admin:
             if request.user.role == RoleChoices.FIELD_AGENT:
-                queryset = queryset.filter(field_agent=request.user)
+                queryset = queryset.filter(Q(assigned_to=request.user) | Q(field_agent=request.user)).distinct()
             else:
                 queryset = queryset.filter(assigned_to=request.user)
 
@@ -1070,27 +1070,73 @@ class LeadBatchViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
 
 class SiteVisitViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
     serializer_class = SiteVisitSerializer
-    permission_classes = [IsTelecallerOrHigher]
-    queryset = SiteVisit.objects.all()
+    permission_classes = [IsFieldAgentOrHigher]
+    queryset = SiteVisit.objects.select_related('lead', 'lead__assigned_to', 'lead__project', 'agent').all()
 
     def get_queryset(self):
         qs = super().get_queryset()
+        # Field agents only see their own visits
         if self.request.user.role == RoleChoices.FIELD_AGENT:
-            return qs.filter(agent=self.request.user)
+            qs = qs.filter(agent=self.request.user)
+        # Allow filtering by status (?status=COMPLETED, ?status=SCHEDULED)
+        visit_status = self.request.query_params.get('status')
+        if visit_status:
+            qs = qs.filter(status=visit_status)
         return qs
 
     def perform_create(self, serializer):
         agent = self.request.user
-        serializer.save(
+        visit = serializer.save(
             client=self.request.user.client,
             agent=agent
         )
-        
-        lead = serializer.validated_data['lead']
+
+        lead = visit.lead
         lead.last_interaction_at = timezone.now()
-        if lead.status != 'WON' and lead.status != 'LOST':
-            lead.status = 'SITE_VISIT'
+
+        outcome_raw = visit.outcome or ''
+        outcome = outcome_raw.upper()
+
+        # Map visit outcome to lead status
+        if outcome == 'WON':
+            lead.status = LeadStatus.WON
+        elif outcome == 'LOST' or outcome == 'NOT_INTERESTED':
+            # Keep lead as SITE_VISIT so telecaller can follow up
+            lead.status = LeadStatus.SITE_VISIT
+        elif outcome == 'INTERESTED':
+            lead.status = LeadStatus.INTERESTED
+        else:
+            lead.status = LeadStatus.SITE_VISIT
+
         lead.save()
+
+        # Log activity so telecaller can see the visit result in lead timeline
+        agent_name = f"{agent.first_name} {agent.last_name}".strip() or agent.email
+        ActivityTimeline.objects.create(
+            client=lead.client,
+            lead=lead,
+            performed_by=agent,
+            activity_type=ActivityType.SITE_VISIT_COMPLETED if visit.status == 'COMPLETED' else ActivityType.SITE_VISIT_SCHEDULED,
+            title=f"Site visit {'completed' if visit.status == 'COMPLETED' else 'scheduled'} by {agent_name} — Outcome: {outcome or 'Pending'}",
+            metadata={
+                'visit_id': str(visit.id),
+                'outcome': outcome,
+                'notes': visit.notes,
+                'agent': agent.email,
+            }
+        )
+
+        # Notify the telecaller who assigned this lead
+        if lead.assigned_to and visit.status == 'COMPLETED':
+            lead_name = f"{lead.first_name} {lead.last_name}".strip()
+            Notification.objects.create(
+                client=lead.client,
+                user=lead.assigned_to,
+                title=f"Site Visit Completed: {lead_name}",
+                message=f"Field agent {agent_name} marked outcome as '{outcome}'. Notes: {visit.notes[:100] if visit.notes else 'N/A'}",
+                notif_type=NotificationType.REMINDER,
+                lead=lead,
+            )
 
 
 class FollowUpReminderViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):

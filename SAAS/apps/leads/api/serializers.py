@@ -115,17 +115,36 @@ class LeadBatchSerializer(serializers.ModelSerializer):
         return None
 
 class SiteVisitSerializer(serializers.ModelSerializer):
-    lead_name = serializers.CharField(source='lead.first_name', read_only=True)
+    lead_name = serializers.SerializerMethodField(read_only=True)
+    lead_phone = serializers.CharField(source='lead.phone', read_only=True)
+    project_name = serializers.SerializerMethodField(read_only=True)
+    telecaller_name = serializers.SerializerMethodField(read_only=True)
     agent_name = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = SiteVisit
         fields = [
-            'id', 'client', 'lead', 'lead_name', 'agent', 'agent_name',
+            'id', 'client', 'lead', 'lead_name', 'lead_phone',
+            'project_name', 'telecaller_name',
+            'agent', 'agent_name',
             'scheduled_at', 'completed_at', 'status', 'outcome', 'notes',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['client', 'agent', 'created_at', 'updated_at']
+
+    def get_lead_name(self, obj):
+        return f"{obj.lead.first_name} {obj.lead.last_name}".strip()
+
+    def get_project_name(self, obj):
+        if obj.lead.project:
+            return obj.lead.project.name
+        return None
+
+    def get_telecaller_name(self, obj):
+        if obj.lead.assigned_to:
+            name = f"{obj.lead.assigned_to.first_name} {obj.lead.assigned_to.last_name}".strip()
+            return name if name else obj.lead.assigned_to.email
+        return None
 
     def get_agent_name(self, obj):
         if obj.agent:

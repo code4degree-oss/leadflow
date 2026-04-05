@@ -10,7 +10,7 @@ import {
   Bell, Search, ChevronDown, LogOut, Building2,
   Phone, MapPin, ShieldCheck, Database, CreditCard,
   Briefcase, Calendar, Activity, FileText, Flame, Globe,
-  Menu, X, Ban, Mail, Megaphone
+  Menu, X, Ban, Mail, Megaphone, CheckCircle2
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -40,6 +40,7 @@ const navConfig = {
       { icon: Flame,           label: 'Hot Leads',        href: '/admin/hot' },
       { icon: Users,           label: 'Employees',        href: '/admin/employees' },
       { icon: Briefcase,       label: 'Projects',         href: '/admin/projects' },
+      { icon: MapPin,          label: 'Site Visits',      href: '/admin/visits' },
       { icon: BarChart2,       label: 'Performance',      href: '/admin/performance' },
       { icon: Activity,        label: 'Login Activity',   href: '/admin/audit' },
       { icon: Settings,        label: 'Settings',         href: '/admin/settings' },
@@ -61,10 +62,9 @@ const navConfig = {
     label: 'Field Agent',
     color: '#F5A623',
     items: [
-      { icon: LayoutDashboard, label: 'Dashboard',        href: '/fieldagent' },
-      { icon: Calendar,        label: 'Site Visits',      href: '/fieldagent/visits' },
-      { icon: MapPin,          label: 'Completed Visits', href: '/fieldagent/completed' },
-      { icon: BarChart2,       label: 'My Stats',         href: '/fieldagent/stats' },
+      { icon: LayoutDashboard, label: 'Dashboard',         href: '/fieldagent' },
+      { icon: CheckCircle2,    label: 'Completed Visits',  href: '/fieldagent/completed' },
+      { icon: Phone,           label: 'My Leads',          href: '/fieldagent/leads' },
     ]
   }
 }
