@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 
 from apps.api.mixins import TenantQuerySetMixin
-from apps.api.permissions import IsClientAdmin, IsTelecallerOrHigher
+from apps.api.permissions import IsClientAdmin, IsTelecallerOrHigher, IsFieldAgentOrHigher
 from apps.leads.api.serializers import (
     LeadSerializer, LeadBatchSerializer, SiteVisitSerializer,
     FollowUpReminderSerializer, CallLogSerializer, ActivityTimelineSerializer,
@@ -28,7 +28,7 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
     Telecallers only see their own assigned leads.
     """
     serializer_class = LeadSerializer
-    permission_classes = [IsTelecallerOrHigher]
+    permission_classes = [IsFieldAgentOrHigher]
     filterset_fields = ['status', 'source', 'is_hot']
     search_fields = ['first_name', 'last_name', 'phone', 'email']
     
@@ -39,6 +39,9 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
         # Telecaller isolation: only see own assigned leads
         if self.request.user.role == RoleChoices.TELECALLER:
             qs = qs.filter(assigned_to=self.request.user)
+        # Field Agent isolation: only see leads assigned for site visits
+        elif self.request.user.role == RoleChoices.FIELD_AGENT:
+            qs = qs.filter(field_agent=self.request.user)
         
         # Date filter for history view — filter by last_interaction_at date
         date_param = self.request.query_params.get('date')
@@ -595,7 +598,10 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
         
         is_admin = request.user.role in [RoleChoices.CLIENT_ADMIN, RoleChoices.SUPER_ADMIN] or request.user.is_superuser
         if not is_admin:
-            queryset = queryset.filter(assigned_to=request.user)
+            if request.user.role == RoleChoices.FIELD_AGENT:
+                queryset = queryset.filter(field_agent=request.user)
+            else:
+                queryset = queryset.filter(assigned_to=request.user)
 
         status_counts = queryset.values('status').annotate(count=Count('id'))
         stats_map = {item['status']: item['count'] for item in status_counts}

@@ -324,20 +324,7 @@ export default function Reminders() {
                            </div>
                          </div>
                          <div className="flex items-center gap-2">
-                           {item.is_reminder && (
-                             <button
-                               onClick={(e) => handleComplete(e, item.id)}
-                               disabled={completingId === item.id}
-                               className={clsx(
-                                 "p-1.5 rounded-lg border transition-colors",
-                                 completingId === item.id ? 'opacity-50' : 'hover:bg-[#10B981]/10 hover:text-[#10B981] hover:border-[#10B981]/30',
-                                 'bg-bg3 border-border text-txt3'
-                               )}
-                               title="Mark done"
-                             >
-                               {completingId === item.id ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                             </button>
-                           )}
+                           {/* (Check button removed as requested) */}
                            <div className="btn-primary text-[10px] py-1.5 px-3 shadow-sm">
                              <PhoneCall size={11} className="mr-1 inline" /> Log
                            </div>
