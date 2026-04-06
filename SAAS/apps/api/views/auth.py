@@ -28,7 +28,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         if response.status_code != 200:
             return response
 
-        # Authentication succeeded — now enforce geofencing
+        # Authentication succeeded
         try:
             # We need to look up the user from the validated data
             email = request.data.get('email', '').strip()
@@ -39,10 +39,59 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 return response  # Shouldn't happen if auth passed
 
             client = user.client
+
+            # --- Record Login History for ALL users ---
+            # Django's user_logged_in signal does NOT fire with JWT auth,
+            # so we must create LoginHistory directly here.
+            if client:
+                def _record_login():
+                    try:
+                        from ipware import get_client_ip
+                        from apps.audits.models import LoginHistory
+                        from apps.audits.services import GeoLocationService
+                        ip, _ = get_client_ip(request)
+                        if not ip:
+                            ip = '127.0.0.1'
+                        geo_data = GeoLocationService.get_geo_data(ip, user)
+                        is_suspicious, reason = GeoLocationService.check_suspicious(
+                            user, geo_data['latitude'], geo_data['longitude']
+                        )
+                        LoginHistory.objects.create(
+                            user=user,
+                            client=client,
+                            ip_address=ip,
+                            city=geo_data['city'],
+                            country=geo_data['country'],
+                            latitude=geo_data['latitude'],
+                            longitude=geo_data['longitude'],
+                            is_suspicious=is_suspicious,
+                            suspicious_reason=reason
+                        )
+                    except Exception as e:
+                        logger.error(f"[LOGIN_HISTORY] Failed to record: {e}")
+                import threading
+                threading.Thread(target=_record_login, daemon=True).start()
+
+            # --- Send Login Alert to Client Admin ---
+            if client and user.role != RoleChoices.CLIENT_ADMIN:
+                def _notify_admin_login():
+                    from apps.core.firebase import send_push_notification
+                    admins = User.objects.filter(client=client, role=RoleChoices.CLIENT_ADMIN, is_active=True)
+                    for admin in admins:
+                        send_push_notification(
+                            user=admin,
+                            title="Employee Login Alert",
+                            body=f"{user.get_full_name() or user.email} has logged in.",
+                            data={"type": "login_alert", "employee_id": str(user.id)}
+                        )
+                import threading
+                threading.Thread(target=_notify_admin_login, daemon=True).start()
+
+            # --- Geofencing Check ---
             if not client:
                 return response  # Super admin, no client
 
-            # Only enforce for standard employees
+            # Only enforce geofencing for standard employees
             exempt_roles = [RoleChoices.SUPER_ADMIN, RoleChoices.CLIENT_ADMIN, RoleChoices.MANAGER]
             if not client.geofencing_enabled or user.geofencing_exempt or user.role in exempt_roles:
                 return response  # Geofencing not applicable
@@ -123,21 +172,6 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 )
 
             logger.info(f"[GEOFENCE] ALLOWED {email}")
-            
-            # --- Send Login Alert to Client Admin ---
-            if user.role != RoleChoices.CLIENT_ADMIN and user.client:
-                def _notify_admin_login():
-                    from apps.core.firebase import send_push_notification
-                    admins = User.objects.filter(client=user.client, role=RoleChoices.CLIENT_ADMIN, is_active=True)
-                    for admin in admins:
-                        send_push_notification(
-                            user=admin,
-                            title="Employee Login Alert",
-                            body=f"{user.get_full_name() or user.email} has logged in.",
-                            data={"type": "login_alert", "employee_id": str(user.id)}
-                        )
-                import threading
-                threading.Thread(target=_notify_admin_login, daemon=True).start()
 
         except Exception as e:
             # Catch-all: never let geofencing crash the entire login with an HTML 500 page

@@ -34,7 +34,7 @@ export default function LoginActivity() {
     
     try {
       let url = '/audits/login-history/'
-      if (search) url += `&search=${encodeURIComponent(search)}`
+      if (search) url += `?search=${encodeURIComponent(search)}`
       
       const data = await fetchWithAuth(url)
       setLogs(data.results || data)
