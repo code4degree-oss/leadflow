@@ -107,12 +107,26 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
             # --- Geofencing Check ---
             if not client:
+                logger.info(f"[GEOFENCE] SKIP {email} — no client (super admin)")
                 return response  # Super admin, no client
 
             # Only enforce geofencing for standard employees
             exempt_roles = [RoleChoices.SUPER_ADMIN, RoleChoices.CLIENT_ADMIN, RoleChoices.MANAGER]
-            if not client.geofencing_enabled or user.geofencing_exempt or user.role in exempt_roles:
-                return response  # Geofencing not applicable
+            
+            logger.info(f"[GEOFENCE] === CHECK START === User={email}, Role={user.role}, "
+                        f"geofencing_enabled={client.geofencing_enabled}, "
+                        f"geofencing_exempt={user.geofencing_exempt}, "
+                        f"role_exempt={user.role in exempt_roles}")
+            
+            if not client.geofencing_enabled:
+                logger.info(f"[GEOFENCE] SKIP {email} — geofencing_enabled=False for client '{client.name}'")
+                return response
+            if user.geofencing_exempt:
+                logger.info(f"[GEOFENCE] SKIP {email} — user is geofencing_exempt")
+                return response
+            if user.role in exempt_roles:
+                logger.info(f"[GEOFENCE] SKIP {email} — role '{user.role}' is exempt")
+                return response
 
             # ── Geofencing is ACTIVE for this user ──
             lat = request.data.get('latitude')
