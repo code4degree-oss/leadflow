@@ -24,7 +24,7 @@ class AuditLogViewSet(TenantQuerySetMixin, mixins.ListModelMixin, mixins.Retriev
 
 class LoginHistoryViewSet(TenantQuerySetMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     """
-    Read-only API for login history. Supports filtering by suspicious status.
+    Read-only API for login history. Supports filtering by suspicious status and date range.
     """
     serializer_class = LoginHistorySerializer
     permission_classes = [IsClientAdmin]
@@ -33,3 +33,13 @@ class LoginHistoryViewSet(TenantQuerySetMixin, mixins.ListModelMixin, mixins.Ret
     filterset_fields = ['is_suspicious', 'user', 'city', 'country']
     search_fields = ['user__email', 'city', 'ip_address']
     ordering_fields = ['created_at']
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        date_from = self.request.query_params.get('date_from')
+        date_to = self.request.query_params.get('date_to')
+        if date_from:
+            qs = qs.filter(created_at__date__gte=date_from)
+        if date_to:
+            qs = qs.filter(created_at__date__lte=date_to)
+        return qs
