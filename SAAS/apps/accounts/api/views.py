@@ -61,6 +61,28 @@ class UserViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
         client = self.request.user.client
         serializer.save(client=client)
 
+    @action(detail=False, methods=['post'], url_path='force-logout')
+    def force_logout(self, request):
+        """
+        Instantly invalidate all active sessions for the current client's employees.
+        Does not invalidate the Client Admin sessions.
+        """
+        from django.utils import timezone
+        client = request.user.client
+        if not client:
+            return Response(
+                {"detail": "No associated client tenant."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        client.force_logout_until = timezone.now()
+        client.save(update_fields=['force_logout_until'])
+        
+        return Response({
+            "detail": "All employee sessions have been forcibly expired. They will be required to log in again.",
+            "timestamp": client.force_logout_until
+        })
+
     @action(detail=True, methods=['post'], url_path='reset-password', permission_classes=[IsClientAdmin])
     def reset_password(self, request, pk=None):
         user = self.get_object()

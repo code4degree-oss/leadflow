@@ -33,7 +33,7 @@ export default function LoginActivity() {
     setError(null)
     
     try {
-      let url = '/audits/audit-logs/?action=LOGIN'
+      let url = '/audits/login-history/'
       if (search) url += `&search=${encodeURIComponent(search)}`
       
       const data = await fetchWithAuth(url)
@@ -67,7 +67,7 @@ export default function LoginActivity() {
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-txt3" />
           <input 
             type="text" 
-            placeholder="Search by email…" 
+            placeholder="Search by email or IP…" 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2 bg-bg3 border border-border2 rounded-lg text-xs focus:ring-1 focus:ring-primary/20 outline-none"
@@ -83,7 +83,7 @@ export default function LoginActivity() {
               <tr className="bg-bg2/50 border-b border-border">
                 <th className="px-5 py-3.5 text-[10px] font-bold text-txt3 uppercase tracking-widest">User</th>
                 <th className="px-5 py-3.5 text-[10px] font-bold text-txt3 uppercase tracking-widest">Status</th>
-                <th className="px-5 py-3.5 text-[10px] font-bold text-txt3 uppercase tracking-widest">IP Address</th>
+                <th className="px-5 py-3.5 text-[10px] font-bold text-txt3 uppercase tracking-widest">Location / IP Address</th>
                 <th className="px-5 py-3.5 text-[10px] font-bold text-txt3 uppercase tracking-widest text-right">Time</th>
               </tr>
             </thead>
@@ -120,15 +120,22 @@ export default function LoginActivity() {
                         </div>
                         <div>
                           <div className="text-xs font-bold text-txt">{log.user_email || 'Unknown'}</div>
-                          <div className="text-[10px] text-txt3">{log.resource_type || 'User'}</div>
+                          <div className="text-[10px] text-txt3">{log.city ? `${log.city}, ${log.country}` : 'Location Unknown'}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-5 py-4">
-                      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-success/10 text-success border border-success/20 text-[10px] font-bold uppercase">
-                        <CheckCircle2 size={10} />
-                        Success
-                      </span>
+                      {log.is_suspicious ? (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-danger/10 text-danger border border-danger/20 text-[10px] font-bold uppercase">
+                          <AlertCircle size={10} />
+                          Suspicious
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-success/10 text-success border border-success/20 text-[10px] font-bold uppercase">
+                          <CheckCircle2 size={10} />
+                          Success
+                        </span>
+                      )}
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2 text-xs text-txt2 font-mono">

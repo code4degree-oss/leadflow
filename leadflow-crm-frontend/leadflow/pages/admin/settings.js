@@ -118,6 +118,23 @@ export default function AdminSettings() {
   const [drawingKey, setDrawingKey] = useState(0)
   const polygonRef = useRef(null)
 
+  // Force Logout State
+  const [forcingLogout, setForcingLogout] = useState(false)
+
+  const handleForceLogout = async () => {
+    if (!confirm("🚨 Are you sure? This will instantly terminate all active employee sessions. They will need to log in again with their credentials.")) return;
+    
+    setForcingLogout(true)
+    try {
+      await fetchWithAuth('/accounts/employees/force-logout/', { method: 'POST' })
+      alert('✅ All employees have been successfully logged out.')
+    } catch (err) {
+      alert('Failed: ' + err.message)
+    } finally {
+      setForcingLogout(false)
+    }
+  }
+
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
@@ -550,6 +567,23 @@ export default function AdminSettings() {
 
         {active === 'Security' && (
           <div className="space-y-4">
+            <div className="card p-5 border border-danger/20 border-l-4 border-l-danger bg-danger/5">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-display font-semibold text-sm text-danger flex items-center gap-2">
+                    <Shield size={16} /> Force Logout
+                  </h3>
+                  <p className="text-[11px] text-txt2 mt-1 max-w-xl">
+                    Instantly terminate all active sessions for every employee in your organization. They will be required to log in again immediately, but their passwords will not change. Your admin session will remain active.
+                  </p>
+                </div>
+                <button onClick={handleForceLogout} disabled={forcingLogout} className="btn-primary bg-danger border-danger hover:bg-danger/80 disabled:opacity-50">
+                  {forcingLogout ? <Loader2 size={14} className="animate-spin" /> : <Shield size={14} />}
+                  {forcingLogout ? "Logging Out..." : "Force Logout All Employees"}
+                </button>
+              </div>
+            </div>
+
             <div className="card p-5">
               <h3 className="font-display font-semibold text-sm text-txt mb-4">Password Policy</h3>
               <div className="space-y-2">

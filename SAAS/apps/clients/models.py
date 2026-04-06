@@ -16,6 +16,10 @@ class ClientAccount(models.Model):
     storage_quota_mb = models.IntegerField(default=1024, help_text="File storage quota in MB")
     geofencing_enabled = models.BooleanField(default=False, help_text="Global toggle to enforce geolocation checking for employees")
     
+    # Used to instantly invalidate all employee JWT tokens
+    force_logout_until = models.DateTimeField(null=True, blank=True, help_text="Forces all employees to log in again if their token was issued before this timestamp.")
+
+    
     # Daily targets — configurable by client admin
     daily_telecaller_target = models.IntegerField(default=100, help_text="Daily call target per telecaller")
     daily_field_agent_target = models.IntegerField(default=8, help_text="Daily visit target per field agent")
