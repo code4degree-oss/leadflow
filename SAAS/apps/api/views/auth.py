@@ -44,7 +44,10 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             # Django's user_logged_in signal does NOT fire with JWT auth,
             # so we must create LoginHistory directly here.
             if client:
-                def _record_login():
+                req_lat = request.data.get('latitude')
+                req_lng = request.data.get('longitude')
+                
+                def _record_login(provided_lat, provided_lng):
                     try:
                         from ipware import get_client_ip
                         from apps.audits.models import LoginHistory
@@ -52,9 +55,24 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                         ip, _ = get_client_ip(request)
                         if not ip:
                             ip = '127.0.0.1'
+                            
+                        # Get approximate geo data (mostly for city/country text layout)
                         geo_data = GeoLocationService.get_geo_data(ip, user)
+                        
+                        # Use precise GPS coordinates if frontend provided them,
+                        # otherwise fallback to the IP-based approximate coordinates
+                        final_lat = geo_data['latitude']
+                        final_lng = geo_data['longitude']
+                        
+                        if provided_lat and provided_lng:
+                            try:
+                                final_lat = float(provided_lat)
+                                final_lng = float(provided_lng)
+                            except (ValueError, TypeError):
+                                pass
+                        
                         is_suspicious, reason = GeoLocationService.check_suspicious(
-                            user, geo_data['latitude'], geo_data['longitude']
+                            user, final_lat, final_lng
                         )
                         LoginHistory.objects.create(
                             user=user,
@@ -62,15 +80,15 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                             ip_address=ip,
                             city=geo_data['city'],
                             country=geo_data['country'],
-                            latitude=geo_data['latitude'],
-                            longitude=geo_data['longitude'],
+                            latitude=final_lat,
+                            longitude=final_lng,
                             is_suspicious=is_suspicious,
                             suspicious_reason=reason
                         )
                     except Exception as e:
                         logger.error(f"[LOGIN_HISTORY] Failed to record: {e}")
                 import threading
-                threading.Thread(target=_record_login, daemon=True).start()
+                threading.Thread(target=_record_login, args=(req_lat, req_lng), daemon=True).start()
 
             # --- Send Login Alert to Client Admin ---
             if client and user.role != RoleChoices.CLIENT_ADMIN:
