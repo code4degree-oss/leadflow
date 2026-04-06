@@ -99,7 +99,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                         send_push_notification(
                             user=admin,
                             title="Employee Login Alert",
-                            body=f"{user.get_full_name() or user.email} has logged in.",
+                            body=f"{user.first_name} {user.last_name}".strip() or f"{user.email}",
                             data={"type": "login_alert", "employee_id": str(user.id)}
                         )
                 import threading
@@ -113,26 +113,26 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             # Only enforce geofencing for standard employees
             exempt_roles = [RoleChoices.SUPER_ADMIN, RoleChoices.CLIENT_ADMIN, RoleChoices.MANAGER]
             
-            logger.info(f"[GEOFENCE] === CHECK START === User={email}, Role={user.role}, "
+            logger.warning(f"[GEOFENCE] === CHECK START === User={email}, Role={user.role}, "
                         f"geofencing_enabled={client.geofencing_enabled}, "
                         f"geofencing_exempt={user.geofencing_exempt}, "
                         f"role_exempt={user.role in exempt_roles}")
             
             if not client.geofencing_enabled:
-                logger.info(f"[GEOFENCE] SKIP {email} — geofencing_enabled=False for client '{client.name}'")
+                logger.warning(f"[GEOFENCE] SKIP {email} — geofencing_enabled=False for client '{client.name}'")
                 return response
             if user.geofencing_exempt:
-                logger.info(f"[GEOFENCE] SKIP {email} — user is geofencing_exempt")
+                logger.warning(f"[GEOFENCE] SKIP {email} — user is geofencing_exempt")
                 return response
             if user.role in exempt_roles:
-                logger.info(f"[GEOFENCE] SKIP {email} — role '{user.role}' is exempt")
+                logger.warning(f"[GEOFENCE] SKIP {email} — role '{user.role}' is exempt")
                 return response
 
             # ── Geofencing is ACTIVE for this user ──
             lat = request.data.get('latitude')
             lng = request.data.get('longitude')
 
-            logger.info(f"[GEOFENCE] User={email}, Role={user.role}, lat={lat}, lng={lng}")
+            logger.warning(f"[GEOFENCE] User={email}, Role={user.role}, lat={lat}, lng={lng}")
 
             if lat is None or lng is None or lat == '' or lng == '':
                 return Response(
