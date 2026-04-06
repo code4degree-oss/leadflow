@@ -27,15 +27,35 @@ export async function fetchWithAuth(url, options = {}) {
     // Attempt to silently refresh token
     if (refreshToken && !url.includes('/auth/refresh/')) {
       try {
+        // Silently get GPS coordinates for geofence validation on refresh
+        let refreshBody = { refresh: refreshToken }
+        try {
+          const pos = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 5000,
+              maximumAge: 60000
+            })
+          })
+          refreshBody.latitude = pos.coords.latitude
+          refreshBody.longitude = pos.coords.longitude
+        } catch (gpsErr) {
+          // GPS unavailable — backend will decide whether to block or allow
+          console.warn('GPS unavailable during token refresh:', gpsErr.message)
+        }
+
         const refreshRes = await fetch(`${API_BASE}/auth/refresh/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refresh: refreshToken })
+          body: JSON.stringify(refreshBody)
         });
         
         if (refreshRes.ok) {
           const newData = await refreshRes.json();
           localStorage.setItem('access_token', newData.access);
+          if (newData.refresh) {
+            localStorage.setItem('refresh_token', newData.refresh);
+          }
           // Retry original request with new token
           options.headers = options.headers || {};
           options.headers['Authorization'] = `Bearer ${newData.access}`;
