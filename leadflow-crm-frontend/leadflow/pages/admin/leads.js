@@ -129,8 +129,8 @@ export default function AdminLeads() {
       alert('Please select exactly one user to assign leads to manually.')
       return
     }
-    if (assignMode === 'round_robin' && assignUserIds.length === 0) {
-      alert('Please select at least one user to assign leads to.')
+    if (assignMode === 'round_robin' && assignUserIds.length < 2) {
+      alert('Please select at least 2 or more employees for round robin distribution.')
       return
     }
     setAssigning(true)
@@ -707,6 +707,9 @@ export default function AdminLeads() {
                 </div>
                 {assignMode === 'manual' && assignUserIds.length > 1 && (
                   <p className="text-xs text-danger mt-2">⚠️ Manual mode requires exactly one employee selected.</p>
+                )}
+                {assignMode === 'round_robin' && assignUserIds.length < 2 && (
+                  <p className="text-xs text-danger mt-2">⚠️ Select at least 2 or more employees for Round Robin.</p>
                 )}
               </div>
             )}
