@@ -46,7 +46,7 @@ class LeadDistributionService:
         """
         telecallers = list(User.objects.filter(
             client=client, 
-            role=RoleChoices.TELECALLER, 
+            role__in=[RoleChoices.TELECALLER, RoleChoices.MANAGER], 
             is_active=True
         ).order_by('id')) # Order guarantees deterministic rotation
 
@@ -79,7 +79,7 @@ class LeadDistributionService:
         # Get agents annotated with their active lead count
         telecallers = list(User.objects.filter(
             client=client, 
-            role=RoleChoices.TELECALLER, 
+            role__in=[RoleChoices.TELECALLER, RoleChoices.MANAGER], 
             is_active=True
         ).annotate(
             active_leads_count=Count('assigned_leads', filter=Q(assigned_leads__status__in=[LeadStatus.NEW, LeadStatus.CALLED]))

@@ -20,9 +20,9 @@ export default function HotLeads() {
   const fetchHotLeads = async () => {
     try {
       setLoading(true)
-      const data = await fetchWithAuth('/leads/')
+      const data = await fetchWithAuth('/leads/?is_hot=true&page_size=500')
       const allLeads = data.results || data || []
-      const hotLeads = allLeads.filter(l => l.is_hot)
+      const hotLeads = allLeads
       setLeads(hotLeads)
       
       // Keep selected lead in sync or select first if none selected

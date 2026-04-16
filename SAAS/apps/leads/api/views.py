@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 
 from apps.api.mixins import TenantQuerySetMixin
-from apps.api.permissions import IsClientAdmin, IsTelecallerOrHigher, IsFieldAgentOrHigher
+from apps.api.permissions import IsClientAdmin, IsTelecallerOrHigher, IsFieldAgentOrHigher, IsManagerOrHigher
 from apps.leads.api.serializers import (
     LeadSerializer, LeadBatchSerializer, SiteVisitSerializer,
     FollowUpReminderSerializer, CallLogSerializer, ActivityTimelineSerializer,
@@ -96,7 +96,7 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
     @action(detail=False, methods=['post'], url_path='pull-leads', permission_classes=[IsTelecallerOrHigher])
     def pull_leads(self, request):
         """Telecallers can pull a batch of NEW, unassigned leads from the global pool."""
-        if request.user.role not in [RoleChoices.TELECALLER, RoleChoices.CLIENT_ADMIN, RoleChoices.SUPER_ADMIN]:
+        if request.user.role not in [RoleChoices.TELECALLER, RoleChoices.CLIENT_ADMIN, RoleChoices.SUPER_ADMIN, RoleChoices.MANAGER]:
             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
             
         try:
@@ -459,7 +459,7 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
     # Admin Lost-Leads Queue
     # ──────────────────────────────────────────────
 
-    @action(detail=False, methods=['get'], url_path='critical-followups', permission_classes=[IsClientAdmin])
+    @action(detail=False, methods=['get'], url_path='critical-followups', permission_classes=[IsManagerOrHigher])
     def critical_followups(self, request):
         """Returns hot leads whose next_call_at or followups are overdue by > 30 mins."""
         thirty_mins_ago = timezone.now() - datetime.timedelta(minutes=30)
@@ -474,7 +474,7 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
         serializer = self.get_serializer(overdue_leads, many=True)
         return Response(serializer.data)
 
-    @action(detail=False, methods=['get'], url_path='lost-queue', permission_classes=[IsClientAdmin])
+    @action(detail=False, methods=['get'], url_path='lost-queue', permission_classes=[IsManagerOrHigher])
     def lost_queue(self, request):
         """Returns all leads marked as LOST for admin review."""
         qs = Lead.objects.filter(
@@ -516,6 +516,20 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
 
         return Response({"detail": f"Lead reassigned to {target_user.email}, counters reset."})
 
+    @action(detail=False, methods=['delete'], url_path='bulk-delete', permission_classes=[IsClientAdmin])
+    def bulk_delete(self, request):
+        """Admin bulk deletes all leads in the system."""
+        queryset = self.get_queryset()
+        count, _ = queryset.delete()
+
+        AuditService.record_action(
+            user=request.user,
+            action="BULK_DELETE_ALL_LEADS",
+            resource_type="Lead",
+            changes={"deleted_count": count}
+        )
+        return Response({"detail": f"Successfully deleted {count} leads."}, status=status.HTTP_204_NO_CONTENT)
+
     @action(detail=True, methods=['delete'], url_path='permanent-delete', permission_classes=[IsClientAdmin])
     def permanent_delete(self, request, pk=None):
         """Admin permanently deletes a lost lead."""
@@ -556,7 +570,7 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
     # Stats & Export & Batch Progress
     # ──────────────────────────────────────────────
 
-    @action(detail=False, methods=['get'], url_path='batch-progress', permission_classes=[IsClientAdmin])
+    @action(detail=False, methods=['get'], url_path='batch-progress', permission_classes=[IsManagerOrHigher])
     def batch_progress(self, request):
         """Returns progress stats for each uploaded batch (source)."""
         qs = self.get_queryset()
@@ -596,7 +610,7 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
     def stats(self, request):
         queryset = self.get_queryset()
         
-        is_admin = request.user.role in [RoleChoices.CLIENT_ADMIN, RoleChoices.SUPER_ADMIN] or request.user.is_superuser
+        is_admin = request.user.role in [RoleChoices.CLIENT_ADMIN, RoleChoices.SUPER_ADMIN, RoleChoices.MANAGER] or request.user.is_superuser
         if not is_admin:
             if request.user.role == RoleChoices.FIELD_AGENT:
                 queryset = queryset.filter(Q(assigned_to=request.user) | Q(field_agent=request.user)).distinct()
@@ -664,7 +678,7 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
             "calls_today": calls_today,
         })
 
-    @action(detail=False, methods=['get'], url_path='performance-report', permission_classes=[IsClientAdmin])
+    @action(detail=False, methods=['get'], url_path='performance-report', permission_classes=[IsManagerOrHigher])
     def performance_report(self, request):
         """Detailed performance report for the Client Admin Dashboard."""
         client = request.user.client
@@ -911,6 +925,10 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
         """
         mode = request.data.get('mode', 'manual')
         user_id = request.data.get('user_id')
+        target_user_ids = request.data.get('target_user_ids', [])
+        if user_id and not target_user_ids:
+            target_user_ids = [user_id]
+            
         from_user_id = request.data.get('from_user_id')  # Optional: redistribute FROM this user
         count = int(request.data.get('count', 10))
         status_filter = request.data.get('status_filter', 'NEW')
@@ -940,10 +958,10 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
             return Response({"detail": msg}, status=status.HTTP_400_BAD_REQUEST)
         
         if mode == 'manual':
-            if not user_id:
-                return Response({"detail": "user_id is required for manual assignment."}, status=status.HTTP_400_BAD_REQUEST)
+            if not target_user_ids:
+                return Response({"detail": "target_user_ids is required for manual assignment."}, status=status.HTTP_400_BAD_REQUEST)
             try:
-                target_user = User.objects.get(id=user_id, client=request.user.client, is_active=True)
+                target_user = User.objects.get(id=target_user_ids[0], client=request.user.client, is_active=True)
             except User.DoesNotExist:
                 return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
             
@@ -963,9 +981,12 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
         elif mode == 'round_robin':
             users_qs = User.objects.filter(
                 client=request.user.client,
-                role__in=[RoleChoices.TELECALLER, RoleChoices.FIELD_AGENT],
+                role__in=[RoleChoices.TELECALLER, RoleChoices.FIELD_AGENT, RoleChoices.MANAGER],
                 is_active=True
-            ).order_by('id')
+            )
+            if target_user_ids:
+                users_qs = users_qs.filter(id__in=target_user_ids)
+            users_qs = users_qs.order_by('id')
             users = list(users_qs)
             
             if not users:
@@ -986,9 +1007,13 @@ class LeadViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
             # Assign to user with fewest currently assigned leads
             users_qs = User.objects.filter(
                 client=request.user.client,
-                role__in=[RoleChoices.TELECALLER, RoleChoices.FIELD_AGENT],
+                role__in=[RoleChoices.TELECALLER, RoleChoices.FIELD_AGENT, RoleChoices.MANAGER],
                 is_active=True
-            ).annotate(
+            )
+            if target_user_ids:
+                users_qs = users_qs.filter(id__in=target_user_ids)
+            
+            users_qs = users_qs.annotate(
                 active_leads=Count('assigned_leads', filter=Q(assigned_leads__status__in=[LeadStatus.NEW, LeadStatus.CALLED, LeadStatus.NOT_ANSWERED, LeadStatus.INTERESTED]))
             ).order_by('active_leads')
             

@@ -24,7 +24,7 @@ export default function AdminLeads() {
   
   // Bulk Assign
   const [assignMode, setAssignMode] = useState('manual') // manual, round_robin, load_balance
-  const [assignUserId, setAssignUserId] = useState('')
+  const [assignUserIds, setAssignUserIds] = useState([])
   const [fromUserId, setFromUserId] = useState('')  // redistribute FROM this user
   const [assignStatusFilter, setAssignStatusFilter] = useState('NEW') // NEW, all
   const [assignCount, setAssignCount] = useState(10)
@@ -111,7 +111,7 @@ export default function AdminLeads() {
   const fetchEmployees = async () => {
     try {
       const data = await fetchWithAuth('/accounts/employees/')
-      setEmployees((data.results || data || []).filter(e => e.role === 'TELECALLER' || e.role === 'FIELD_AGENT'))
+      setEmployees((data.results || data || []).filter(e => e.role === 'TELECALLER' || e.role === 'FIELD_AGENT' || e.role === 'MANAGER'))
     } catch (err) { /* */ }
   }
 
@@ -125,8 +125,12 @@ export default function AdminLeads() {
   }
 
   const handleBulkAssign = async () => {
-    if (assignMode === 'manual' && !assignUserId) {
-      alert('Please select a user to assign leads to.')
+    if (assignMode === 'manual' && assignUserIds.length !== 1) {
+      alert('Please select exactly one user to assign leads to manually.')
+      return
+    }
+    if ((assignMode === 'round_robin' || assignMode === 'load_balance') && assignUserIds.length === 0) {
+      alert('Please select at least one user to assign leads to.')
       return
     }
     setAssigning(true)
@@ -135,8 +139,8 @@ export default function AdminLeads() {
         mode: assignMode,
         count: assignCount,
         status_filter: assignStatusFilter,
+        target_user_ids: assignUserIds
       }
-      if (assignMode === 'manual') payload.user_id = assignUserId
       if (fromUserId) payload.from_user_id = fromUserId
       
       const result = await fetchWithAuth('/leads/bulk-assign/', {
@@ -184,6 +188,23 @@ export default function AdminLeads() {
     finally { setExporting(false) }
   }
 
+  const handleBulkDelete = async () => {
+    if (!confirm('⚠️ SYSTEM WARNING ⚠️\n\nYou are about to PERMANENTLY DELETE ALL LEADS in the system.\nThis action CANNOT be undone.\n\nAre you absolutely sure you want to proceed?')) return
+    
+    // Double confirmation for safety
+    const check = prompt('Type "DELETE" to confirm complete wipe of all leads:')
+    if (check !== 'DELETE') return
+
+    try {
+      await fetchWithAuth('/leads/bulk-delete/', { method: 'DELETE' })
+      alert('All leads have been permanently deleted.')
+      fetchLeads()
+      fetchBatchProgress()
+    } catch (err) {
+      alert('Error during bulk delete: ' + err.message)
+    }
+  }
+
   const handleAdminReassign = async () => {
     if (!reassignLead || !selectedUser) return
     try {
@@ -229,7 +250,11 @@ export default function AdminLeads() {
   return (
     <Layout role="admin" pageTitle="Lead Management"
       actions={
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <button onClick={handleBulkDelete} className="btn-ghost text-xs border-danger/20 hover:bg-danger/10 hover:text-danger text-danger">
+            <Trash2 size={13} className="mr-1" /> Delete All Leads
+          </button>
+          <div className="w-px h-6 bg-border mx-1"></div>
           <button disabled={exporting} onClick={() => handleExport('csv')} className="btn-ghost text-xs group">
             {exporting ? <Loader2 size={13} className="animate-spin text-accent" /> : <Download size={13} />} Export CSV
           </button>
@@ -614,7 +639,7 @@ export default function AdminLeads() {
                 <option value="">Unassigned leads (default)</option>
                 {employees.map(emp => (
                   <option key={emp.id} value={emp.id}>
-                    {emp.first_name} {emp.last_name} — {emp.role === 'FIELD_AGENT' ? '🏃 Field Agent' : '📞 Telecaller'} ({emp.email})
+                    {emp.first_name} {emp.last_name} — {emp.role === 'FIELD_AGENT' ? '🏃 Field Agent' : emp.role === 'MANAGER' ? '👔 Manager (Caller)' : '📞 Telecaller'} ({emp.email})
                   </option>
                 ))}
               </select>
@@ -640,21 +665,40 @@ export default function AdminLeads() {
               </div>
             </div>
 
-            {/* Target User (Manual mode) */}
-            {assignMode === 'manual' && (
-              <div className="mb-6 animate-in fade-in slide-in-from-top-2">
-                <label className="text-[10px] font-bold text-txt3 uppercase tracking-wider mb-2 block">Assign To</label>
-                <select value={assignUserId} onChange={e => setAssignUserId(e.target.value)}
-                  className="input w-full bg-bg3 text-sm">
-                  <option value="">Select employee...</option>
-                  {employees.map(emp => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.first_name} {emp.last_name} — {emp.role === 'FIELD_AGENT' ? '🏃 Field Agent' : '📞 Telecaller'} ({emp.email})
-                    </option>
-                  ))}
-                </select>
+            {/* Target Users */}
+            <div className="mb-6 animate-in fade-in slide-in-from-top-2">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-[10px] font-bold text-txt3 uppercase tracking-wider block">Target Employees</label>
+                <div className="flex gap-2">
+                  <button onClick={() => setAssignUserIds(employees.map(e => e.id))} className="text-[10px] font-bold text-accent hover:underline">Select All</button>
+                  <button onClick={() => setAssignUserIds([])} className="text-[10px] font-bold text-txt3 hover:underline">Clear</button>
+                </div>
               </div>
-            )}
+              
+              <div className="bg-bg2 border border-border rounded-xl max-h-[200px] overflow-y-auto divide-y divide-border">
+                {employees.length === 0 ? (
+                   <div className="p-4 text-center text-xs text-txt3">No active employees found</div>
+                ) : (
+                  employees.map(emp => {
+                    const isSelected = assignUserIds.includes(emp.id)
+                    return (
+                      <label key={emp.id} className={clsx("flex items-center gap-3 p-3 cursor-pointer hover:bg-bg3 transition-colors", isSelected && "bg-accent/5")}>
+                        <div className={clsx("w-4 h-4 rounded border flex items-center justify-center shrink-0", isSelected ? "bg-accent border-accent text-white" : "border-txt3/30")}>
+                          {isSelected && <CheckCircle2 size={12} />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-bold text-txt truncate">{emp.first_name} {emp.last_name}</div>
+                          <div className="text-[10px] text-txt3 truncate">{emp.role === 'FIELD_AGENT' ? '🏃 Field Agent' : emp.role === 'MANAGER' ? '👔 Manager' : '📞 Telecaller'} • {emp.email}</div>
+                        </div>
+                      </label>
+                    )
+                  })
+                )}
+              </div>
+              {assignMode === 'manual' && assignUserIds.length > 1 && (
+                <p className="text-xs text-danger mt-2">⚠️ Manual mode requires exactly one employee selected.</p>
+              )}
+            </div>
 
             {/* Count */}
             <div className="mb-6">
@@ -682,7 +726,9 @@ export default function AdminLeads() {
                   ? <>Take <strong className="text-accent2">{assignCount}</strong> leads from <strong className="text-accent2">{employees.find(e => e.id === fromUserId)?.first_name || 'selected user'}</strong> and </>
                   : <>Assign <strong className="text-accent2">{assignCount}</strong> unassigned leads </>
                 }
-                {assignMode === 'manual' ? `to ${employees.find(e => e.id === assignUserId)?.first_name || 'selected user'}` : `via ${assignMode.replace(/_/g, ' ')}`}
+                {assignMode === 'manual' 
+                  ? `to ${assignUserIds.length === 1 ? employees.find(e => e.id === assignUserIds[0])?.first_name || 'selected user' : 'selected users'}` 
+                  : `via ${assignMode.replace(/_/g, ' ')} (${assignUserIds.length === 0 ? 'All applicable' : assignUserIds.length} users)`}
                 {' '}({assignStatusFilter === 'NEW' ? 'NEW status only' : 'all statuses'})
               </p>
             </div>
