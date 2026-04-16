@@ -682,7 +682,16 @@ export default function AdminLeads() {
                   employees.map(emp => {
                     const isSelected = assignUserIds.includes(emp.id)
                     return (
-                      <label key={emp.id} className={clsx("flex items-center gap-3 p-3 cursor-pointer hover:bg-bg3 transition-colors", isSelected && "bg-accent/5")}>
+                      <label 
+                        key={emp.id} 
+                        className={clsx("flex items-center gap-3 p-3 cursor-pointer hover:bg-bg3 transition-colors", isSelected && "bg-accent/5")}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setAssignUserIds(prev => 
+                            prev.includes(emp.id) ? prev.filter(id => id !== emp.id) : [...prev, emp.id]
+                          )
+                        }}
+                      >
                         <div className={clsx("w-4 h-4 rounded border flex items-center justify-center shrink-0", isSelected ? "bg-accent border-accent text-white" : "border-txt3/30")}>
                           {isSelected && <CheckCircle2 size={12} />}
                         </div>
