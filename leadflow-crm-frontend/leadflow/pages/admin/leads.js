@@ -129,7 +129,7 @@ export default function AdminLeads() {
       alert('Please select exactly one user to assign leads to manually.')
       return
     }
-    if ((assignMode === 'round_robin' || assignMode === 'load_balance') && assignUserIds.length === 0) {
+    if (assignMode === 'round_robin' && assignUserIds.length === 0) {
       alert('Please select at least one user to assign leads to.')
       return
     }
@@ -139,7 +139,7 @@ export default function AdminLeads() {
         mode: assignMode,
         count: assignCount,
         status_filter: assignStatusFilter,
-        target_user_ids: assignUserIds
+        target_user_ids: assignMode === 'load_balance' ? [] : assignUserIds
       }
       if (fromUserId) payload.from_user_id = fromUserId
       
@@ -666,48 +666,50 @@ export default function AdminLeads() {
             </div>
 
             {/* Target Users */}
-            <div className="mb-6 animate-in fade-in slide-in-from-top-2">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-[10px] font-bold text-txt3 uppercase tracking-wider block">Target Employees</label>
-                <div className="flex gap-2">
-                  <button onClick={() => setAssignUserIds(employees.map(e => e.id))} className="text-[10px] font-bold text-accent hover:underline">Select All</button>
-                  <button onClick={() => setAssignUserIds([])} className="text-[10px] font-bold text-txt3 hover:underline">Clear</button>
+            {assignMode !== 'load_balance' && (
+              <div className="mb-6 animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[10px] font-bold text-txt3 uppercase tracking-wider block">Target Employees</label>
+                  <div className="flex gap-2">
+                    <button onClick={() => setAssignUserIds(employees.map(e => e.id))} className="text-[10px] font-bold text-accent hover:underline">Select All</button>
+                    <button onClick={() => setAssignUserIds([])} className="text-[10px] font-bold text-txt3 hover:underline">Clear</button>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="bg-bg2 border border-border rounded-xl max-h-[200px] overflow-y-auto divide-y divide-border">
-                {employees.length === 0 ? (
-                   <div className="p-4 text-center text-xs text-txt3">No active employees found</div>
-                ) : (
-                  employees.map(emp => {
-                    const isSelected = assignUserIds.includes(emp.id)
-                    return (
-                      <label 
-                        key={emp.id} 
-                        className={clsx("flex items-center gap-3 p-3 cursor-pointer hover:bg-bg3 transition-colors", isSelected && "bg-accent/5")}
-                        onClick={(e) => {
-                          e.preventDefault()
-                          setAssignUserIds(prev => 
-                            prev.includes(emp.id) ? prev.filter(id => id !== emp.id) : [...prev, emp.id]
-                          )
-                        }}
-                      >
-                        <div className={clsx("w-4 h-4 rounded border flex items-center justify-center shrink-0", isSelected ? "bg-accent border-accent text-white" : "border-txt3/30")}>
-                          {isSelected && <CheckCircle2 size={12} />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-bold text-txt truncate">{emp.first_name} {emp.last_name}</div>
-                          <div className="text-[10px] text-txt3 truncate">{emp.role === 'FIELD_AGENT' ? '🏃 Field Agent' : emp.role === 'MANAGER' ? '👔 Manager' : '📞 Telecaller'} • {emp.email}</div>
-                        </div>
-                      </label>
-                    )
-                  })
+                
+                <div className="bg-bg2 border border-border rounded-xl max-h-[200px] overflow-y-auto divide-y divide-border">
+                  {employees.length === 0 ? (
+                     <div className="p-4 text-center text-xs text-txt3">No active employees found</div>
+                  ) : (
+                    employees.map(emp => {
+                      const isSelected = assignUserIds.includes(emp.id)
+                      return (
+                        <label 
+                          key={emp.id} 
+                          className={clsx("flex items-center gap-3 p-3 cursor-pointer hover:bg-bg3 transition-colors", isSelected && "bg-accent/5")}
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setAssignUserIds(prev => 
+                              prev.includes(emp.id) ? prev.filter(id => id !== emp.id) : [...prev, emp.id]
+                            )
+                          }}
+                        >
+                          <div className={clsx("w-4 h-4 rounded border flex items-center justify-center shrink-0", isSelected ? "bg-accent border-accent text-white" : "border-txt3/30")}>
+                            {isSelected && <CheckCircle2 size={12} />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-bold text-txt truncate">{emp.first_name} {emp.last_name}</div>
+                            <div className="text-[10px] text-txt3 truncate">{emp.role === 'FIELD_AGENT' ? '🏃 Field Agent' : emp.role === 'MANAGER' ? '👔 Manager' : '📞 Telecaller'} • {emp.email}</div>
+                          </div>
+                        </label>
+                      )
+                    })
+                  )}
+                </div>
+                {assignMode === 'manual' && assignUserIds.length > 1 && (
+                  <p className="text-xs text-danger mt-2">⚠️ Manual mode requires exactly one employee selected.</p>
                 )}
               </div>
-              {assignMode === 'manual' && assignUserIds.length > 1 && (
-                <p className="text-xs text-danger mt-2">⚠️ Manual mode requires exactly one employee selected.</p>
-              )}
-            </div>
+            )}
 
             {/* Count */}
             <div className="mb-6">
@@ -737,6 +739,8 @@ export default function AdminLeads() {
                 }
                 {assignMode === 'manual' 
                   ? `to ${assignUserIds.length === 1 ? employees.find(e => e.id === assignUserIds[0])?.first_name || 'selected user' : 'selected users'}` 
+                  : assignMode === 'load_balance'
+                  ? `via load balance (auto-assigned to least loaded users)`
                   : `via ${assignMode.replace(/_/g, ' ')} (${assignUserIds.length === 0 ? 'All applicable' : assignUserIds.length} users)`}
                 {' '}({assignStatusFilter === 'NEW' ? 'NEW status only' : 'all statuses'})
               </p>
