@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==============================================================================
-# DYLeadFlow CRM — Full Server Setup (Run ONCE on a fresh Ubuntu VM)
+# DY LeadFlow CRM — Full Server Setup (Run ONCE on a fresh Ubuntu VM)
 #
 # Usage:
 #   1. Copy this file to your VM
@@ -25,7 +25,7 @@ DJANGO_SECRET_KEY="replace-this-with-a-very-secret-string"  # Change in producti
 # ==============================================================================
 
 echo "========================================================"
-echo "  DYLeadFlow CRM — Full Server Setup"
+echo "  DY LeadFlow CRM — Full Server Setup"
 echo "  Target User : $TARGET_USER"
 echo "  Project Dir : $PROJECT_DIR"
 echo "  Domain/IP   : $DOMAIN_NAME"
@@ -118,7 +118,7 @@ echo ""
 echo "==> [5/8] Configuring Gunicorn systemd service..."
 cat <<EOF | tee /etc/systemd/system/gunicorn.service
 [Unit]
-Description=gunicorn daemon for DYLeadFlow Backend
+Description=gunicorn daemon for DY LeadFlow Backend
 After=network.target
 
 [Service]

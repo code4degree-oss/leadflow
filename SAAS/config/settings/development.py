@@ -1,5 +1,5 @@
 """
-Development settings for DYLeadFlow CRM.
+Development settings for DY LeadFlow CRM.
 """
 from .base import *  # noqa
 

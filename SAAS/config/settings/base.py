@@ -1,5 +1,5 @@
 """
-Base settings for DYLeadFlow CRM.
+Base settings for DY LeadFlow CRM.
 
 These settings are common to all environments.
 """

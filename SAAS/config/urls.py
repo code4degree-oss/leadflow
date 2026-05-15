@@ -1,5 +1,5 @@
 """
-URL configuration for DYLeadFlow CRM.
+URL configuration for DY LeadFlow CRM.
 
 All API endpoints are versioned under /api/v1/.
 """

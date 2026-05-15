@@ -192,7 +192,7 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
         <div className="px-4 py-4 border-b border-border flex items-center justify-between">
           <div>
             <div className="font-display font-extrabold text-xl text-txt tracking-tight">
-              DYLead<span className="text-accent">Flow</span>
+              DY Lead<span className="text-accent">Flow</span>
             </div>
             <div className={clsx('badge mt-2 border text-xs', roleColors[role])}>
               {config.label}

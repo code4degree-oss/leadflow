@@ -1,6 +1,6 @@
-# DYLeadFlow CRM — Deployment Guide 🚀
+# DY LeadFlow CRM — Deployment Guide 🚀
 
-A simple, step-by-step guide to deploy DYLeadFlow on any Ubuntu server (Azure, AWS, DigitalOcean, etc.)
+A simple, step-by-step guide to deploy DY LeadFlow on any Ubuntu server (Azure, AWS, DigitalOcean, etc.)
 
 ---
 
@@ -65,7 +65,7 @@ DJANGO_SETTINGS_MODULE=config.settings.production python manage.py createsuperus
 It will ask you for an email and password. Remember these — you'll use them to log in!
 
 ### Step 6 — Open your browser and check!
-- **Frontend:** `http://YOUR_SERVER_IP` — You should see the DYLeadFlow login page
+- **Frontend:** `http://YOUR_SERVER_IP` — You should see the DY LeadFlow login page
 - **Django Admin:** `http://YOUR_SERVER_IP/dyleadflow-backend-admin/` — Database admin panel
 
 🎉 **Your app is now live!**

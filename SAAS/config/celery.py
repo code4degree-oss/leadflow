@@ -1,5 +1,5 @@
 """
-Celery configuration for DYLeadFlow CRM.
+Celery configuration for DY LeadFlow CRM.
 
 This module sets up the Celery application with Redis as the message broker.
 It auto-discovers tasks from all installed Django apps.

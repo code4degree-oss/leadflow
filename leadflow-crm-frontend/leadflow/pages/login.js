@@ -236,7 +236,7 @@ export default function LoginPage() {
             {/* Logo */}
             <div className="mb-10 text-center lg:text-left">
               <div className="font-display font-extrabold text-4xl text-txt tracking-tight mb-1 flex items-center justify-center lg:justify-start">
-                DYLead<span className="text-accent">Flow</span>
+                DY Lead<span className="text-accent">Flow</span>
               </div>
               <div className="text-txt3 text-sm flex items-center justify-center lg:justify-start">Real Estate CRM Platform</div>
             </div>
@@ -334,7 +334,7 @@ export default function LoginPage() {
 
           {/* Footer */}
           <div className="absolute bottom-6 w-full text-center flex items-center justify-center text-xs font-medium text-txt3/60">
-            © 2026 DYLeadFlow CRM <span className="mx-2">|</span> Privacy Policy <span className="mx-2">|</span> Terms
+            © 2026 DY LeadFlow CRM <span className="mx-2">|</span> Privacy Policy <span className="mx-2">|</span> Terms
           </div>
 
         </div>

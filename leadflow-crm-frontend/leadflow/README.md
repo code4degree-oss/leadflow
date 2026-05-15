@@ -1,6 +1,6 @@
-# DYLeadFlow CRM — Frontend
+# DY LeadFlow CRM — Frontend
 
-Complete Next.js + React frontend for the DYLeadFlow Real Estate CRM SaaS.
+Complete Next.js + React frontend for the DY LeadFlow Real Estate CRM SaaS.
 
 ## Tech Stack
 - **Next.js 14** (Pages Router)

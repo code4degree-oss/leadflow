@@ -1,4 +1,4 @@
-# DYLeadFlow CRM — Deployment Guide
+# DY LeadFlow CRM — Deployment Guide
 
 > **Last Tested:** March 27, 2026 on Ubuntu 24.04 LTS (Azure VM)
 

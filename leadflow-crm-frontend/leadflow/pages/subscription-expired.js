@@ -137,7 +137,7 @@ export default function SubscriptionExpiredPage() {
 
           {/* Footer */}
           <div className="text-center mt-6 text-xs text-txt3/60">
-            © 2026 DYLeadFlow CRM <span className="mx-1">•</span> All rights reserved
+            © 2026 DY LeadFlow CRM <span className="mx-1">•</span> All rights reserved
           </div>
         </div>
       </div>

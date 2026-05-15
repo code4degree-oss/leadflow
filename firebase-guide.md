@@ -1,6 +1,6 @@
 # 🔔 Firebase Push Notifications — Complete Integration Guide
 
-> Step-by-step guide to integrate Firebase Cloud Messaging (FCM) into the DYLeadFlow CRM for real-time push notifications.
+> Step-by-step guide to integrate Firebase Cloud Messaging (FCM) into the DY LeadFlow CRM for real-time push notifications.
 
 ---
 
@@ -19,14 +19,14 @@
 
 1. Go to [Firebase Console](https://console.firebase.google.com/)
 2. Click **Add Project**
-3. Name it: `DYLeadFlow-CRM-Production`
+3. Name it: `DY LeadFlow-CRM-Production`
 4. Disable Google Analytics (optional for notifications)
 5. Click **Create Project**
 
 ### Step 1.2 — Register Your Web App
 
 1. On the project overview, click the **Web icon** (`</>`)
-2. App nickname: `DYLeadFlow Frontend`
+2. App nickname: `DY LeadFlow Frontend`
 3. Check **"Also set up Firebase Hosting"** → Skip for now
 4. Click **Register app**
 5. **Copy the `firebaseConfig` object** — you'll need it in Step 2.2
@@ -129,7 +129,7 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   console.log("[SW] Background message:", payload);
 
-  const title = payload.notification?.title || "DYLeadFlow Notification";
+  const title = payload.notification?.title || "DY LeadFlow Notification";
   const options = {
     body: payload.notification?.body || "You have a new update.",
     icon: "/favicon.ico",

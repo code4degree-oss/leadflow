@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==============================================================================
-# DYLeadFlow CRM — Fast Auto-Sync (Triggered by GitHub Actions on push to main)
+# DY LeadFlow CRM — Fast Auto-Sync (Triggered by GitHub Actions on push to main)
 #
 # This script is lightweight by design. It does NOT reinstall system packages,
 # databases, or Nginx. It only pulls code, installs new deps, and restarts.
@@ -13,7 +13,7 @@ TARGET_USER="dyleadflow"
 PROJECT_DIR="/home/$TARGET_USER/saas-project"
 
 echo "========================================================"
-echo "  DYLeadFlow CRM — Auto-Sync Started"
+echo "  DY LeadFlow CRM — Auto-Sync Started"
 echo "  $(date '+%Y-%m-%d %H:%M:%S UTC')"
 echo "========================================================"
 

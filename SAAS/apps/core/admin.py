@@ -4,7 +4,7 @@ from apps.accounts.models import RoleChoices
 
 class MultiTenantModelAdmin(admin.ModelAdmin):
     """
-    Base ModelAdmin for all tenant-specific models in DYLeadFlow CRM.
+    Base ModelAdmin for all tenant-specific models in DY LeadFlow CRM.
     Ensures that users (who are not Super Admins) can only see and edit
     data belonging to their own ClientAccount.
     """

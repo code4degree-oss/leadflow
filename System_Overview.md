@@ -1,7 +1,7 @@
-# DYLeadFlow CRM - System Architecture & Detailed Overview
+# DY LeadFlow CRM - System Architecture & Detailed Overview
 
 ## 1. Executive Summary
-DYLeadFlow CRM is a comprehensive, production-grade, multi-tenant SaaS application tailored for efficient lead lifecycle management, distribution, and field agent coordination. The system is designed to handle multiple administrative layers while providing a specialized daily workflow for telecallers and a robust mobile application for field agents.
+DY LeadFlow CRM is a comprehensive, production-grade, multi-tenant SaaS application tailored for efficient lead lifecycle management, distribution, and field agent coordination. The system is designed to handle multiple administrative layers while providing a specialized daily workflow for telecallers and a robust mobile application for field agents.
 
 ## 2. System Architecture
 
