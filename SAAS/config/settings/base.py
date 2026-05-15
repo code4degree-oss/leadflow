@@ -1,5 +1,5 @@
 """
-Base settings for LeadFlow CRM.
+Base settings for DYLeadFlow CRM.
 
 These settings are common to all environments.
 """
@@ -87,7 +87,7 @@ ASGI_APPLICATION = "config.asgi.application"
 
 # Database defaults to env value
 DATABASES = {
-    "default": env.db("DATABASE_URL", default="postgres://localhost/leadflow_db")
+    "default": env.db("DATABASE_URL", default="postgres://localhost/dyleadflow_db")
 }
 
 # Password validation

@@ -1,13 +1,13 @@
-# LeadFlow CRM — Deployment Guide 🚀
+# DYLeadFlow CRM — Deployment Guide 🚀
 
-A simple, step-by-step guide to deploy LeadFlow on any Ubuntu server (Azure, AWS, DigitalOcean, etc.)
+A simple, step-by-step guide to deploy DYLeadFlow on any Ubuntu server (Azure, AWS, DigitalOcean, etc.)
 
 ---
 
 ## What You Need Before Starting
 
 - An Ubuntu 22.04 or 24.04 server (VM) with a public IP address
-- A user account on the server with sudo access (e.g., `leadflow`)
+- A user account on the server with sudo access (e.g., `dyleadflow`)
 - Ability to SSH into the server from your terminal
 
 ---
@@ -17,13 +17,13 @@ A simple, step-by-step guide to deploy LeadFlow on any Ubuntu server (Azure, AWS
 ### Step 1 — Log into your server
 Open your terminal (PowerShell on Windows) and connect:
 ```bash
-ssh leadflow@YOUR_SERVER_IP
+ssh dyleadflow@YOUR_SERVER_IP
 ```
 
 ### Step 2 — Download the project
 ```bash
 cd ~
-git clone https://github.com/code4degree-oss/leadflow.git saas-project
+git clone https://github.com/code4degree-oss/dyleadflow.git saas-project
 ```
 
 ### Step 3 — Edit the config (important!)
@@ -34,7 +34,7 @@ nano ~/saas-project/deploy/setup.sh
 
 Change these lines:
 ```bash
-TARGET_USER="leadflow"              # Your Linux username
+TARGET_USER="dyleadflow"              # Your Linux username
 DOMAIN_NAME="YOUR_SERVER_IP"        # Your IP or domain name
 DB_PASSWORD="a-strong-password"     # Pick a strong database password
 DJANGO_SECRET_KEY="a-random-string" # Pick a long random string
@@ -65,8 +65,8 @@ DJANGO_SETTINGS_MODULE=config.settings.production python manage.py createsuperus
 It will ask you for an email and password. Remember these — you'll use them to log in!
 
 ### Step 6 — Open your browser and check!
-- **Frontend:** `http://YOUR_SERVER_IP` — You should see the LeadFlow login page
-- **Django Admin:** `http://YOUR_SERVER_IP/leadflow-backend-admin/` — Database admin panel
+- **Frontend:** `http://YOUR_SERVER_IP` — You should see the DYLeadFlow login page
+- **Django Admin:** `http://YOUR_SERVER_IP/dyleadflow-backend-admin/` — Database admin panel
 
 🎉 **Your app is now live!**
 
@@ -79,14 +79,14 @@ This makes it so every time you push code to GitHub, your server updates automat
 ### Step 1 — Copy the sync script to your server
 From your **local Windows terminal** (not the SSH session):
 ```powershell
-scp "deploy/auto-sync.sh" leadflow@YOUR_SERVER_IP:/home/leadflow/saas-project/deploy/auto-sync.sh
+scp "deploy/auto-sync.sh" dyleadflow@YOUR_SERVER_IP:/home/dyleadflow/saas-project/deploy/auto-sync.sh
 ```
 
 ### Step 2 — Allow Gunicorn to restart without password
 On your **server terminal (SSH)**:
 ```bash
-echo "leadflow ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart gunicorn" | sudo tee /etc/sudoers.d/leadflow-gunicorn
-sudo chmod 0440 /etc/sudoers.d/leadflow-gunicorn
+echo "dyleadflow ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart gunicorn" | sudo tee /etc/sudoers.d/dyleadflow-gunicorn
+sudo chmod 0440 /etc/sudoers.d/dyleadflow-gunicorn
 ```
 
 ### Step 3 — Add secrets to GitHub
@@ -97,7 +97,7 @@ Click "New repository secret" and add these **one by one**:
 | Name              | Value                        |
 |-------------------|------------------------------|
 | `SERVER_HOST`     | Your server's IP address     |
-| `SERVER_USER`     | `leadflow`                   |
+| `SERVER_USER`     | `dyleadflow`                   |
 | `SERVER_PASSWORD` | Your SSH login password      |
 
 ### Step 4 — Push code and watch it deploy!
@@ -123,14 +123,14 @@ sudo systemctl status nginx       # Web server status
 ### Restart services manually
 ```bash
 sudo systemctl restart gunicorn   # Restart backend
-pm2 restart leadflow-frontend     # Restart frontend
+pm2 restart dyleadflow-frontend     # Restart frontend
 sudo systemctl restart nginx      # Restart web server
 ```
 
 ### View error logs
 ```bash
 sudo journalctl -u gunicorn --no-pager -n 50     # Backend logs
-pm2 logs leadflow-frontend --lines 50             # Frontend logs
+pm2 logs dyleadflow-frontend --lines 50             # Frontend logs
 sudo tail -n 50 /var/log/nginx/error.log          # Nginx logs
 ```
 
@@ -163,7 +163,7 @@ sudo systemctl restart gunicorn
 cd ~/saas-project/leadflow-crm-frontend/leadflow
 npm install
 npm run build
-pm2 restart leadflow-frontend
+pm2 restart dyleadflow-frontend
 ```
 
 ---
@@ -186,15 +186,15 @@ sudo journalctl -u gunicorn --no-pager -n 100
 ### "Permission denied" for socket
 **Cause:** Nginx can't access Gunicorn's socket file.
 ```bash
-sudo usermod -a -G leadflow www-data
-sudo chmod 710 /home/leadflow
+sudo usermod -a -G dyleadflow www-data
+sudo chmod 710 /home/dyleadflow
 sudo systemctl restart nginx
 ```
 
 ### Database migration errors
 **Cause:** PostgreSQL 15+ doesn't give permissions automatically.
 ```bash
-sudo -u postgres psql -d leadflow_db -c "GRANT ALL ON SCHEMA public TO leadflow_user;"
+sudo -u postgres psql -d dyleadflow_db -c "GRANT ALL ON SCHEMA public TO dyleadflow_user;"
 ```
 
 ### Frontend shows old version
@@ -202,7 +202,7 @@ sudo -u postgres psql -d leadflow_db -c "GRANT ALL ON SCHEMA public TO leadflow_
 ```bash
 cd ~/saas-project/leadflow-crm-frontend/leadflow
 npm run build
-pm2 restart leadflow-frontend
+pm2 restart dyleadflow-frontend
 ```
 
 ### Can't log in (wrong credentials)

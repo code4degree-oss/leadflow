@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==============================================================================
-# LeadFlow CRM — Full Server Setup (Run ONCE on a fresh Ubuntu VM)
+# DYLeadFlow CRM — Full Server Setup (Run ONCE on a fresh Ubuntu VM)
 #
 # Usage:
 #   1. Copy this file to your VM
@@ -13,19 +13,19 @@ set -e
 
 # ======================== CONFIGURATION VARIABLES =============================
 # Change these for each new deployment target
-TARGET_USER="leadflow"
+TARGET_USER="dyleadflow"
 PROJECT_DIR="/home/$TARGET_USER/saas-project"
 DOMAIN_NAME="20.18.160.17"               # Your domain or public IP
-REPO_URL="https://github.com/code4degree-oss/leadflow.git"
+REPO_URL="https://github.com/code4degree-oss/dyleadflow.git"
 
-DB_NAME="leadflow_db"
-DB_USER="leadflow_user"
-DB_PASSWORD="leadflow123"                 # Change in production!
+DB_NAME="dyleadflow_db"
+DB_USER="dyleadflow_user"
+DB_PASSWORD="dyleadflow123"                 # Change in production!
 DJANGO_SECRET_KEY="replace-this-with-a-very-secret-string"  # Change in production!
 # ==============================================================================
 
 echo "========================================================"
-echo "  LeadFlow CRM — Full Server Setup"
+echo "  DYLeadFlow CRM — Full Server Setup"
 echo "  Target User : $TARGET_USER"
 echo "  Project Dir : $PROJECT_DIR"
 echo "  Domain/IP   : $DOMAIN_NAME"
@@ -118,7 +118,7 @@ echo ""
 echo "==> [5/8] Configuring Gunicorn systemd service..."
 cat <<EOF | tee /etc/systemd/system/gunicorn.service
 [Unit]
-Description=gunicorn daemon for Leadflow Backend
+Description=gunicorn daemon for DYLeadFlow Backend
 After=network.target
 
 [Service]
@@ -137,8 +137,8 @@ systemctl start gunicorn
 systemctl enable gunicorn
 
 # Allow passwordless restart for CI/CD pipeline
-echo "$TARGET_USER ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart gunicorn" | tee /etc/sudoers.d/leadflow-gunicorn
-chmod 0440 /etc/sudoers.d/leadflow-gunicorn
+echo "$TARGET_USER ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart gunicorn" | tee /etc/sudoers.d/dyleadflow-gunicorn
+chmod 0440 /etc/sudoers.d/dyleadflow-gunicorn
 
 # Fix Nginx socket permissions
 usermod -a -G "$TARGET_USER" www-data
@@ -160,7 +160,7 @@ EOF
 echo "    Building Next.js..."
 sudo -u "$TARGET_USER" -H bash -c "cd $PROJECT_DIR/leadflow-crm-frontend/leadflow && npm run build"
 
-sudo -u "$TARGET_USER" -H bash -c "cd $PROJECT_DIR/leadflow-crm-frontend/leadflow && pm2 delete leadflow-frontend 2>/dev/null; pm2 start npm --name 'leadflow-frontend' -- start"
+sudo -u "$TARGET_USER" -H bash -c "cd $PROJECT_DIR/leadflow-crm-frontend/leadflow && pm2 delete dyleadflow-frontend 2>/dev/null; pm2 start npm --name 'dyleadflow-frontend' -- start"
 sudo -u "$TARGET_USER" -H bash -c "pm2 save"
 env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u "$TARGET_USER" --hp "/home/$TARGET_USER"
 
@@ -169,7 +169,7 @@ env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u "$T
 # ==========================================================================
 echo ""
 echo "==> [7/8] Configuring Nginx..."
-cat <<EOF | tee /etc/nginx/sites-available/leadflow
+cat <<EOF | tee /etc/nginx/sites-available/dyleadflow
 server {
     listen 80;
     server_name $DOMAIN_NAME;
@@ -185,7 +185,7 @@ server {
     }
 
     # Django Backend (API + hidden admin panel)
-    location ~ ^/(api|leadflow-backend-admin) {
+    location ~ ^/(api|dyleadflow-backend-admin) {
         include proxy_params;
         proxy_pass http://unix:$PROJECT_DIR/SAAS/gunicorn.sock;
         proxy_read_timeout 300s;
@@ -206,7 +206,7 @@ server {
 }
 EOF
 
-ln -sf /etc/nginx/sites-available/leadflow /etc/nginx/sites-enabled/
+ln -sf /etc/nginx/sites-available/dyleadflow /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
 nginx -t
 systemctl restart nginx
@@ -223,7 +223,7 @@ echo ""
 echo "========================================================"
 echo "  DEPLOYMENT COMPLETE!"
 echo "  Frontend : http://$DOMAIN_NAME"
-echo "  Admin    : http://$DOMAIN_NAME/leadflow-backend-admin/"
+echo "  Admin    : http://$DOMAIN_NAME/dyleadflow-backend-admin/"
 echo ""
 echo "  Next steps:"
 echo "  1. Create a superuser:"

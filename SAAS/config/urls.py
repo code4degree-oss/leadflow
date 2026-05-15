@@ -1,5 +1,5 @@
 """
-URL configuration for LeadFlow CRM.
+URL configuration for DYLeadFlow CRM.
 
 All API endpoints are versioned under /api/v1/.
 """
@@ -8,7 +8,7 @@ from django.urls import include, path
 from django.conf import settings
 
 urlpatterns = [
-    path("leadflow-backend-admin/", admin.site.urls),
+    path("secure-hq-8f2m9/", admin.site.urls),
     # API v1 namespace
     path("api/v1/", include("apps.api.urls")),
     path("api/v1/", include("apps.leads.api.urls")),

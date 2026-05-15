@@ -1,5 +1,5 @@
 """
-ASGI config for LeadFlow CRM.
+ASGI config for DYLeadFlow CRM.
 Exposes the ASGI callable as a module-level variable named ``application``.
 """
 import os

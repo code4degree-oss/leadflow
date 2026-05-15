@@ -110,7 +110,7 @@ export default function SubscriptionExpiredPage() {
                   </div>
                   <div>
                     <div className="text-xs text-txt3">Email</div>
-                    <div className="text-sm font-bold text-txt">support@leadflow.in</div>
+                    <div className="text-sm font-bold text-txt">support@dyleadflow.in</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 bg-bg2/50 rounded-xl border border-border hover:border-accent/20 transition-colors">
@@ -137,7 +137,7 @@ export default function SubscriptionExpiredPage() {
 
           {/* Footer */}
           <div className="text-center mt-6 text-xs text-txt3/60">
-            © 2026 LeadFlow CRM <span className="mx-1">•</span> All rights reserved
+            © 2026 DYLeadFlow CRM <span className="mx-1">•</span> All rights reserved
           </div>
         </div>
       </div>

@@ -51,7 +51,7 @@ def send_push_notification(user, title, body, data=None):
         android=messaging.AndroidConfig(
             notification=messaging.AndroidNotification(
                 sound='default',
-                channel_id='leadflow_notifications'
+                channel_id='dyleadflow_notifications'
             )
         ),
         apns=messaging.APNSConfig(
@@ -115,7 +115,7 @@ def send_broadcast_notification(title, body, data=None):
             android=messaging.AndroidConfig(
                 notification=messaging.AndroidNotification(
                     sound='default',
-                    channel_id='leadflow_notifications'
+                    channel_id='dyleadflow_notifications'
                 )
             ),
             apns=messaging.APNSConfig(

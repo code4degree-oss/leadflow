@@ -1,5 +1,5 @@
 """
-WSGI config for LeadFlow CRM.
+WSGI config for DYLeadFlow CRM.
 Exposes the WSGI callable as a module-level variable named ``application``.
 """
 import os

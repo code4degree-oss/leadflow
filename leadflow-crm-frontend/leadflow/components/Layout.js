@@ -165,7 +165,7 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
             <div className="p-4 bg-bg3 rounded-2xl border border-border mb-6">
               <div className="flex items-center gap-3 justify-center text-txt2">
                 <Mail size={16} className="text-primary" />
-                <span className="text-sm font-medium">support@leadflow.in</span>
+                <span className="text-sm font-medium">support@dyleadflow.in</span>
               </div>
             </div>
 
@@ -192,7 +192,7 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
         <div className="px-4 py-4 border-b border-border flex items-center justify-between">
           <div>
             <div className="font-display font-extrabold text-xl text-txt tracking-tight">
-              Lead<span className="text-accent">Flow</span>
+              DYLead<span className="text-accent">Flow</span>
             </div>
             <div className={clsx('badge mt-2 border text-xs', roleColors[role])}>
               {config.label}

@@ -14,7 +14,7 @@ class RoleChoices(models.TextChoices):
 
 class User(AbstractBaseUser, PermissionsMixin, BaseModel):
     """
-    Custom User Model for LeadFlow CRM.
+    Custom User Model for DYLeadFlow CRM.
     Uses email as the username field.
     Inherits BaseModel for UUID primary key and timestamps.
     """

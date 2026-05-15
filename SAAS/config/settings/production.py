@@ -1,5 +1,5 @@
 """
-Production settings for LeadFlow CRM.
+Production settings for DYLeadFlow CRM.
 """
 from .base import *  # noqa
 
