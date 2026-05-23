@@ -245,10 +245,10 @@ export default function AdminSettings() {
             <div className="card p-5">
               <h3 className="font-display font-semibold text-sm text-txt mb-4">Company Details</h3>
               <div className="space-y-3">
-                <div><label className="label block mb-1">Company Name</label><input className="input" defaultValue="SunCity Realty Pvt Ltd" /></div>
+                <div><label className="label block mb-1">Company Name</label><input className="input" /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><label className="label block mb-1">Admin Email</label><input className="input" defaultValue="admin@suncity.in" /></div>
-                  <div><label className="label block mb-1">Contact Phone</label><input className="input" defaultValue="022-66554433" /></div>
+                  <div><label className="label block mb-1">Admin Email</label><input className="input" /></div>
+                  <div><label className="label block mb-1">Contact Phone</label><input className="input" /></div>
                 </div>
               </div>
             </div>
