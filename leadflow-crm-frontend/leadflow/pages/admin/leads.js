@@ -32,8 +32,10 @@ export default function AdminLeads() {
   
   // Filtering & Pagination
   const [statusFilter, setStatusFilter] = useState('all')
+  const [isHotFilter, setIsHotFilter] = useState(false)
   const [search, setSearch] = useState('')
   const [batchFilter, setBatchFilter] = useState('all')
+  const [deletingBatch, setDeletingBatch] = useState(null)
   const [sourceOptions, setSourceOptions] = useState([])
   
   const [page, setPage] = useState(1)
@@ -59,11 +61,11 @@ export default function AdminLeads() {
     if (activeTab === 'batches') fetchBatchProgress()
     if (activeTab === 'lost') fetchLostQueue()
     if (activeTab === 'won') fetchWonLeads()
-  }, [activeTab, page, pageSize, statusFilter, batchFilter])
+  }, [activeTab, page, pageSize, statusFilter, batchFilter, isHotFilter])
 
   useEffect(() => {
     setPage(1) // Reset to page 1 when search or filters change
-  }, [search, statusFilter, batchFilter])
+  }, [search, statusFilter, batchFilter, isHotFilter])
 
   // Optional: Debounce search
   useEffect(() => {
@@ -80,6 +82,7 @@ export default function AdminLeads() {
       if (search) url += `&search=${search}`
       if (statusFilter !== 'all') url += `&status=${statusFilter.toUpperCase()}`
       if (batchFilter !== 'all') url += `&source=${batchFilter}`
+      if (isHotFilter) url += `&is_hot=true`
       
       const data = await fetchWithAuth(url)
       setLeads(data.results || [])
@@ -205,6 +208,29 @@ export default function AdminLeads() {
     }
   }
 
+  const handleDeleteBatch = async (source) => {
+    const check = prompt(`⚠️ This will permanently delete all leads in batch "${source}".\nType "${source}" to confirm:`)
+    if (check !== source) {
+      if (check !== null) alert("Batch name did not match. Deletion cancelled.")
+      return
+    }
+    try {
+      setDeletingBatch(source)
+      await fetchWithAuth('/leads/bulk-delete-batch/', {
+        method: 'DELETE',
+        body: JSON.stringify({ source })
+      })
+      alert(`Batch "${source}" and all its leads were successfully deleted.`)
+      fetchBatchProgress()
+      if (batchFilter === source) setBatchFilter('all')
+      if (activeTab === 'all') fetchLeads()
+    } catch (err) {
+      alert("Error deleting batch: " + err.message)
+    } finally {
+      setDeletingBatch(null)
+    }
+  }
+
   const handleAdminReassign = async () => {
     if (!reassignLead || !selectedUser) return
     try {
@@ -298,15 +324,11 @@ export default function AdminLeads() {
         <>
           {/* Status pills - Filter purely handles server-side filtering */}
           <div className="flex flex-wrap gap-2 mb-6">
-            {STATUS_FILTERS.map(s => (
-              <button key={s} onClick={() => setStatusFilter(s)}
-                className={clsx(
-                  'flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all capitalize border shadow-sm',
-                  statusFilter === s ? 'bg-accent text-white border-accent shadow-accent/20 scale-105' : 'bg-card text-txt2 border-border hover:bg-bg3'
-                )}>
-                {s === 'all' ? 'All' : s.replace(/_/g,' ')}
-              </button>
-            ))}
+            <button onClick={() => { setStatusFilter('all'); setIsHotFilter(false); }} className={clsx('px-4 py-2 rounded-xl text-xs font-bold transition-all border shadow-sm', statusFilter === 'all' && !isHotFilter ? 'bg-accent text-white border-accent scale-105' : 'bg-card text-txt2 border-border hover:bg-bg3')}>All Leads</button>
+            <button onClick={() => { setStatusFilter('INTERESTED'); setIsHotFilter(false); }} className={clsx('px-4 py-2 rounded-xl text-xs font-bold transition-all border shadow-sm', statusFilter === 'INTERESTED' ? 'bg-purple text-white border-purple scale-105' : 'bg-card text-txt2 border-border hover:bg-bg3')}>Interested</button>
+            <button onClick={() => { setStatusFilter('SITE_VISIT'); setIsHotFilter(false); }} className={clsx('px-4 py-2 rounded-xl text-xs font-bold transition-all border shadow-sm', statusFilter === 'SITE_VISIT' ? 'bg-accent2 text-white border-accent2 scale-105' : 'bg-card text-txt2 border-border hover:bg-bg3')}>Site Visit Done</button>
+            <button onClick={() => { setStatusFilter('NOT_ANSWERED'); setIsHotFilter(false); }} className={clsx('px-4 py-2 rounded-xl text-xs font-bold transition-all border shadow-sm', statusFilter === 'NOT_ANSWERED' ? 'bg-amber text-white border-amber scale-105' : 'bg-card text-txt2 border-border hover:bg-bg3')}>Call Not Pick Up</button>
+            <button onClick={() => { setStatusFilter('all'); setIsHotFilter(true); }} className={clsx('flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-bold transition-all border shadow-sm', isHotFilter ? 'bg-hot text-white border-hot scale-105' : 'bg-card text-txt2 border-border hover:bg-bg3')}><Flame size={14}/> Hot Lead</button>
           </div>
 
           {/* Search & Filters */}
@@ -423,39 +445,57 @@ export default function AdminLeads() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {batchStats.map((batch, idx) => (
-                <div key={idx} className="card p-5 border-t-4 border-t-purple shadow-md hover:shadow-lg hover:border-border2 transition-all">
-                  <div className="flex items-center gap-2 mb-4">
-                    <FileSpreadsheet size={18} className="text-purple" />
-                    <h3 className="font-bold text-txt truncate" title={batch.source}>{batch.source}</h3>
-                  </div>
-                  
-                  <div className="mb-4">
-                    <div className="flex justify-between text-xs mb-1.5">
-                      <span className="font-bold text-txt2">Coverage Progress</span>
-                      <span className="font-mono font-bold text-purple">{batch.progress_percentage}%</span>
+                <div key={idx} onClick={() => { setBatchFilter(batch.source); setActiveTab('all'); }} className="card p-5 border-t-4 border-t-purple shadow-md hover:shadow-lg hover:border-border2 transition-all cursor-pointer relative group">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <FileSpreadsheet size={20} className="text-purple" />
+                      <div>
+                        <h3 className="font-bold text-txt truncate max-w-[150px] md:max-w-[180px]" title={batch.source}>{batch.source}</h3>
+                        <div className="text-[10px] text-txt3">{batch.created_at ? new Date(batch.created_at).toLocaleDateString() : 'Unknown date'}</div>
+                      </div>
                     </div>
-                    <div className="h-2 w-full bg-bg3 rounded-full overflow-hidden">
-                      <div className="h-full bg-purple transition-all duration-1000" style={{ width: `${batch.progress_percentage}%` }} />
-                    </div>
-                    <div className="text-[10px] text-txt3 text-right mt-1">{batch.covered} / {batch.total} Leads Covered</div>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleDeleteBatch(batch.source); }}
+                      disabled={deletingBatch === batch.source}
+                      className="p-1.5 text-danger opacity-0 group-hover:opacity-100 hover:bg-danger/10 rounded-lg transition-all"
+                      title="Delete Batch"
+                    >
+                      {deletingBatch === batch.source ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                    </button>
                   </div>
                   
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div className="bg-bg2/50 p-2 rounded border border-border">
-                      <div className="text-[9px] uppercase tracking-wider text-txt3 mb-0.5">Untouched (New)</div>
-                      <div className="font-bold text-txt">{batch.new_leads}</div>
+                      <div className="text-[9px] uppercase tracking-wider text-txt3 mb-0.5">Total Leads</div>
+                      <div className="font-bold text-txt">{batch.total}</div>
                     </div>
-                    <div className="bg-accent/5 p-2 rounded border border-accent/20">
-                      <div className="text-[9px] uppercase tracking-wider text-accent mb-0.5">In Progress</div>
-                      <div className="font-bold text-accent">{batch.in_progress}</div>
+                    <div className="bg-hot/5 p-2 rounded border border-hot/20 flex items-center justify-between">
+                      <div>
+                        <div className="text-[9px] uppercase tracking-wider text-hot mb-0.5">Hot Leads</div>
+                        <div className="font-bold text-hot">{batch.hot_leads || 0}</div>
+                      </div>
+                      <Flame size={14} className="text-hot opacity-50"/>
                     </div>
-                    <div className="bg-[#10B981]/5 p-2 rounded border border-[#10B981]/20">
-                      <div className="text-[9px] uppercase tracking-wider text-[#10B981] mb-0.5">Won</div>
-                      <div className="font-bold text-[#10B981]">{batch.won}</div>
+                    <div className="bg-purple/5 p-2 rounded border border-purple/20 flex items-center justify-between">
+                      <div>
+                        <div className="text-[9px] uppercase tracking-wider text-purple mb-0.5">Interested</div>
+                        <div className="font-bold text-purple">{batch.interested_leads || 0}</div>
+                      </div>
+                      <CheckCircle2 size={14} className="text-purple opacity-50"/>
                     </div>
-                    <div className="bg-danger/5 p-2 rounded border border-danger/20">
-                      <div className="text-[9px] uppercase tracking-wider text-danger mb-0.5">Lost</div>
-                      <div className="font-bold text-danger">{batch.lost}</div>
+                    <div className="bg-[#10B981]/5 p-2 rounded border border-[#10B981]/20 flex items-center justify-between">
+                      <div>
+                        <div className="text-[9px] uppercase tracking-wider text-[#10B981] mb-0.5">Converted</div>
+                        <div className="font-bold text-[#10B981]">{batch.won}</div>
+                      </div>
+                      <Trophy size={14} className="text-[#10B981] opacity-50"/>
+                    </div>
+                    <div className="bg-danger/5 p-2 rounded border border-danger/20 flex items-center justify-between col-span-2">
+                      <div>
+                        <div className="text-[9px] uppercase tracking-wider text-danger mb-0.5">Wrong / Lost Leads</div>
+                        <div className="font-bold text-danger">{batch.wrong_leads || 0}</div>
+                      </div>
+                      <AlertTriangle size={14} className="text-danger opacity-50"/>
                     </div>
                   </div>
                 </div>

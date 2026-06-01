@@ -114,3 +114,30 @@ def reassign_stale_leads():
             total_reassigned += count
             
     return f"Automatically reassigned {total_reassigned} stale leads across multi-tenant platform."
+
+@shared_task(name="apps.leads.tasks.send_push_notification_task")
+def send_push_notification_task(notif_id):
+    """
+    Asynchronously sends a push notification to avoid blocking DB transactions.
+    """
+    from apps.leads.models import Notification
+    from apps.core.firebase import send_push_notification
+    try:
+        instance = Notification.objects.get(id=notif_id)
+        data = {
+            'notif_id': str(instance.id),
+            'notif_type': instance.notif_type,
+        }
+        if instance.lead_id:
+            data['lead_id'] = str(instance.lead_id)
+            
+        send_push_notification(
+            user=instance.user,
+            title=instance.title,
+            body=instance.message,
+            data=data
+        )
+    except Notification.DoesNotExist:
+        pass
+    except Exception as e:
+        logger.error(f"Failed to send push notification {notif_id}: {e}")

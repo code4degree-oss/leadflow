@@ -10,15 +10,17 @@ ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS')
 CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS')
 CORS_ALLOW_CREDENTIALS = True
 
-# Security Settings (Set to False since we are accessing via Raw IP without SSL)
-SECURE_SSL_REDIRECT = False
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
+# Security Settings (Configurable via ENV, defaults to True for production)
+USE_SSL = env.bool('USE_SSL', default=True)
+
+SECURE_SSL_REDIRECT = USE_SSL
+SESSION_COOKIE_SECURE = USE_SSL
+CSRF_COOKIE_SECURE = USE_SSL
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
-SECURE_HSTS_SECONDS = 0  # Disabled for HTTP
-SECURE_HSTS_INCLUDE_SUBDOMAINS = False
-SECURE_HSTS_PRELOAD = False
+SECURE_HSTS_SECONDS = 31536000 if USE_SSL else 0  # 1 year if SSL enabled
+SECURE_HSTS_INCLUDE_SUBDOMAINS = USE_SSL
+SECURE_HSTS_PRELOAD = USE_SSL
 
 # Email backend (to be configured later e.g., with SendGrid)
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

@@ -357,6 +357,9 @@ class NotificationType(models.TextChoices):
     UPLOAD = "UPLOAD", _("Leads Uploaded")
     INFO = "INFO", _("General Info")
     BROADCAST = "BROADCAST", _("Broadcast")
+    SYSTEM = "SYSTEM", _("System")
+    SUBSCRIPTION_WARNING = "SUBSCRIPTION_WARNING", _("Subscription Warning")
+    SUBSCRIPTION_EXPIRED = "SUBSCRIPTION_EXPIRED", _("Subscription Expired")
 
 
 class Notification(BaseModel):
@@ -401,31 +404,16 @@ class Notification(BaseModel):
         return f"[{self.notif_type}] {self.user} - {self.title}"
 
 
+from django.db import transaction
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 @receiver(post_save, sender=Notification)
 def send_push_on_notification(sender, instance, created, **kwargs):
     """
-    Listens for new in-app notifications and triggers an FCM Push Notification.
+    Listens for new in-app notifications and triggers an FCM Push Notification asynchronously.
     """
     if created:
-        from apps.core.firebase import send_push_notification
-        
-        # Prepare custom data payload
-        data = {
-            'notif_id': str(instance.id),
-            'notif_type': instance.notif_type,
-        }
-        if instance.lead_id:
-            data['lead_id'] = str(instance.lead_id)
-            
-        # Push notification sent asynchronously via Firebase Admin (fire-and-forget for now, 
-        # normally you might use Celery here, but this works for lightweight initial implementation)
-        send_push_notification(
-            user=instance.user,
-            title=instance.title,
-            body=instance.message,
-            data=data
-        )
+        from apps.leads.tasks import send_push_notification_task
+        transaction.on_commit(lambda: send_push_notification_task.delay(str(instance.id)))
 

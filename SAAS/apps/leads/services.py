@@ -60,12 +60,16 @@ class LeadDistributionService:
         agent_count = len(telecallers)
         agent_index = 0
 
+        leads_to_update = []
         for lead in queryset:
             lead.assigned_to = telecallers[agent_index]
-            # Batch updates would be faster, but Django's bulk_update is an option here
-            lead.save(update_fields=['assigned_to', 'updated_at'])
+            lead.updated_at = timezone.now()
+            leads_to_update.append(lead)
             assigned_count += 1
             agent_index = (agent_index + 1) % agent_count
+            
+        if leads_to_update:
+            Lead.objects.bulk_update(leads_to_update, ['assigned_to', 'updated_at'], batch_size=1000)
             
         return assigned_count
 
@@ -94,16 +98,21 @@ class LeadDistributionService:
         # as we assign leads if the queryset is large, to keep it balanced.
         # A simple priority queue or just re-sorting every X leads works.
         
+        leads_to_update = []
         for lead in queryset:
             # Pop the agent with the least leads
             best_agent = telecallers[0]
             lead.assigned_to = best_agent
-            lead.save(update_fields=['assigned_to', 'updated_at'])
+            lead.updated_at = timezone.now()
+            leads_to_update.append(lead)
             best_agent.active_leads_count += 1
             assigned_count += 1
             
             # Re-sort telecallers so the next lead goes to the new lowest
             telecallers.sort(key=lambda x: (x.active_leads_count, x.id))
+
+        if leads_to_update:
+            Lead.objects.bulk_update(leads_to_update, ['assigned_to', 'updated_at'], batch_size=1000)
 
         return assigned_count
 

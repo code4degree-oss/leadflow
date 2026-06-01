@@ -3,6 +3,7 @@ import Layout from '../../components/Layout'
 import { Save, Bell, MapPin, Clock, Shield, Users, Crosshair, Plus, Trash2, Hexagon, Circle as CircleIcon, Target, Loader2 } from 'lucide-react'
 import clsx from 'clsx'
 import { fetchWithAuth } from '../../utils/api'
+import toast from 'react-hot-toast'
 import { GoogleMap, useJsApiLoader, Marker, Circle, Polygon, DrawingManager } from '@react-google-maps/api'
 
 const SECTIONS = ['General', 'Geo-Login', 'Notifications', 'Targets', 'Security']
@@ -265,7 +266,7 @@ export default function AdminSettings() {
                 ))}
               </div>
             </div>
-            <button className="btn-primary"><Save size={14}/>Save Changes</button>
+            <button onClick={() => toast.success('Settings saved successfully!')} className="btn-primary"><Save size={14}/>Save Changes</button>
           </div>
         )}
 
@@ -557,7 +558,7 @@ export default function AdminSettings() {
                 </button>
               </div>
             ))}
-            <button className="btn-primary"><Save size={14}/>Save Preferences</button>
+            <button onClick={() => toast.success('Preferences saved successfully!')} className="btn-primary"><Save size={14}/>Save Preferences</button>
           </div>
         )}
 
@@ -603,7 +604,7 @@ export default function AdminSettings() {
                 <option>24 hours</option>
               </select>
             </div>
-            <button className="btn-primary"><Save size={14}/>Save Security Settings</button>
+            <button onClick={() => toast.success('Security settings saved successfully!')} className="btn-primary"><Save size={14}/>Save Security Settings</button>
           </div>
         )}
       </div>

@@ -21,6 +21,20 @@ const ROLE_DASHBOARD = {
 // Pages that don't require any role check
 const PUBLIC_PATHS = ['/', '/login', '/change-password', '/subscription-expired']
 
+// Helper to decode JWT without a library
+function parseJwt(token) {
+  try {
+    const base64Url = token.split('.')[1]
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+    const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+    }).join(''))
+    return JSON.parse(jsonPayload)
+  } catch (e) {
+    return null
+  }
+}
+
 export default function RouteGuard({ children }) {
   const router = useRouter()
   const [authorized, setAuthorized] = useState(false)
@@ -42,7 +56,6 @@ export default function RouteGuard({ children }) {
     let role  = localStorage.getItem('user_role')
 
     // Capacitor Native/Cookie Resurrection:
-    // If memory was cleared by Android OS, reconstruct it BEFORE rejecting auth
     if (!token && typeof window !== 'undefined') {
         let nToken = null;
         let nRefresh = null;
@@ -70,14 +83,24 @@ export default function RouteGuard({ children }) {
             
             token = nToken;
             role = nRole;
-            console.log('Restored Capacitor session perfectly in RouteGuard!');
         }
+    }
+
+    // SECURE ROUTE GUARD: Override tampered localStorage with signed JWT payload
+    if (token) {
+      const payload = parseJwt(token)
+      if (payload && payload.role) {
+        role = payload.role
+        // Fix up localStorage if it was tampered with
+        if (localStorage.getItem('user_role') !== role) {
+          localStorage.setItem('user_role', role)
+        }
+      }
     }
 
     // Allow public paths, but redirect if already logged in
     if (PUBLIC_PATHS.some(p => path === p)) {
       if (token && role && (path === '/' || path === '/login')) {
-         // User is authenticated but on login/root -> bounce to dashboard
          setAuthorized(false)
          const correctDashboard = ROLE_DASHBOARD[role] || '/'
          router.push(correctDashboard)

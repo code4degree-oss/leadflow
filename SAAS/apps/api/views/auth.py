@@ -6,6 +6,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from apps.api.serializers import CustomTokenObtainPairSerializer, UserMeSerializer
 from apps.accounts.models import RoleChoices
+from apps.core.geo import GeoService
 import math
 import logging
 
@@ -21,12 +22,49 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
     def post(self, request, *args, **kwargs):
-        # First, let SimpleJWT authenticate and generate tokens normally
-        response = super().post(request, *args, **kwargs)
+        email = request.data.get('email', '').strip()
+        from ipware import get_client_ip
+        ip, _ = get_client_ip(request)
+        if not ip:
+            ip = '127.0.0.1'
+
+        from django.utils import timezone
+        from datetime import timedelta
+        from apps.accounts.models import LoginAttempt
+        
+        if email:
+            # Check lockout
+            recent_fails = LoginAttempt.objects.filter(
+                email=email,
+                success=False,
+                attempted_at__gte=timezone.now() - timedelta(minutes=15)
+            ).count()
+            
+            if recent_fails >= 5:
+                return Response(
+                    {"detail": "Account temporarily locked due to multiple failed login attempts. Please try again in 15 minutes."},
+                    status=status.HTTP_429_TOO_MANY_REQUESTS
+                )
+
+        try:
+            # First, let SimpleJWT authenticate and generate tokens normally
+            response = super().post(request, *args, **kwargs)
+        except Exception as e:
+            if email:
+                LoginAttempt.objects.create(email=email, ip_address=ip, success=False)
+            raise e
 
         # If authentication failed, return as-is (401/400)
         if response.status_code != 200:
+            if email:
+                LoginAttempt.objects.create(email=email, ip_address=ip, success=False)
             return response
+
+        # Auth succeeded
+        if email:
+            LoginAttempt.objects.create(email=email, ip_address=ip, success=True)
+            # Reset failed attempts to prevent lockout logic if user finally logs in
+            LoginAttempt.objects.filter(email=email, success=False).delete()
 
         # Authentication succeeded
         try:
@@ -47,63 +85,27 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 req_lat = request.data.get('latitude')
                 req_lng = request.data.get('longitude')
                 
-                def _record_login(provided_lat, provided_lng):
-                    try:
-                        from ipware import get_client_ip
-                        from apps.audits.models import LoginHistory
-                        from apps.audits.services import GeoLocationService
-                        ip, _ = get_client_ip(request)
-                        if not ip:
-                            ip = '127.0.0.1'
-                            
-                        # Get approximate geo data (mostly for city/country text layout)
-                        geo_data = GeoLocationService.get_geo_data(ip, user)
-                        
-                        # Use precise GPS coordinates if frontend provided them,
-                        # otherwise fallback to the IP-based approximate coordinates
-                        final_lat = geo_data['latitude']
-                        final_lng = geo_data['longitude']
-                        
-                        if provided_lat and provided_lng:
-                            try:
-                                final_lat = float(provided_lat)
-                                final_lng = float(provided_lng)
-                            except (ValueError, TypeError):
-                                pass
-                        
-                        is_suspicious, reason = GeoLocationService.check_suspicious(
-                            user, final_lat, final_lng
-                        )
-                        LoginHistory.objects.create(
-                            user=user,
-                            client=client,
-                            ip_address=ip,
-                            city=geo_data['city'],
-                            country=geo_data['country'],
-                            latitude=final_lat,
-                            longitude=final_lng,
-                            is_suspicious=is_suspicious,
-                            suspicious_reason=reason
-                        )
-                    except Exception as e:
-                        logger.error(f"[LOGIN_HISTORY] Failed to record: {e}")
-                import threading
-                threading.Thread(target=_record_login, args=(req_lat, req_lng), daemon=True).start()
+                from ipware import get_client_ip
+                ip, _ = get_client_ip(request)
+                if not ip:
+                    ip = '127.0.0.1'
+                
+                from apps.audits.tasks import record_login_history_task
+                record_login_history_task.delay(
+                    user_id=str(user.id),
+                    client_id=str(client.id) if client else None,
+                    ip=ip,
+                    req_lat=req_lat,
+                    req_lng=req_lng
+                )
 
             # --- Send Login Alert to Client Admin ---
             if client and user.role != RoleChoices.CLIENT_ADMIN:
-                def _notify_admin_login():
-                    from apps.core.firebase import send_push_notification
-                    admins = User.objects.filter(client=client, role=RoleChoices.CLIENT_ADMIN, is_active=True)
-                    for admin in admins:
-                        send_push_notification(
-                            user=admin,
-                            title="Employee Login Alert",
-                            body=f"{user.first_name} {user.last_name}".strip() or f"{user.email}",
-                            data={"type": "login_alert", "employee_id": str(user.id)}
-                        )
-                import threading
-                threading.Thread(target=_notify_admin_login, daemon=True).start()
+                from apps.audits.tasks import notify_admin_login_task
+                notify_admin_login_task.delay(
+                    user_id=str(user.id),
+                    client_id=str(client.id)
+                )
 
             # --- Geofencing Check ---
             if not client:
@@ -134,76 +136,22 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
             logger.warning(f"[GEOFENCE] User={email}, Role={user.role}, lat={lat}, lng={lng}")
 
-            if lat is None or lng is None or lat == '' or lng == '':
-                return Response(
-                    {"detail": "Location coordinates are required for login. Please enable GPS/location services in your browser."},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-
-            try:
-                lat, lng = float(lat), float(lng)
-            except (ValueError, TypeError):
-                return Response(
-                    {"detail": "Invalid GPS coordinates format."},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-
-            locations = client.geofence_locations.all()
-            if not locations.exists():
-                return Response(
-                    {"detail": "Geofencing is enabled but no authorized locations have been configured. Please contact your administrator."},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-
-            # Check if user is within any authorized zone
-            def haversine(lat1, lon1, lat2, lon2):
-                R = 6371000  # Earth radius in meters
-                phi1, phi2 = math.radians(lat1), math.radians(lat2)
-                dphi = math.radians(lat2 - lat1)
-                dlam = math.radians(lon2 - lon1)
-                a = math.sin(dphi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(dlam/2)**2
-                return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
-            def point_in_polygon(pt_lat, pt_lng, polygon_coords):
-                n = len(polygon_coords)
-                if n < 3:
-                    return False
-                inside = False
-                j = n - 1
-                for i in range(n):
-                    yi = float(polygon_coords[i]['lat'])
-                    xi = float(polygon_coords[i]['lng'])
-                    yj = float(polygon_coords[j]['lat'])
-                    xj = float(polygon_coords[j]['lng'])
-                    if ((yi > pt_lat) != (yj > pt_lat)) and \
-                       (pt_lng < (xj - xi) * (pt_lat - yi) / (yj - yi) + xi):
-                        inside = not inside
-                    j = i
-                return inside
-
-            authorized = False
-            for loc in locations:
-                if loc.geofence_type == 'POLYGON' and loc.polygon_coords:
-                    if point_in_polygon(lat, lng, loc.polygon_coords):
-                        authorized = True
-                        break
-                else:
-                    # Circle-based check
-                    if loc.latitude and loc.longitude:
-                        distance = haversine(lat, lng, float(loc.latitude), float(loc.longitude))
-                        logger.info(f"[GEOFENCE] Checking {loc.name}: distance={distance:.0f}m, radius={loc.radius_meters}m")
-                        if distance <= loc.radius_meters:
-                            authorized = True
-                            break
-
+            authorized, reason = GeoService.check_geofence(user, lat, lng)
+            
             if not authorized:
-                logger.warning(f"[GEOFENCE] BLOCKED {email} — outside all authorized zones")
+                logger.warning(f"[GEOFENCE] BLOCKED {email} — {reason}")
+                msg = "Login Blocked: You are outside your organization's authorized geofenced working area."
+                if "required" in reason.lower():
+                    msg = "Location coordinates are required for login. Please enable GPS/location services in your browser."
+                elif "invalid" in reason.lower():
+                    msg = "Invalid GPS coordinates format."
+                    
                 return Response(
-                    {"detail": "Login Blocked: You are outside your organization's authorized geofenced working area."},
+                    {"detail": msg},
                     status=status.HTTP_403_FORBIDDEN
                 )
 
-            logger.info(f"[GEOFENCE] ALLOWED {email}")
+            logger.info(f"[GEOFENCE] ALLOWED {email} — {reason}")
 
         except Exception as e:
             # Catch-all: never let geofencing crash the entire login with an HTML 500 page
@@ -236,6 +184,11 @@ class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        from django.contrib.auth.password_validation import validate_password
+        from django.core.exceptions import ValidationError
+        from django.contrib.auth.hashers import check_password, make_password
+        from apps.accounts.models import PasswordHistory
+
         old_password = request.data.get('old_password')
         new_password = request.data.get('new_password')
 
@@ -253,14 +206,33 @@ class ChangePasswordView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if len(new_password) < 8:
+        # 1. Validate password strength
+        try:
+            validate_password(new_password, user)
+        except ValidationError as e:
             return Response(
-                {"detail": "New password must be at least 8 characters."},
+                {"detail": " ".join(e.messages)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # 2. Check against password history
+        history = PasswordHistory.objects.filter(user=user).order_by('-created_at')[:5]
+        for past_pass in history:
+            if check_password(new_password, past_pass.password_hash):
+                return Response(
+                    {"detail": "You cannot reuse your recent passwords. Please choose a new one."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        # 3. Update password and history
         user.set_password(new_password)
         user.must_change_password = False
         user.save()
+
+        # Save to history
+        PasswordHistory.objects.create(
+            user=user,
+            password_hash=make_password(new_password)
+        )
 
         return Response({"detail": "Password changed successfully."})

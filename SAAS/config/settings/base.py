@@ -143,7 +143,11 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": "100/day",
         "user": "1000/hour"
-    }
+    },
+    "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.AcceptHeaderVersioning",
+    "DEFAULT_VERSION": "v1",
+    "ALLOWED_VERSIONS": ["v1", "v2"],
+    "VERSION_PARAM": "version",
 }
 
 # JWT Configuration
@@ -164,22 +168,24 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 
+from celery.schedules import crontab
+
 CELERY_BEAT_SCHEDULE = {
     "check-lead-aging-every-hour": {
         "task": "apps.leads.tasks.check_lead_aging",
-        "schedule": 3600.0,  # Every hour
+        "schedule": crontab(minute=0),  # Every hour at minute 0
     },
     "trigger-reminders-every-5-minutes": {
         "task": "apps.leads.tasks.reminder_engine",
-        "schedule": 300.0,  # Every 5 minutes
+        "schedule": crontab(minute='*/5'),  # Every 5 minutes
     },
     "reassign-stale-leads-daily": {
         "task": "apps.leads.tasks.reassign_stale_leads",
-        "schedule": 86400.0,  # Every 24 hours
+        "schedule": crontab(hour=0, minute=0),  # Every day at midnight
     },
     "check-subscription-expiry-daily": {
         "task": "apps.clients.tasks.check_subscription_expiry",
-        "schedule": 86400.0,  # Every 24 hours
+        "schedule": crontab(hour=0, minute=0),  # Every day at midnight
     },
 }
 

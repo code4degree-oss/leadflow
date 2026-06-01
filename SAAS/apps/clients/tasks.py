@@ -18,7 +18,7 @@ def check_subscription_expiry():
     2. Creates in-app notifications for clients expiring in 7 days.
     """
     from apps.clients.models import ClientAccount
-    from apps.accounts.models import Notification
+    from apps.leads.models import Notification, NotificationType
 
     today = timezone.now().date()
 
@@ -37,8 +37,9 @@ def check_subscription_expiry():
         admin_user = client.users.filter(role='CLIENT_ADMIN').first()
         if admin_user:
             Notification.objects.create(
+                client=client,
                 user=admin_user,
-                type='subscription_expired',
+                notif_type=NotificationType.SUBSCRIPTION_EXPIRED,
                 title='Subscription Expired',
                 message=(
                     f'Your subscription expired on {client.valid_until}. '
@@ -60,14 +61,16 @@ def check_subscription_expiry():
         if admin_user:
             # Avoid duplicate notifications for the same expiry
             already_notified = Notification.objects.filter(
+                client=client,
                 user=admin_user,
-                type='subscription_warning',
+                notif_type=NotificationType.SUBSCRIPTION_WARNING,
                 created_at__date=today
             ).exists()
             if not already_notified:
                 Notification.objects.create(
+                    client=client,
                     user=admin_user,
-                    type='subscription_warning',
+                    notif_type=NotificationType.SUBSCRIPTION_WARNING,
                     title='Subscription Expiring Soon',
                     message=(
                         f'Your plan expires in 7 days on {client.valid_until}. '

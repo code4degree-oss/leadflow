@@ -8,6 +8,9 @@ import ReminderPopup from '../components/ReminderPopup'
 // Root pages where pressing back should exit the app
 const ROOT_PAGES = ['/login', '/telecaller', '/admin', '/fieldagent', '/superadmin']
 
+import ErrorBoundary from '../components/ErrorBoundary'
+import { Toaster } from 'react-hot-toast'
+
 export default function App({ Component, pageProps }) {
   const router = useRouter()
 
@@ -38,10 +41,13 @@ export default function App({ Component, pageProps }) {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="dark">
-      <RouteGuard>
-        <Component {...pageProps} />
-        <ReminderPopup />
-      </RouteGuard>
+      <ErrorBoundary>
+        <RouteGuard>
+          <Component {...pageProps} />
+          <ReminderPopup />
+          <Toaster position="top-center" />
+        </RouteGuard>
+      </ErrorBoundary>
     </ThemeProvider>
   )
 }

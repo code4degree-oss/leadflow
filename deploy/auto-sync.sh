@@ -9,8 +9,8 @@
 
 set -e
 
-TARGET_USER="dyleadflow"
-PROJECT_DIR="/home/$TARGET_USER/saas-project"
+# Determine the project directory dynamically from where the script is called
+PROJECT_DIR=$(pwd)
 
 echo "========================================================"
 echo "  DY LeadFlow CRM — Auto-Sync Started"

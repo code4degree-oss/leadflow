@@ -9,6 +9,7 @@ class LeadExportService:
         """
         Exports a lead queryset to a CSV response.
         """
+        queryset = queryset.select_related('assigned_to')
         data = []
         for lead in queryset:
             data.append({
@@ -37,6 +38,7 @@ class LeadExportService:
         """
         Exports a lead queryset to an Excel response.
         """
+        queryset = queryset.select_related('assigned_to')
         data = []
         for lead in queryset:
             data.append({
