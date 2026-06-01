@@ -90,22 +90,28 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 if not ip:
                     ip = '127.0.0.1'
                 
-                from apps.audits.tasks import record_login_history_task
-                record_login_history_task.delay(
-                    user_id=str(user.id),
-                    client_id=str(client.id) if client else None,
-                    ip=ip,
-                    req_lat=req_lat,
-                    req_lng=req_lng
-                )
+                try:
+                    from apps.audits.tasks import record_login_history_task
+                    record_login_history_task.delay(
+                        user_id=str(user.id),
+                        client_id=str(client.id) if client else None,
+                        ip=ip,
+                        req_lat=req_lat,
+                        req_lng=req_lng
+                    )
+                except Exception as e:
+                    logger.error(f"Failed to queue record_login_history_task: {e}")
 
             # --- Send Login Alert to Client Admin ---
             if client and user.role != RoleChoices.CLIENT_ADMIN:
-                from apps.audits.tasks import notify_admin_login_task
-                notify_admin_login_task.delay(
-                    user_id=str(user.id),
-                    client_id=str(client.id)
-                )
+                try:
+                    from apps.audits.tasks import notify_admin_login_task
+                    notify_admin_login_task.delay(
+                        user_id=str(user.id),
+                        client_id=str(client.id)
+                    )
+                except Exception as e:
+                    logger.error(f"Failed to queue notify_admin_login_task: {e}")
 
             # --- Geofencing Check ---
             if not client:
