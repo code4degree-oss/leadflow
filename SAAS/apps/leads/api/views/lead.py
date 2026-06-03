@@ -61,6 +61,11 @@ class LeadViewSet(
         if exclude_new == 'true':
             qs = qs.exclude(status__in=[LeadStatus.NEW, 'IMPORTED'])
         
+        # Filter by batch ID for batch-to-leads navigation
+        batch_id = self.request.query_params.get('batch_id')
+        if batch_id:
+            qs = qs.filter(batch_id=batch_id)
+        
         return qs
 
     def perform_create(self, serializer):

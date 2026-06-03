@@ -87,6 +87,96 @@ class LeadDistributionMixin:
         )
         return Response({"detail": f"Successfully reassigned {count} leads."})
 
+    @action(detail=False, methods=['post'], url_path='bulk-assign')
+    def bulk_assign(self, request):
+        """
+        Flexible bulk assignment endpoint supporting manual, round-robin, and load-balanced modes.
+        Used by the frontend's "Assign Leads" tab.
+        """
+        from apps.api.permissions import IsClientAdmin
+        if request.user.role not in ['CLIENT_ADMIN', 'SUPER_ADMIN', 'MANAGER']:
+            return Response({"error": "Only admins/managers can bulk assign."}, status=status.HTTP_403_FORBIDDEN)
+
+        mode = request.data.get('mode', 'manual')
+        count = min(int(request.data.get('count', 10)), 500)
+        status_filter = request.data.get('status_filter', 'NEW')
+        target_user_ids = request.data.get('target_user_ids', [])
+        from_user_id = request.data.get('from_user_id', '')
+
+        client = request.user.client
+
+        # Build the queryset of leads to assign
+        if from_user_id:
+            # Redistribute FROM a specific user
+            queryset = Lead.objects.filter(
+                client=client,
+                assigned_to_id=from_user_id,
+                is_archived=False
+            )
+        else:
+            # Only unassigned leads
+            queryset = Lead.objects.filter(
+                client=client,
+                assigned_to__isnull=True,
+                is_archived=False
+            )
+
+        if status_filter == 'NEW':
+            queryset = queryset.filter(status=LeadStatus.NEW)
+
+        queryset = queryset.order_by('created_at')[:count]
+        leads_list = list(queryset)
+
+        if not leads_list:
+            return Response({"detail": "No matching leads found to assign."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if mode == 'manual':
+            if len(target_user_ids) != 1:
+                return Response({"error": "Manual mode requires exactly one target user."}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                target_user = User.objects.get(id=target_user_ids[0], client=client, is_active=True)
+            except User.DoesNotExist:
+                return Response({"error": "Target user not found."}, status=status.HTTP_404_NOT_FOUND)
+
+            from django.utils import timezone
+            for lead in leads_list:
+                lead.assigned_to = target_user
+                lead.updated_at = timezone.now()
+            Lead.objects.bulk_update(leads_list, ['assigned_to', 'updated_at'], batch_size=500)
+            assigned_count = len(leads_list)
+
+        elif mode == 'round_robin':
+            if len(target_user_ids) < 2:
+                return Response({"error": "Round-robin requires at least 2 target users."}, status=status.HTTP_400_BAD_REQUEST)
+            agents = list(User.objects.filter(id__in=target_user_ids, client=client, is_active=True).order_by('id'))
+            if not agents:
+                return Response({"error": "No valid target users found."}, status=status.HTTP_404_NOT_FOUND)
+
+            from django.utils import timezone
+            agent_count = len(agents)
+            for i, lead in enumerate(leads_list):
+                lead.assigned_to = agents[i % agent_count]
+                lead.updated_at = timezone.now()
+            Lead.objects.bulk_update(leads_list, ['assigned_to', 'updated_at'], batch_size=500)
+            assigned_count = len(leads_list)
+
+        elif mode == 'load_balance':
+            assigned_count = LeadDistributionService.assign_load_balanced(leads_list, client)
+
+        else:
+            return Response({"error": f"Unknown mode: {mode}"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Log action
+        from apps.audits.services import AuditService
+        AuditService.record_action(
+            user=request.user,
+            action="BULK_ASSIGN",
+            resource_type="Lead",
+            changes={"mode": mode, "count": assigned_count, "from_user_id": from_user_id}
+        )
+
+        return Response({"detail": f"Successfully assigned {assigned_count} leads via {mode.replace('_', ' ')}."})
+
     @action(detail=True, methods=['post'], url_path='merge')
     def merge(self, request, pk=None):
         duplicate_id = request.data.get('duplicate_id')

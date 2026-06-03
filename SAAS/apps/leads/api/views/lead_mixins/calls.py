@@ -74,18 +74,45 @@ class LeadCallsMixin:
         elif outcome == 'NOT_ANSWERED':
             old_status = lead.status
             lead.status = LeadStatus.NOT_ANSWERED
-            tomorrow = timezone.now() + datetime.timedelta(days=1)
-            while tomorrow.weekday() in (5, 6):
-                tomorrow += datetime.timedelta(days=1)
-            lead.next_call_at = tomorrow.replace(hour=9, minute=0, second=0, microsecond=0)
+            
+            # Smart 4-hour retry: if within working hours (9AM-7PM), retry in 4h
+            # Otherwise, schedule for next business day 9AM
+            now = timezone.now()
+            four_hours_later = now + datetime.timedelta(hours=4)
+            
+            # Check if 4 hours later falls within working hours (9AM-7PM) on a weekday
+            if four_hours_later.hour >= 9 and four_hours_later.hour < 19 and four_hours_later.weekday() < 5:
+                lead.next_call_at = four_hours_later
+                retry_label = f"{four_hours_later.strftime('%I:%M %p')} today"
+            else:
+                # Next business day at 9 AM
+                tomorrow = now + datetime.timedelta(days=1)
+                while tomorrow.weekday() in (5, 6):
+                    tomorrow += datetime.timedelta(days=1)
+                lead.next_call_at = tomorrow.replace(hour=9, minute=0, second=0, microsecond=0)
+                retry_label = f"{lead.next_call_at.strftime('%d %b, %I:%M %p')}"
+            
             lead.save()
+            
             ActivityTimeline.objects.create(
                 client=lead.client, lead=lead, performed_by=request.user,
                 activity_type=ActivityType.CALL_LOGGED,
-                title=f"Call attempted \u2014 not answered (auto-retry: {lead.next_call_at.strftime('%d %b, %I:%M %p')})",
+                title=f"Call attempted — not answered (auto-retry: {retry_label})",
                 metadata={'outcome': outcome, 'old_status': old_status, 'auto_retry': str(lead.next_call_at)}
             )
-            return Response({"detail": f"Not answered. Auto-scheduled for {lead.next_call_at.strftime('%d %b %Y, %I:%M %p')}.", "status": lead.status, "next_call_at": str(lead.next_call_at)})
+            
+            # Auto-create a FollowUpReminder so the reminder engine notifies the agent
+            FollowUpReminder.objects.create(
+                client=lead.client, lead=lead, created_by=request.user,
+                scheduled_at=lead.next_call_at,
+                note=f"Auto-scheduled: Not answered at {now.strftime('%I:%M %p')}"
+            )
+            
+            return Response({
+                "detail": f"Not answered. Auto-scheduled retry for {retry_label}.",
+                "status": lead.status,
+                "next_call_at": str(lead.next_call_at)
+            })
 
         elif outcome == 'CALLBACK':
             old_status = lead.status

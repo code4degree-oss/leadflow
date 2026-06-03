@@ -12,6 +12,7 @@ class LeadAnalyticsMixin:
     @action(detail=False, methods=['get'], url_path='batch-progress', permission_classes=[IsManagerOrHigher])
     def batch_progress(self, request):
         from django.db.models import Max
+        from apps.leads.models import LeadBatch
         qs = self.get_queryset()
         
         batch_counts = qs.values('source').annotate(
@@ -27,6 +28,12 @@ class LeadAnalyticsMixin:
             last_upload=Max('created_at')
         ).order_by('-total')
 
+        # Build a source → batch_id lookup from LeadBatch
+        batch_lookup = {}
+        batches = LeadBatch.objects.filter(client=request.user.client).values('id', 'name')
+        for b in batches:
+            batch_lookup[b['name']] = str(b['id'])
+
         results = []
         for b in batch_counts:
             source_name = b['source'] or "Unknown/Manual"
@@ -36,6 +43,7 @@ class LeadAnalyticsMixin:
             
             results.append({
                 "source": source_name,
+                "batch_id": batch_lookup.get(source_name, None),
                 "total": total,
                 "new_leads": b['new_leads'],
                 "in_progress": b['in_progress'],

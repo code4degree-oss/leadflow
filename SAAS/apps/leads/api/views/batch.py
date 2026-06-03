@@ -62,3 +62,32 @@ class LeadBatchViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
             return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         
         return Response(response_data, status=status.HTTP_201_CREATED)
+
+    def list(self, request, *args, **kwargs):
+        """Override list to include lead counts per batch."""
+        from django.db.models import Count, Q
+        from apps.leads.models import LeadStatus
+        
+        qs = self.get_queryset().annotate(
+            total_leads=Count('leads'),
+            new_leads=Count('leads', filter=Q(leads__status=LeadStatus.NEW)),
+            won_leads=Count('leads', filter=Q(leads__status=LeadStatus.WON)),
+        ).order_by('-created_at')
+        
+        results = []
+        for batch in qs:
+            results.append({
+                "id": str(batch.id),
+                "name": batch.name,
+                "status": batch.status,
+                "total_rows": batch.total_rows or 0,
+                "imported_count": batch.imported_count or 0,
+                "failed_count": batch.failed_count or 0,
+                "total_leads": batch.total_leads,
+                "new_leads": batch.new_leads,
+                "won_leads": batch.won_leads,
+                "created_at": batch.created_at.isoformat() if batch.created_at else None,
+                "uploaded_by": batch.uploaded_by.email if batch.uploaded_by else None,
+            })
+        
+        return Response(results)

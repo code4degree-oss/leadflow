@@ -360,6 +360,8 @@ class NotificationType(models.TextChoices):
     SYSTEM = "SYSTEM", _("System")
     SUBSCRIPTION_WARNING = "SUBSCRIPTION_WARNING", _("Subscription Warning")
     SUBSCRIPTION_EXPIRED = "SUBSCRIPTION_EXPIRED", _("Subscription Expired")
+    AGED = "AGED", _("Stale Lead Alert")
+    FOLLOW_UP = "FOLLOW_UP", _("Follow-up Reminder")
 
 
 class Notification(BaseModel):
