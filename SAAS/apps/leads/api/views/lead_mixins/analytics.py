@@ -12,10 +12,9 @@ class LeadAnalyticsMixin:
     @action(detail=False, methods=['get'], url_path='batch-progress', permission_classes=[IsManagerOrHigher])
     def batch_progress(self, request):
         from django.db.models import Max
-        from apps.leads.models import LeadBatch
         qs = self.get_queryset()
         
-        batch_counts = qs.values('source').annotate(
+        batch_counts = qs.values('batch_id', 'batch__name', 'batch__created_at', 'source').annotate(
             total=Count('id'),
             new_leads=Count('id', filter=Q(status__in=[LeadStatus.NEW, 'IMPORTED'])),
             in_progress=Count('id', filter=Q(status__in=[LeadStatus.CALLED, 'CALLBACK', LeadStatus.INTERESTED, LeadStatus.SITE_VISIT, LeadStatus.NOT_ANSWERED])),
@@ -26,24 +25,22 @@ class LeadAnalyticsMixin:
             interested_leads=Count('id', filter=Q(status=LeadStatus.INTERESTED)),
             wrong_leads=Count('id', filter=Q(status__in=[LeadStatus.LOST, 'INVALID_NUMBER'])),
             last_upload=Max('created_at')
-        ).order_by('-total')
-
-        # Build a source → batch_id lookup from LeadBatch
-        batch_lookup = {}
-        batches = LeadBatch.objects.filter(client=request.user.client).values('id', 'name')
-        for b in batches:
-            batch_lookup[b['name']] = str(b['id'])
+        ).order_by('-batch__created_at', '-last_upload')
 
         results = []
         for b in batch_counts:
-            source_name = b['source'] or "Unknown/Manual"
+            # If batch__name exists, use it. Otherwise fallback to source, then "Unknown/Manual"
+            source_name = b['batch__name'] or b['source'] or "Unknown/Manual"
+            
             total = b['total']
             covered = b['covered']
             progress_pct = round((covered / total * 100), 1) if total > 0 else 0
             
+            created_at = b['batch__created_at'] or b['last_upload']
+            
             results.append({
                 "source": source_name,
-                "batch_id": batch_lookup.get(source_name, None),
+                "batch_id": str(b['batch_id']) if b['batch_id'] else None,
                 "total": total,
                 "new_leads": b['new_leads'],
                 "in_progress": b['in_progress'],
@@ -53,7 +50,7 @@ class LeadAnalyticsMixin:
                 "hot_leads": b['hot_leads'],
                 "interested_leads": b['interested_leads'],
                 "wrong_leads": b['wrong_leads'],
-                "created_at": b['last_upload'].isoformat() if b['last_upload'] else None,
+                "created_at": created_at.isoformat() if created_at else None,
                 "progress_percentage": progress_pct
             })
             
