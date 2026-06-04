@@ -126,7 +126,7 @@ User=$TARGET_USER
 Group=www-data
 WorkingDirectory=$PROJECT_DIR/SAAS
 Environment="DJANGO_SETTINGS_MODULE=config.settings.production"
-ExecStart=$PROJECT_DIR/SAAS/venv/bin/gunicorn --access-logfile - -k uvicorn.workers.UvicornWorker --workers 3 --timeout 300 --bind unix:$PROJECT_DIR/SAAS/gunicorn.sock config.asgi:application
+ExecStart=$PROJECT_DIR/SAAS/venv/bin/gunicorn --access-logfile - -k uvicorn.workers.UvicornWorker --proxy-headers --forwarded-allow-ips="*" --workers 3 --timeout 300 --bind unix:$PROJECT_DIR/SAAS/gunicorn.sock config.asgi:application
 
 [Install]
 WantedBy=multi-user.target

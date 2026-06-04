@@ -17,7 +17,9 @@ USE_SSL = env.bool('USE_SSL', default=True)
 # This prevents infinite redirect loops when using Uvicorn behind a proxy
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-SECURE_SSL_REDIRECT = USE_SSL
+# Turn off Django's SSL redirect because Cloudflare or the Load Balancer handles it.
+# Forcing it here causes infinite redirect loops if Nginx proxies via HTTP.
+SECURE_SSL_REDIRECT = False
 SESSION_COOKIE_SECURE = USE_SSL
 CSRF_COOKIE_SECURE = USE_SSL
 SECURE_BROWSER_XSS_FILTER = True

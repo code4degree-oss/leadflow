@@ -20,7 +20,7 @@ PROJECT_DIR=$(dirname $(pwd))
 
 echo "==> Upgrading Gunicorn to ASGI/Uvicorn for WebSockets..."
 if [ -f "/etc/systemd/system/gunicorn.service" ]; then
-    sed -i 's/config.wsgi:application/-k uvicorn.workers.UvicornWorker config.asgi:application/g' /etc/systemd/system/gunicorn.service
+    sed -i 's/config.wsgi:application/-k uvicorn.workers.UvicornWorker --proxy-headers --forwarded-allow-ips="*" config.asgi:application/g' /etc/systemd/system/gunicorn.service
     systemctl daemon-reload
     systemctl restart gunicorn
 else
