@@ -274,7 +274,7 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
         </div>
 
         {/* Quick Add Button (Admin/Manager only) */}
-        {(actualRole === 'admin' || actualRole === 'manager' || actualRole === 'superadmin') && (
+        {(actualRole === 'admin' || actualRole === 'manager') && (
           <button 
             onClick={() => setAddLeadOpen(true)}
             className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-accent text-white text-xs font-bold rounded-lg shadow-sm hover:shadow-md hover:bg-accent/90 transition-all mr-2"
@@ -282,7 +282,7 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
             <span className="text-lg leading-none mt-[-2px]">+</span> Quick Add
           </button>
         )}
-        {(actualRole === 'admin' || actualRole === 'manager' || actualRole === 'superadmin') && (
+        {(actualRole === 'admin' || actualRole === 'manager') && (
           <button 
             onClick={() => setAddLeadOpen(true)}
             className="md:hidden flex items-center justify-center w-8 h-8 bg-accent text-white rounded-lg shadow-sm hover:shadow-md hover:bg-accent/90 transition-all mr-2"
