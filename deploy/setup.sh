@@ -154,7 +154,7 @@ cd "$PROJECT_DIR/leadflow-crm-frontend/leadflow"
 sudo -u "$TARGET_USER" -H bash -c "cd $PROJECT_DIR/leadflow-crm-frontend/leadflow && npm install"
 
 cat <<EOF | sudo -u "$TARGET_USER" tee "$PROJECT_DIR/leadflow-crm-frontend/leadflow/.env.local"
-NEXT_PUBLIC_API_URL=http://$DOMAIN_NAME/api/v1
+NEXT_PUBLIC_API_URL=https://$DOMAIN_NAME/api/v1
 EOF
 
 echo "    Building Next.js..."
