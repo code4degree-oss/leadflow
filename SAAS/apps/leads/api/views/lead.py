@@ -60,6 +60,10 @@ class LeadViewSet(
         exclude_new = self.request.query_params.get('exclude_new')
         if exclude_new == 'true':
             qs = qs.exclude(status__in=[LeadStatus.NEW, 'IMPORTED'])
+
+        exclude_closed = self.request.query_params.get('exclude_closed')
+        if exclude_closed == 'true':
+            qs = qs.exclude(status__in=[LeadStatus.WON, LeadStatus.LOST, LeadStatus.INVALID_NUMBER])
         
         # Filter by batch ID for batch-to-leads navigation
         batch_id = self.request.query_params.get('batch_id')

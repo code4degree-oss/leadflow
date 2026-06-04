@@ -70,11 +70,23 @@ export default function HotLeads() {
   return (
     <Layout role="telecaller" pageTitle="Hot Leads">
 
-      <div className="flex items-center gap-2 mb-5 p-3 bg-hot/8 border border-hot/20 rounded-xl">
-        <Flame size={16} className="text-hot" />
-        <span className="text-sm text-hot font-medium">
-          {loading ? 'Loading...' : `${leads.length} hot leads — high-priority prospects pinned here`}
-        </span>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-hot/5 border border-hot/20 p-4 rounded-xl">
+          <div className="text-[10px] uppercase font-bold text-hot tracking-wider mb-1 flex items-center gap-1"><Flame size={12}/> Total Hot Leads</div>
+          <div className="text-2xl font-bold text-txt">{leads.length}</div>
+        </div>
+        <div className="bg-purple/5 border border-purple/20 p-4 rounded-xl">
+          <div className="text-[10px] uppercase font-bold text-purple tracking-wider mb-1">Interested</div>
+          <div className="text-2xl font-bold text-txt">{leads.filter(l => l.status === 'INTERESTED').length}</div>
+        </div>
+        <div className="bg-accent2/5 border border-accent2/20 p-4 rounded-xl">
+          <div className="text-[10px] uppercase font-bold text-accent2 tracking-wider mb-1">Site Visits</div>
+          <div className="text-2xl font-bold text-txt">{leads.filter(l => l.status === 'SITE_VISIT').length}</div>
+        </div>
+        <div className="bg-[#10B981]/5 border border-[#10B981]/20 p-4 rounded-xl">
+          <div className="text-[10px] uppercase font-bold text-[#10B981] tracking-wider mb-1">Won</div>
+          <div className="text-2xl font-bold text-txt">{leads.filter(l => l.status === 'WON').length}</div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">

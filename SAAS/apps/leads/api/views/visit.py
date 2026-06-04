@@ -15,10 +15,30 @@ class SiteVisitViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
         qs = super().get_queryset()
         if self.request.user.role == RoleChoices.FIELD_AGENT:
             qs = qs.filter(agent=self.request.user)
+        
         visit_status = self.request.query_params.get('status')
         if visit_status:
             qs = qs.filter(status=visit_status)
-        return qs
+            
+        agent_id = self.request.query_params.get('agent_id')
+        if agent_id:
+            qs = qs.filter(agent_id=agent_id)
+            
+        project_id = self.request.query_params.get('project_id')
+        if project_id:
+            qs = qs.filter(lead__project_id=project_id)
+            
+        date_param = self.request.query_params.get('date')
+        if date_param:
+            from django.db.models import Q
+            try:
+                from datetime import datetime as dt
+                filter_date = dt.strptime(date_param, '%Y-%m-%d').date()
+                qs = qs.filter(Q(scheduled_at__date=filter_date) | Q(completed_at__date=filter_date))
+            except (ValueError, TypeError):
+                pass
+                
+        return qs.order_by('-scheduled_at')
 
     def perform_create(self, serializer):
         agent = self.request.user

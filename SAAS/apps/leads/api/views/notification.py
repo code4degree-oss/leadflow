@@ -17,7 +17,13 @@ class NotificationViewSet(TenantQuerySetMixin, viewsets.GenericViewSet):
         return super().get_queryset().filter(user=self.request.user)
 
     def list(self, request):
-        qs = self.get_queryset()[:30]
+        queryset = self.get_queryset().order_by('-created_at')
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        qs = queryset[:30]
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 
@@ -51,26 +57,37 @@ class NotificationViewSet(TenantQuerySetMixin, viewsets.GenericViewSet):
         ).select_related('lead', 'created_by')
 
         created = 0
+        if not upcoming:
+            return Response({'created': 0})
+            
+        upcoming_leads = [r.lead_id for r in upcoming]
+        existing_notifs = set(Notification.objects.filter(
+            user=request.user,
+            lead_id__in=upcoming_leads,
+            notif_type=NotificationType.REMINDER,
+            created_at__gte=now - datetime.timedelta(minutes=10)
+        ).values_list('lead_id', flat=True))
+
+        notifications_to_create = []
         for reminder in upcoming:
-            if not reminder.created_by:
+            if not reminder.created_by or reminder.created_by != request.user:
                 continue
-            exists = Notification.objects.filter(
-                user=reminder.created_by,
-                lead=reminder.lead,
-                notif_type=NotificationType.REMINDER,
-                created_at__gte=now - datetime.timedelta(minutes=10)
-            ).exists()
-            if not exists:
+            if reminder.lead.id not in existing_notifs:
                 lead_name = f"{reminder.lead.first_name} {reminder.lead.last_name}".strip()
                 mins = max(1, int((reminder.scheduled_at - now).total_seconds() // 60))
-                Notification.objects.create(
-                    client=request.user.client,
-                    user=reminder.created_by,
-                    title=f"📞 Call {lead_name} in {mins} min",
-                    message=reminder.note or f"Scheduled follow-up with {lead_name}",
-                    notif_type=NotificationType.REMINDER,
-                    lead=reminder.lead,
+                notifications_to_create.append(
+                    Notification(
+                        client=request.user.client,
+                        user=reminder.created_by,
+                        title=f"📞 Call {lead_name} in {mins} min",
+                        message=reminder.note or f"Scheduled follow-up with {lead_name}",
+                        notif_type=NotificationType.REMINDER,
+                        lead=reminder.lead,
+                    )
                 )
-                created += 1
+        
+        if notifications_to_create:
+            Notification.objects.bulk_create(notifications_to_create)
+            created = len(notifications_to_create)
 
         return Response({'created': created})

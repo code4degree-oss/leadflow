@@ -3,6 +3,7 @@ import { requestForToken, onMessageListener } from '../utils/firebase'
 import { fetchWithAuth } from '../utils/api'
 import SubscriptionBanner from './SubscriptionBanner'
 import NotificationDropdown from './NotificationDropdown'
+import AddLeadModal from './AddLeadModal'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import {
@@ -13,6 +14,7 @@ import {
   Menu, X, Ban, Mail, Megaphone, CheckCircle2
 } from 'lucide-react'
 import clsx from 'clsx'
+import useWebSocket from '../hooks/useWebSocket'
 
 
 const navConfig = {
@@ -77,6 +79,10 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
   const [isInactive, setIsInactive] = useState(false)
   const [userName, setUserName] = useState('')
   const [userEmail, setUserEmail] = useState('')
+  const [addLeadOpen, setAddLeadOpen] = useState(false)
+
+  // Initialize WebSocket connection globally
+  useWebSocket()
 
   useEffect(() => {
     // Load user info from localStorage
@@ -245,6 +251,24 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
           <h1 className="font-display font-bold text-base md:text-lg text-txt truncate">{pageTitle}</h1>
         </div>
 
+        {/* Quick Add Button (Admin/Manager only) */}
+        {(role === 'admin' || role === 'manager' || role === 'superadmin') && (
+          <button 
+            onClick={() => setAddLeadOpen(true)}
+            className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-accent text-white text-xs font-bold rounded-lg shadow-sm hover:shadow-md hover:bg-accent/90 transition-all mr-2"
+          >
+            <span className="text-lg leading-none mt-[-2px]">+</span> Quick Add
+          </button>
+        )}
+        {(role === 'admin' || role === 'manager' || role === 'superadmin') && (
+          <button 
+            onClick={() => setAddLeadOpen(true)}
+            className="md:hidden flex items-center justify-center w-8 h-8 bg-accent text-white rounded-lg shadow-sm hover:shadow-md hover:bg-accent/90 transition-all mr-2"
+          >
+            <span className="text-lg leading-none">+</span>
+          </button>
+        )}
+
         <NotificationDropdown role={role} />
 
         {/* Mobile Profile Toggle */}
@@ -286,11 +310,11 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
       </main>
 
       {/* Bottom Navigation (Mobile) */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-40 flex justify-around items-center h-16 px-1 md:hidden pb-safe">
-        {config.items.slice(0, 5).map((item) => {
+      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-40 flex items-center h-16 px-1 md:hidden pb-safe overflow-x-auto no-scrollbar scroll-smooth">
+        {config.items.map((item) => {
           const active = router.pathname === item.href
           return (
-            <Link key={item.href} href={item.href} className="flex-1 flex flex-col items-center justify-center h-full text-txt3 hover:text-txt transition-colors">
+            <Link key={item.href} href={item.href} className="flex-none min-w-[72px] flex flex-col items-center justify-center h-full text-txt3 hover:text-txt transition-colors">
               <div className={clsx('flex flex-col items-center gap-1 w-full', active && 'text-accent')}>
                 <div className={clsx('p-1.5 rounded-full transition-colors', active && 'bg-accent/10')}>
                   <item.icon size={20} className={clsx(active ? 'text-accent' : 'text-txt3')} />
@@ -303,6 +327,18 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
           )
         })}
       </nav>
+
+      {/* Add Lead Modal */}
+      <AddLeadModal 
+        isOpen={addLeadOpen} 
+        onClose={() => setAddLeadOpen(false)} 
+        onSuccess={() => {
+          // If we are on leads page, we could reload, but WebSocket handles that for telecallers.
+          // For admins, we might want to refresh. Let's just let it auto-assign.
+          const customEvent = new CustomEvent('ws_message', { detail: { type: 'lead_assigned' } });
+          window.dispatchEvent(customEvent);
+        }} 
+      />
     </div>
   )
 }

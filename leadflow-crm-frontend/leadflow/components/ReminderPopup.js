@@ -10,11 +10,20 @@ import { fetchWithAuth } from '../utils/api'
  */
 export default function ReminderPopup() {
   const [popups, setPopups] = useState([])
-  const [dismissed, setDismissed] = useState(() => {
+  const [hiddenReminders, setHiddenReminders] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem('dismissed_reminders') || '[]')
+      const data = JSON.parse(localStorage.getItem('hidden_reminders') || '{}')
+      const now = new Date().getTime()
+      const cleaned = {}
+      Object.entries(data).forEach(([id, time]) => {
+        if (now < time) {
+          cleaned[id] = time
+        }
+      })
+      localStorage.setItem('hidden_reminders', JSON.stringify(cleaned))
+      return cleaned
     } catch {
-      return []
+      return {}
     }
   })
 
@@ -32,8 +41,11 @@ export default function ReminderPopup() {
       const upcoming = reminders.filter(r => {
         const scheduledTime = new Date(r.scheduled_at)
         const timeUntil = scheduledTime - now
+        const hiddenTime = hiddenReminders[r.id]
+        const isHidden = hiddenTime && (now.getTime() < hiddenTime)
+        
         // Show popup if ≤ 5 min away and not past by more than 5 min
-        return timeUntil <= fiveMinutes && timeUntil > -5 * 60 * 1000 && !dismissed.includes(r.id)
+        return timeUntil <= fiveMinutes && timeUntil > -5 * 60 * 1000 && !isHidden
       })
 
       setPopups(upcoming)
@@ -74,7 +86,7 @@ export default function ReminderPopup() {
       // Silently fail — don't break the app for notifications
       console.warn('Reminder check failed:', err)
     }
-  }, [dismissed])
+  }, [hiddenReminders])
 
   useEffect(() => {
     // Request browser notification permission on mount
@@ -85,17 +97,33 @@ export default function ReminderPopup() {
     // Check immediately
     checkReminders()
 
-    // Poll every 60 seconds
-    const interval = setInterval(checkReminders, 60000)
-    return () => clearInterval(interval)
+    // Listen for WebSocket events to refresh reminders
+    const handleWsMessage = (e) => {
+      const payload = e.detail;
+      if (payload.type === 'notification' && payload.data.notif_type === 'REMINDER') {
+        checkReminders();
+      }
+    };
+    window.addEventListener('ws_message', handleWsMessage);
+
+    // Fallback poll every 5 minutes instead of 1 minute to save resources
+    const interval = setInterval(checkReminders, 5 * 60 * 1000)
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('ws_message', handleWsMessage)
+    }
   }, [checkReminders])
 
-  const handleDismiss = (id) => {
-    const updated = [...dismissed, id]
-    setDismissed(updated)
-    localStorage.setItem('dismissed_reminders', JSON.stringify(updated))
+  const handleHide = (id, hideDurationMs) => {
+    const hiddenUntil = new Date().getTime() + hideDurationMs
+    const updated = { ...hiddenReminders, [id]: hiddenUntil }
+    setHiddenReminders(updated)
+    localStorage.setItem('hidden_reminders', JSON.stringify(updated))
     setPopups(prev => prev.filter(p => p.id !== id))
   }
+
+  const handleDismiss = (id) => handleHide(id, 24 * 60 * 60 * 1000) // hide for 24h
+  const handleSnooze = (id, mins) => handleHide(id, mins * 60 * 1000)
 
   const handleCall = (lead_id) => {
     // Navigate to telecaller leads page
@@ -105,7 +133,7 @@ export default function ReminderPopup() {
   if (popups.length === 0) return null
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 pointer-events-auto">
+    <div className="fixed bottom-4 right-4 z-[9999] flex flex-col items-end justify-end gap-4 pointer-events-none">
       <div className="flex flex-col gap-4 w-full max-w-sm">
       {popups.map((reminder, idx) => {
         const scheduledTime = new Date(reminder.scheduled_at)
@@ -177,19 +205,29 @@ export default function ReminderPopup() {
             </div>
 
             {/* Actions */}
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleCall(reminder.lead)}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-accent text-white rounded-xl text-xs font-bold hover:bg-accent/90 transition-colors shadow-lg shadow-accent/20"
-              >
-                <Phone size={12} /> Open Leads
-              </button>
-              <button
-                onClick={() => handleDismiss(reminder.id)}
-                className="px-3 py-2 bg-bg3 text-txt2 rounded-xl text-xs font-bold hover:bg-bg2 transition-colors border border-border"
-              >
-                Dismiss
-              </button>
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleCall(reminder.lead)}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-accent text-white rounded-xl text-xs font-bold hover:bg-accent/90 transition-colors shadow-lg shadow-accent/20"
+                >
+                  <Phone size={12} /> Open Leads
+                </button>
+                <button
+                  onClick={() => handleDismiss(reminder.id)}
+                  className="px-3 py-2 bg-bg3 text-txt2 rounded-xl text-xs font-bold hover:bg-bg2 transition-colors border border-border"
+                >
+                  Dismiss
+                </button>
+              </div>
+              <div className="flex gap-2 justify-center mt-1">
+                <span className="text-[10px] text-txt3 self-center font-bold uppercase mr-1">Snooze:</span>
+                {[5, 15, 30].map(mins => (
+                  <button key={mins} onClick={() => handleSnooze(reminder.id, mins)} className="text-[10px] font-bold text-accent hover:bg-accent/10 px-2 py-1 rounded-lg transition-colors">
+                    {mins}m
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )

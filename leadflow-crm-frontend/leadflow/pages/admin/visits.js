@@ -11,6 +11,20 @@ export default function AdminSiteVisits() {
   const [error, setError] = useState(null)
   const [tab, setTab] = useState('completed') // 'completed' | 'scheduled' | 'all'
   const [selectedVisit, setSelectedVisit] = useState(null)
+  
+  const [dateFilter, setDateFilter] = useState('')
+  const [agentFilter, setAgentFilter] = useState('')
+  const [projectFilter, setProjectFilter] = useState('')
+  const [projects, setProjects] = useState([])
+  const [agents, setAgents] = useState([])
+
+  useEffect(() => {
+    fetchWithAuth('/leads/projects/').then(res => setProjects(res || []))
+    fetchWithAuth('/accounts/employees/').then(res => {
+      const all = res.results || res || []
+      setAgents(all.filter(e => e.role === 'FIELD_AGENT'))
+    })
+  }, [])
 
   useEffect(() => {
     fetchVisits()
@@ -19,7 +33,11 @@ export default function AdminSiteVisits() {
   const fetchVisits = async () => {
     setLoading(true)
     try {
-      const endpoint = tab === 'all' ? '/visits/' : `/visits/?status=${tab.toUpperCase()}`
+      let endpoint = tab === 'all' ? '/visits/' : `/visits/?status=${tab.toUpperCase()}`
+      if (dateFilter) endpoint += (endpoint.includes('?') ? '&' : '?') + `date=${dateFilter}`
+      if (agentFilter) endpoint += (endpoint.includes('?') ? '&' : '?') + `agent_id=${agentFilter}`
+      if (projectFilter) endpoint += (endpoint.includes('?') ? '&' : '?') + `project_id=${projectFilter}`
+      
       const data = await fetchWithAuth(endpoint)
       setVisits(data.results || data || [])
       setError(null)
@@ -74,6 +92,29 @@ export default function AdminSiteVisits() {
             {t.label}
           </button>
         ))}
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6 p-4 bg-card border border-border rounded-2xl shadow-sm">
+        <div className="flex-1 flex gap-3 flex-wrap">
+          <input 
+            type="date" 
+            value={dateFilter} 
+            onChange={e => setDateFilter(e.target.value)}
+            className="input max-w-[180px] h-10 text-sm bg-bg3 text-txt"
+          />
+          <select value={agentFilter} onChange={e => setAgentFilter(e.target.value)} className="input min-w-[180px] h-10 text-sm bg-bg3 text-txt">
+            <option value="">All Field Agents</option>
+            {agents.map(a => <option key={a.id} value={a.id}>{a.first_name} {a.last_name}</option>)}
+          </select>
+          <select value={projectFilter} onChange={e => setProjectFilter(e.target.value)} className="input min-w-[180px] h-10 text-sm bg-bg3 text-txt">
+            <option value="">All Projects</option>
+            {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+        </div>
+        <button onClick={fetchVisits} className="px-6 py-2 bg-accent text-white rounded-xl text-sm font-bold shadow-lg shadow-accent/20 hover:bg-accent/90 transition-colors">
+          Apply Filters
+        </button>
       </div>
 
       {error && (

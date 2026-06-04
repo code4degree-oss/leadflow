@@ -65,6 +65,18 @@ export default function TelecallerLeads() {
     setPage(1)
   }, [search, statusFilter])
 
+  // Listen for real-time lead assignments
+  useEffect(() => {
+    const handleWsMessage = (e) => {
+      const payload = e.detail;
+      if (payload.type === 'lead_assigned') {
+        fetchLeads();
+      }
+    };
+    window.addEventListener('ws_message', handleWsMessage);
+    return () => window.removeEventListener('ws_message', handleWsMessage);
+  }, [page, pageSize, statusFilter, search])
+
   // Optional: Debounce search
   useEffect(() => {
     const delay = setTimeout(fetchLeads, 500)

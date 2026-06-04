@@ -22,16 +22,29 @@ export default function NotificationDropdown({ role }) {
   const [reminderPopup, setReminderPopup] = useState(null)
   const dropdownRef = useRef(null)
 
-  // Fetch unread count every 30s
+  const [loadingRead, setLoadingRead] = useState({})
+  const [loadingAllRead, setLoadingAllRead] = useState(false)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
+
+  // Fetch initial notifications and unread count
   useEffect(() => {
     fetchUnreadCount()
-    const interval = setInterval(() => {
-      fetchUnreadCount()
-      checkReminders()
-    }, 30000)
-    // Initial reminder check
-    checkReminders()
-    return () => clearInterval(interval)
+  }, [])
+
+  // Listen for WebSocket notifications
+  useEffect(() => {
+    const handleWsMessage = (e) => {
+      const payload = e.detail;
+      if (payload.type === 'notification') {
+        const notif = payload.data;
+        setNotifications(prev => [notif, ...prev]);
+        setUnreadCount(prev => prev + 1);
+      }
+    };
+    window.addEventListener('ws_message', handleWsMessage);
+    return () => window.removeEventListener('ws_message', handleWsMessage);
   }, [])
 
   // Close dropdown on outside click
@@ -52,47 +65,49 @@ export default function NotificationDropdown({ role }) {
     } catch (err) { console.error(err) }
   }
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (pageNum = 1) => {
     try {
-      const data = await fetchWithAuth('/accounts/notifications/')
-      setNotifications(data || [])
+      if (pageNum > 1) setLoadingMore(true)
+      const data = await fetchWithAuth(`/accounts/notifications/?page=${pageNum}`)
+      const results = data.results || data || []
+      
+      if (pageNum === 1) {
+        setNotifications(results)
+      } else {
+        setNotifications(prev => [...prev, ...results])
+      }
+      
+      setHasMore(data.next !== null)
+      setPage(pageNum)
     } catch (err) { console.error(err) }
+    finally { setLoadingMore(false) }
   }
 
-  const checkReminders = async () => {
-    try {
-      const result = await fetchWithAuth('/accounts/notifications/check-reminders/', { method: 'POST' })
-      if (result.created > 0) {
-        fetchUnreadCount()
-        // Show popup for the most recent reminder
-        const data = await fetchWithAuth('/accounts/notifications/')
-        const reminder = (data || []).find(n => n.notif_type === 'REMINDER' && !n.is_read)
-        if (reminder) {
-          setReminderPopup(reminder)
-        }
-      }
-    } catch (err) { console.error(err) }
-  }
+  const checkReminders = async () => {} // Deprecated
 
   const handleBellClick = () => {
-    if (!open) fetchNotifications()
+    if (!open) fetchNotifications(1)
     setOpen(!open)
   }
 
   const markAsRead = async (id) => {
     try {
+      setLoadingRead(prev => ({ ...prev, [id]: true }))
       await fetchWithAuth(`/accounts/notifications/${id}/read/`, { method: 'POST' })
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n))
       setUnreadCount(prev => Math.max(0, prev - 1))
     } catch (err) { console.error(err) }
+    finally { setLoadingRead(prev => ({ ...prev, [id]: false })) }
   }
 
   const markAllRead = async () => {
     try {
+      setLoadingAllRead(true)
       await fetchWithAuth('/accounts/notifications/read-all/', { method: 'POST' })
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
       setUnreadCount(0)
     } catch (err) { console.error(err) }
+    finally { setLoadingAllRead(false) }
   }
 
   const handleView = (notif) => {
@@ -151,9 +166,10 @@ export default function NotificationDropdown({ role }) {
                 )}
               </div>
               {unreadCount > 0 && (
-                <button onClick={markAllRead}
-                  className="text-[10px] font-bold text-accent hover:text-accent2 flex items-center gap-1 transition-colors">
-                  <CheckCheck size={12} /> Mark all read
+                <button onClick={markAllRead} disabled={loadingAllRead}
+                  className="text-[10px] font-bold text-accent hover:text-accent2 flex items-center gap-1 transition-colors disabled:opacity-50">
+                  {loadingAllRead ? <span className="w-3 h-3 border-2 border-accent border-t-transparent rounded-full animate-spin inline-block" /> : <CheckCheck size={12} />}
+                  Mark all read
                 </button>
               )}
             </div>
@@ -209,6 +225,17 @@ export default function NotificationDropdown({ role }) {
                     </div>
                   )
                 })
+              )}
+              {hasMore && notifications.length > 0 && (
+                <div className="p-3 border-t border-border/50 text-center">
+                  <button
+                    onClick={() => fetchNotifications(page + 1)}
+                    disabled={loadingMore}
+                    className="text-xs font-bold text-accent hover:text-accent/80 transition-colors disabled:opacity-50"
+                  >
+                    {loadingMore ? 'Loading...' : 'Load More'}
+                  </button>
+                </div>
               )}
             </div>
           </div>

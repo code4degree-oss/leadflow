@@ -126,7 +126,7 @@ User=$TARGET_USER
 Group=www-data
 WorkingDirectory=$PROJECT_DIR/SAAS
 Environment="DJANGO_SETTINGS_MODULE=config.settings.production"
-ExecStart=$PROJECT_DIR/SAAS/venv/bin/gunicorn --access-logfile - --workers 3 --timeout 300 --bind unix:$PROJECT_DIR/SAAS/gunicorn.sock config.wsgi:application
+ExecStart=$PROJECT_DIR/SAAS/venv/bin/gunicorn --access-logfile - -k uvicorn.workers.UvicornWorker --workers 3 --timeout 300 --bind unix:$PROJECT_DIR/SAAS/gunicorn.sock config.asgi:application
 
 [Install]
 WantedBy=multi-user.target
@@ -192,6 +192,20 @@ server {
         proxy_connect_timeout 300s;
         proxy_send_timeout 300s;
         client_max_body_size 50M;
+    }
+
+    # WebSockets
+    location /ws/ {
+        proxy_pass http://unix:$PROJECT_DIR/SAAS/gunicorn.sock;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Host \$server_name;
+        proxy_read_timeout 86400s;
+        proxy_send_timeout 86400s;
     }
 
     # Next.js Frontend (everything else)

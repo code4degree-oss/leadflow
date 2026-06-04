@@ -57,9 +57,9 @@ export async function fetchWithAuth(url, options = {}) {
             localStorage.setItem('refresh_token', newData.refresh);
           }
           // Retry original request with new token
-          options.headers = options.headers || {};
-          options.headers['Authorization'] = `Bearer ${newData.access}`;
-          const retryRes = await fetch(`${API_BASE}${url}`, options);
+          const retryOptions = { ...options };
+          retryOptions.headers = { ...headers, Authorization: `Bearer ${newData.access}` };
+          const retryRes = await fetch(`${API_BASE}${url}`, retryOptions);
           
           if (!retryRes.ok) throw new Error('Retry failed');
           if (retryRes.status === 204) return null;

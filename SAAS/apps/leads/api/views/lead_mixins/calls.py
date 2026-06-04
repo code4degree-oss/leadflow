@@ -143,6 +143,7 @@ class LeadCallsMixin:
             old_status = lead.status
             lead.status = LeadStatus.WON
             lead.last_interaction_at = timezone.now()
+            lead.next_call_at = None
             lead.save()
             ActivityTimeline.objects.create(
                 client=lead.client, lead=lead, performed_by=request.user,
@@ -164,33 +165,27 @@ class LeadCallsMixin:
             tc_name = f"{request.user.first_name} {request.user.last_name}".strip()
             admins = User.objects.filter(client=lead.client, role=RoleChoices.CLIENT_ADMIN, is_active=True)
             
-            def _send_won_push_notif():
-                from apps.core.firebase import send_push_notification
-                for admin in admins:
-                    send_push_notification(
-                        user=admin,
-                        title=f"🎉 Lead {lead_name} won!",
-                        body=f"Converted by {tc_name}",
-                        data={"type": "lead_won", "lead_id": str(lead.id)}
-                    )
-            threading.Thread(target=_send_won_push_notif, daemon=True).start()
-
+            from apps.leads.tasks import send_push_notification_task
             for admin in admins:
-                Notification.objects.create(
+                notif = Notification.objects.create(
                     client=lead.client, user=admin,
                     title=f"🎉 Lead {lead_name} won!",
                     message=f"Converted by {tc_name}",
                     notif_type=NotificationType.WON, lead=lead,
                 )
+                send_push_notification_task.delay(notif.id)
+
             return Response({"detail": "🎉 Lead marked as WON!", "status": lead.status})
 
         elif outcome == 'LOST':
+            lead.next_call_at = None
             return self._handle_lost(lead, request)
 
         elif outcome == 'INVALID_NUMBER':
             old_status = lead.status
             lead.status = LeadStatus.INVALID_NUMBER
             lead.lost_count = 4
+            lead.next_call_at = None
             lead.save()
             ActivityTimeline.objects.create(
                 client=lead.client, lead=lead, performed_by=request.user,

@@ -18,7 +18,7 @@ class LeadStatusMixin:
             title=f"Lead {'marked as HOT \U0001f525' if lead.is_hot else 'unmarked as hot'}",
             metadata={'is_hot': lead.is_hot}
         )
-        return Response({"detail": f"Lead {'marked hot' if lead.is_hot else 'unmarked'}."})
+        return Response({"detail": f"Lead {'marked hot' if lead.is_hot else 'unmarked'}.", "is_hot": lead.is_hot})
 
     @action(detail=True, methods=['post'], url_path='assign-field-agent')
     def assign_field_agent(self, request, pk=None):
@@ -49,6 +49,7 @@ class LeadStatusMixin:
         lead.lost_count += 1
         lead.last_interaction_at = timezone.now()
         lead.status = LeadStatus.LOST
+        lead.next_call_at = None
         lead.save()
 
         ActivityTimeline.objects.create(

@@ -64,6 +64,7 @@ export default function TelecallerDashboard() {
   const [selectedFieldAgent, setSelectedFieldAgent] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [pullingLeads, setPullingLeads] = useState(false)
+  const [confirmModal, setConfirmModal] = useState(null)
 
   // ═══ Reference Data ═══
   const [projects, setProjects] = useState([])
@@ -98,6 +99,19 @@ export default function TelecallerDashboard() {
     setPage(1)
   }, [search, statusFilter, historyFilter, historyDate, activeTab])
 
+  // Listen for real-time lead assignments
+  useEffect(() => {
+    const handleWsMessage = (e) => {
+      const payload = e.detail;
+      if (payload.type === 'lead_assigned') {
+        fetchLeads();
+        fetchTarget();
+      }
+    };
+    window.addEventListener('ws_message', handleWsMessage);
+    return () => window.removeEventListener('ws_message', handleWsMessage);
+  }, [page, pageSize, statusFilter, historyFilter, historyDate, search, activeTab, fetchTarget])
+
   useEffect(() => {
     const delay = setTimeout(fetchLeads, 500)
     return () => clearTimeout(delay)
@@ -112,6 +126,10 @@ export default function TelecallerDashboard() {
       if (activeTab === 'new') {
         // Show NEW status only
         url += '&status=NEW'
+      } else if (activeTab === 'hot') {
+        // Show High Priority
+        url += '&is_hot=true'
+        url += '&exclude_closed=true' // custom logic or just filter out WON/LOST if backend supports
       } else {
         // History tab — filter by date and status, exclude uncontacted
         if (historyFilter !== 'all') url += `&status=${historyFilter.toUpperCase()}`
@@ -205,37 +223,9 @@ export default function TelecallerDashboard() {
     } catch (err) { alert("Failed: " + err.message) }
   }
 
-  const handleLogCall = async (e) => {
-    e.preventDefault()
-
-    if (outcome !== 'LOST' && outcome !== 'INVALID_NUMBER' && outcome !== 'NOT_ANSWERED' && outcome !== 'WON' && !nextCallAt) {
-      alert("⚠️ You must schedule the next call before saving.")
-      return
-    }
-
+  const processCallLog = async (payload) => {
     setSubmitting(true)
     try {
-      const payload = {
-        outcome,
-        notes,
-        budget: budget ? parseFloat(budget) : null,
-        area: area || '',
-        interested_flat: interestedFlat || '',
-        project_id: selectedProject || null,
-        field_agent_id: selectedFieldAgent || null,
-      }
-
-      if (outcome === 'NOT_ANSWERED') {
-        payload.next_call_at = new Date(nextCallAt).toISOString()
-      } else if (outcome !== 'LOST' && outcome !== 'WON' && outcome !== 'INVALID_NUMBER') {
-        payload.next_call_at = new Date(nextCallAt).toISOString()
-      }
-
-      if (outcome === 'CALLBACK') {
-        payload.follow_up_at = new Date(nextCallAt).toISOString()
-        payload.follow_up_note = "Follow up scheduled from call logger."
-      }
-
       await fetchWithAuth(`/leads/${selectedLead.id}/log-call/`, {
         method: 'POST',
         body: JSON.stringify(payload)
@@ -247,6 +237,43 @@ export default function TelecallerDashboard() {
     } catch (err) {
       alert("Failed: " + err.message)
     } finally { setSubmitting(false) }
+  }
+
+  const handleLogCall = async (e) => {
+    e.preventDefault()
+
+    if (outcome !== 'LOST' && outcome !== 'INVALID_NUMBER' && outcome !== 'NOT_ANSWERED' && outcome !== 'WON' && !nextCallAt) {
+      alert("⚠️ You must schedule the next call before saving.")
+      return
+    }
+
+    const payload = {
+      outcome,
+      notes,
+      budget: budget ? parseFloat(budget) : null,
+      area: area || '',
+      interested_flat: interestedFlat || '',
+      project_id: selectedProject || null,
+      field_agent_id: selectedFieldAgent || null,
+    }
+
+    if (outcome === 'NOT_ANSWERED') {
+      payload.next_call_at = new Date(nextCallAt).toISOString()
+    } else if (outcome !== 'LOST' && outcome !== 'WON' && outcome !== 'INVALID_NUMBER') {
+      payload.next_call_at = new Date(nextCallAt).toISOString()
+    }
+
+    if (outcome === 'CALLBACK') {
+      payload.follow_up_at = new Date(nextCallAt).toISOString()
+      payload.follow_up_note = "Follow up scheduled from call logger."
+    }
+
+    if (outcome === 'LOST' || outcome === 'WON' || outcome === 'INVALID_NUMBER') {
+      setConfirmModal({ outcome, payload })
+      return
+    }
+
+    processCallLog(payload)
   }
 
   const getTimelineIcon = (type) => {
@@ -310,13 +337,13 @@ export default function TelecallerDashboard() {
         </div>
       </div>
 
-      {/* ═══ NEW / HISTORY TABS ═══ */}
+      {/* ═══ NEW / HOT / HISTORY TABS ═══ */}
       <div className="flex justify-between items-center mb-6">
-        <div className="flex gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar w-full">
           <button
             onClick={() => setActiveTab('new')}
             className={clsx(
-              'flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all border',
+              'flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold transition-all border shrink-0',
               activeTab === 'new'
                 ? 'bg-accent text-white border-accent shadow-lg shadow-accent/20 scale-[1.02]'
                 : 'bg-card text-txt2 border-border hover:bg-bg3'
@@ -324,9 +351,19 @@ export default function TelecallerDashboard() {
             <Sparkles size={16} /> New Leads
           </button>
           <button
+            onClick={() => setActiveTab('hot')}
+            className={clsx(
+              'flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold transition-all border shrink-0',
+              activeTab === 'hot'
+                ? 'bg-hot text-white border-hot shadow-lg shadow-hot/20 scale-[1.02]'
+                : 'bg-card text-txt2 border-border hover:bg-bg3'
+            )}>
+            <Flame size={16} /> High Priority
+          </button>
+          <button
             onClick={() => setActiveTab('history')}
             className={clsx(
-              'flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all border',
+              'flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold transition-all border shrink-0',
               activeTab === 'history'
                 ? 'bg-purple text-white border-purple shadow-lg shadow-purple/20 scale-[1.02]'
                 : 'bg-card text-txt2 border-border hover:bg-bg3'
@@ -334,8 +371,6 @@ export default function TelecallerDashboard() {
             <History size={16} /> History
           </button>
         </div>
-        
-        {/* removed pull leads */}
       </div>
 
       {/* ═══ HISTORY TAB: Date picker + status filters ═══ */}
@@ -430,6 +465,8 @@ export default function TelecallerDashboard() {
                 <tr><td colSpan={6} className="py-12 text-center text-txt3">
                   {activeTab === 'new'
                     ? "🎉 All leads have been contacted! Check History for past activity."
+                    : activeTab === 'hot' 
+                    ? "No high priority leads available right now."
                     : "No leads found for the selected date/filter."}
                 </td></tr>
               ) : leads.map(lead => (
@@ -801,6 +838,42 @@ export default function TelecallerDashboard() {
                   )}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ CONFIRMATION MODAL ═══ */}
+      {confirmModal && (
+        <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-card w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-border animate-in zoom-in-95">
+            <div className="flex flex-col items-center text-center">
+              <div className={clsx(
+                "w-16 h-16 rounded-full flex items-center justify-center mb-4",
+                confirmModal.outcome === 'WON' ? 'bg-[#10B981]/10 text-[#10B981]' : 'bg-danger/10 text-danger'
+              )}>
+                {confirmModal.outcome === 'WON' ? <Trophy size={32} /> : confirmModal.outcome === 'INVALID_NUMBER' ? <PhoneOff size={32} /> : <X size={32} />}
+              </div>
+              <h3 className="text-xl font-bold text-txt mb-2">Are you sure?</h3>
+              <p className="text-sm text-txt2 mb-6">
+                You are about to mark this lead as <strong>{confirmModal.outcome}</strong>. This action is terminal and will clear any future reminders.
+              </p>
+              <div className="flex gap-3 w-full">
+                <button onClick={() => setConfirmModal(null)} className="flex-1 py-3 bg-bg3 text-txt rounded-xl font-bold hover:bg-bg2 transition-colors">
+                  Cancel
+                </button>
+                <button 
+                  onClick={() => {
+                    processCallLog(confirmModal.payload)
+                    setConfirmModal(null)
+                  }} 
+                  className={clsx(
+                    "flex-1 py-3 text-white rounded-xl font-bold transition-colors shadow-lg",
+                    confirmModal.outcome === 'WON' ? 'bg-[#10B981] hover:bg-[#059669] shadow-[#10B981]/20' : 'bg-danger hover:bg-danger/90 shadow-danger/20'
+                  )}>
+                  Confirm
+                </button>
+              </div>
             </div>
           </div>
         </div>

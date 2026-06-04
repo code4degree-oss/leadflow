@@ -2,6 +2,7 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
+import datetime
 from apps.api.mixins import TenantQuerySetMixin
 from apps.api.permissions import IsTelecallerOrHigher
 from apps.accounts.models import RoleChoices
@@ -29,7 +30,7 @@ class FollowUpReminderViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
     def upcoming(self, request):
         qs = self.get_queryset().filter(
             is_completed=False,
-            scheduled_at__gte=timezone.now()
+            scheduled_at__gte=timezone.now() - datetime.timedelta(minutes=10)
         ).order_by('scheduled_at')[:20]
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)

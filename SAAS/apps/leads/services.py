@@ -23,6 +23,9 @@ class LeadDistributionService:
             lead.assigned_to = user
             lead.save(update_fields=['assigned_to', 'updated_at'])
             
+            from apps.leads.tasks import send_ws_event_task
+            send_ws_event_task.delay(str(user.id), "lead_assigned", {"message": "A new lead has been manually assigned to you."})
+            
             # Log action
             from apps.audits.services import AuditService
             AuditService.record_action(
@@ -71,6 +74,11 @@ class LeadDistributionService:
         if leads_to_update:
             Lead.objects.bulk_update(leads_to_update, ['assigned_to', 'updated_at'], batch_size=1000)
             
+            from apps.leads.tasks import send_ws_event_task
+            affected_agents = set(l.assigned_to.id for l in leads_to_update if l.assigned_to)
+            for agent_id in affected_agents:
+                send_ws_event_task.delay(str(agent_id), "lead_assigned", {"message": "New leads have been assigned to you."})
+            
         return assigned_count
 
     @staticmethod
@@ -113,6 +121,11 @@ class LeadDistributionService:
 
         if leads_to_update:
             Lead.objects.bulk_update(leads_to_update, ['assigned_to', 'updated_at'], batch_size=1000)
+
+            from apps.leads.tasks import send_ws_event_task
+            affected_agents = set(l.assigned_to.id for l in leads_to_update if l.assigned_to)
+            for agent_id in affected_agents:
+                send_ws_event_task.delay(str(agent_id), "lead_assigned", {"message": "New leads have been assigned to you."})
 
         return assigned_count
 

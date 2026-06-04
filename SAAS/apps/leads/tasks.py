@@ -73,7 +73,7 @@ def check_lead_aging():
                 created_at__gte=now - timedelta(hours=24)
             ).values_list('lead_id', flat=True)
             
-            stale_leads = stale_leads.exclude(id__in=recently_flagged_ids)
+            stale_leads = stale_leads.exclude(id__in=recently_flagged_ids)[:500]
             
             for lead in stale_leads:
                 hours_idle = int((now - lead.updated_at).total_seconds() / 3600)
@@ -162,6 +162,9 @@ def reminder_engine():
                         lead=lead,
                     )
                     total_triggered += 1
+                    
+                    reminder.is_completed = True
+                    reminder.save(update_fields=['is_completed'])
         
         # Also check next_call_at on leads directly
         due_calls = Lead.objects.filter(
@@ -210,13 +213,14 @@ def reassign_stale_leads():
     clients = ClientAccount.objects.filter(is_active=True)
     total_reassigned = 0
     
+    from django.db.models import Q
     for client in clients:
         admins = list(User.objects.filter(client=client, role=RoleChoices.CLIENT_ADMIN, is_active=True))
         
         stale_leads = Lead.objects.filter(
+            Q(last_interaction_at__lt=threshold) | Q(last_interaction_at__isnull=True, created_at__lt=threshold),
             client=client,
             assigned_to__isnull=False,
-            last_interaction_at__lt=threshold,
             status__in=[LeadStatus.NEW, LeadStatus.CALLED, LeadStatus.INTERESTED]
         ).select_related('assigned_to')
         
@@ -258,26 +262,63 @@ def reassign_stale_leads():
 @shared_task(name="apps.leads.tasks.send_push_notification_task")
 def send_push_notification_task(notif_id):
     """
-    Asynchronously sends a push notification to avoid blocking DB transactions.
+    Asynchronously sends a push notification and WebSocket event to avoid blocking DB transactions.
     """
     from apps.leads.models import Notification
     from apps.core.firebase import send_push_notification
+    from channels.layers import get_channel_layer
+    from asgiref.sync import async_to_sync
     try:
         instance = Notification.objects.get(id=notif_id)
         data = {
             'notif_id': str(instance.id),
             'notif_type': instance.notif_type,
+            'title': instance.title,
+            'message': instance.message,
+            'created_at': instance.created_at.isoformat(),
         }
         if instance.lead_id:
             data['lead_id'] = str(instance.lead_id)
             
+        # 1. Send WebSocket Event
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"user_{instance.user_id}",
+            {
+                "type": "send_notification",
+                "message": data
+            }
+        )
+            
+        # 2. Send Firebase Push
         send_push_notification(
             user=instance.user,
             title=instance.title,
             body=instance.message,
-            data=data
+            data={'notif_id': str(instance.id), 'notif_type': instance.notif_type}
         )
     except Notification.DoesNotExist:
         pass
     except Exception as e:
         logger.error(f"Failed to send push notification {notif_id}: {e}")
+
+@shared_task(name="apps.leads.tasks.send_ws_event_task")
+def send_ws_event_task(user_id, event_type, data):
+    from channels.layers import get_channel_layer
+    from asgiref.sync import async_to_sync
+    channel_layer = get_channel_layer()
+    
+    # We must format it correctly based on the consumer's expected event methods.
+    # Since our consumer has 'lead_assigned', we can use that type directly.
+    event = {
+        "type": event_type,
+    }
+    if event_type == 'lead_assigned':
+        event['lead'] = data
+    else:
+        event['message'] = data
+
+    async_to_sync(channel_layer.group_send)(
+        f"user_{user_id}",
+        event
+    )
