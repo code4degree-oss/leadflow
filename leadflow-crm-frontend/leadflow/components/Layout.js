@@ -68,12 +68,26 @@ const navConfig = {
       { icon: CheckCircle2,    label: 'Completed Visits',  href: '/fieldagent/completed' },
       { icon: Phone,           label: 'My Leads',          href: '/fieldagent/leads' },
     ]
+  },
+  manager: {
+    label: 'Manager',
+    color: '#F43F5E',
+    items: [
+      { icon: LayoutDashboard, label: 'My Dashboard',     href: '/telecaller' },
+      { icon: Phone,           label: 'My Leads',         href: '/telecaller/leads' },
+      { icon: Flame,           label: 'Hot Leads',        href: '/telecaller/hot' },
+      { icon: Calendar,        label: 'Reminders',        href: '/telecaller/reminders' },
+      { icon: Briefcase,       label: 'Projects',         href: '/telecaller/projects' },
+      { icon: BarChart2,       label: 'My Performance',   href: '/telecaller/performance' },
+      { icon: Users,           label: 'Team Performance', href: '/admin/performance' },
+    ]
   }
 }
 
 export default function Layout({ children, role = 'admin', pageTitle = '', actions }) {
   const router = useRouter()
-  const config = navConfig[role]
+  const [actualRole, setActualRole] = useState(role)
+  const config = navConfig[actualRole] || navConfig[role] || navConfig['admin']
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [isInactive, setIsInactive] = useState(false)
@@ -132,6 +146,13 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
       setTimeout(() => setupNotifications(), 1500);
     }
 
+    const storedRole = localStorage.getItem('user_role')
+    if (storedRole === 'MANAGER') setActualRole('manager')
+    else if (storedRole === 'CLIENT_ADMIN') setActualRole('admin')
+    else if (storedRole === 'SUPER_ADMIN') setActualRole('superadmin')
+    else if (storedRole === 'TELECALLER') setActualRole('telecaller')
+    else if (storedRole === 'FIELD_AGENT') setActualRole('fieldagent')
+
   }, [role])
 
   const handleLogout = () => {
@@ -148,6 +169,7 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
   const roleColors = {
     superadmin: 'bg-purple/10 text-purple border-purple/20',
     admin: 'bg-accent/10 text-accent border-accent/20',
+    manager: 'bg-[#F43F5E]/10 text-[#F43F5E] border-[#F43F5E]/20',
     telecaller: 'bg-accent2/10 text-accent2 border-accent2/20',
     fieldagent: 'bg-amber/10 text-amber border-amber/20',
   }
@@ -200,7 +222,7 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
             <div className="font-display font-extrabold text-xl text-txt tracking-tight">
               DY Lead<span className="text-accent">Flow</span>
             </div>
-            <div className={clsx('badge mt-2 border text-xs', roleColors[role])}>
+            <div className={clsx('badge mt-2 border text-xs', roleColors[actualRole] || roleColors[role] || roleColors.admin)}>
               {config.label}
             </div>
           </div>
@@ -252,7 +274,7 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
         </div>
 
         {/* Quick Add Button (Admin/Manager only) */}
-        {(role === 'admin' || role === 'manager' || role === 'superadmin') && (
+        {(actualRole === 'admin' || actualRole === 'manager' || actualRole === 'superadmin') && (
           <button 
             onClick={() => setAddLeadOpen(true)}
             className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-accent text-white text-xs font-bold rounded-lg shadow-sm hover:shadow-md hover:bg-accent/90 transition-all mr-2"
@@ -260,7 +282,7 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
             <span className="text-lg leading-none mt-[-2px]">+</span> Quick Add
           </button>
         )}
-        {(role === 'admin' || role === 'manager' || role === 'superadmin') && (
+        {(actualRole === 'admin' || actualRole === 'manager' || actualRole === 'superadmin') && (
           <button 
             onClick={() => setAddLeadOpen(true)}
             className="md:hidden flex items-center justify-center w-8 h-8 bg-accent text-white rounded-lg shadow-sm hover:shadow-md hover:bg-accent/90 transition-all mr-2"
@@ -269,7 +291,7 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
           </button>
         )}
 
-        <NotificationDropdown role={role} />
+        <NotificationDropdown role={actualRole} />
 
         {/* Mobile Profile Toggle */}
         <div className="relative md:hidden ml-1">

@@ -156,7 +156,7 @@ export default function LoginPage() {
       const roleMap = {
         'SUPER_ADMIN': '/superadmin',
         'CLIENT_ADMIN': '/admin',
-        'MANAGER': '/admin',
+        'MANAGER': '/telecaller',
         'TELECALLER': '/telecaller',
         'FIELD_AGENT': '/fieldagent'
       }
