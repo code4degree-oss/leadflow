@@ -18,6 +18,7 @@ export async function fetchWithAuth(url, options = {}) {
   const response = await fetch(`${API_BASE}${url}`, {
     ...options,
     headers,
+    cache: 'no-store', // Bypass any cached 301 redirects
   })
 
   // Handle unauthorized/expired token
