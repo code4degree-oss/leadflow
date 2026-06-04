@@ -263,3 +263,107 @@ class BroadcastNotificationView(APIView):
         })
 
 
+
+class SecurityDashboardView(APIView):
+    """
+    Super Admin endpoint for the Security & Compliance dashboard.
+    Returns real-time security metrics from LoginHistory and AuditLog.
+    
+    GET /api/v1/superadmin/clients/security-dashboard/
+    """
+    permission_classes = [IsSuperAdmin]
+
+    def get(self, request):
+        from django.utils import timezone
+        from datetime import timedelta
+        from apps.audits.models import LoginHistory
+        from apps.accounts.models import User, LoginAttempt
+
+        now = timezone.now()
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        last_7_days = now - timedelta(days=7)
+        last_24h = now - timedelta(hours=24)
+
+        # Suspicious login count (last 7 days)
+        suspicious_logins = LoginHistory.objects.filter(
+            is_suspicious=True,
+            created_at__gte=last_7_days
+        ).count()
+
+        # Failed login attempts (last 24 hours)
+        failed_attempts = LoginAttempt.objects.filter(
+            success=False,
+            attempted_at__gte=last_24h
+        ).count()
+
+        # Active sessions today (unique users who logged in today)
+        active_sessions = LoginHistory.objects.filter(
+            created_at__gte=today_start
+        ).values('user').distinct().count()
+
+        # Total active users in platform
+        total_active_users = User.objects.filter(is_active=True).count()
+
+        # Recent suspicious logins (last 7 days, max 20)
+        recent_suspicious = LoginHistory.objects.filter(
+            is_suspicious=True,
+            created_at__gte=last_7_days
+        ).select_related('user', 'client').order_by('-created_at')[:20]
+
+        suspicious_entries = []
+        for log in recent_suspicious:
+            suspicious_entries.append({
+                'id': str(log.id),
+                'user_email': log.user.email if log.user else 'Unknown',
+                'client_name': log.client.name if log.client else 'N/A',
+                'ip_address': log.ip_address,
+                'city': log.city,
+                'country': log.country,
+                'latitude': str(log.latitude) if log.latitude else None,
+                'longitude': str(log.longitude) if log.longitude else None,
+                'reason': log.suspicious_reason,
+                'created_at': log.created_at.isoformat(),
+            })
+
+        # Recent login events (last 24h, max 50)
+        recent_logins = LoginHistory.objects.filter(
+            created_at__gte=last_24h
+        ).select_related('user', 'client').order_by('-created_at')[:50]
+
+        login_entries = []
+        for log in recent_logins:
+            login_entries.append({
+                'id': str(log.id),
+                'user_email': log.user.email if log.user else 'Unknown',
+                'client_name': log.client.name if log.client else 'N/A',
+                'ip_address': log.ip_address,
+                'city': log.city,
+                'country': log.country,
+                'is_suspicious': log.is_suspicious,
+                'created_at': log.created_at.isoformat(),
+            })
+
+        # Failed login details (last 24h, max 20)
+        recent_failures = LoginAttempt.objects.filter(
+            success=False,
+            attempted_at__gte=last_24h
+        ).order_by('-attempted_at')[:20]
+
+        failure_entries = []
+        for attempt in recent_failures:
+            failure_entries.append({
+                'email': attempt.email,
+                'ip_address': attempt.ip_address,
+                'attempted_at': attempt.attempted_at.isoformat(),
+            })
+
+        return Response({
+            'threats': suspicious_logins + failed_attempts,
+            'suspicious_logins_7d': suspicious_logins,
+            'failed_attempts_24h': failed_attempts,
+            'active_sessions_today': active_sessions,
+            'total_active_users': total_active_users,
+            'recent_suspicious': suspicious_entries,
+            'recent_logins': login_entries,
+            'recent_failures': failure_entries,
+        })

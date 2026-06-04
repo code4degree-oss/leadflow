@@ -12,7 +12,7 @@ export default function FeatureFlags() {
 
   const fetchClients = async () => {
     try {
-      const data = await fetchWithAuth('/superadmin/clients/')
+      const data = await fetchWithAuth('/superadmin/clients/clients/')
       setClients(Array.isArray(data) ? data : (data?.results || []))
     } catch (err) {
       console.error(err)
@@ -28,7 +28,7 @@ export default function FeatureFlags() {
   const handleToggleGeofencing = async (client) => {
     setToggling(client.id)
     try {
-      const updated = await fetchWithAuth(`/superadmin/clients/${client.id}/`, {
+      const updated = await fetchWithAuth(`/superadmin/clients/clients/${client.id}/`, {
         method: 'PATCH',
         // Toggle the current state
         body: JSON.stringify({ geofencing_enabled: !client.geofencing_enabled }),

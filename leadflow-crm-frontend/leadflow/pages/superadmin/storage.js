@@ -38,6 +38,8 @@ export default function StorageQuotas() {
 
   const total_used  = clients.reduce((s,c)=>s+c.used,0)
   const total_limit = clients.reduce((s,c)=>s+c.limit,0) || 1
+  const nearQuotaClients = clients.filter(c => (c.used / c.limit) >= 0.85)
+  const avgUsagePct = clients.length > 0 ? Math.round((total_used / total_limit) * 100) : 0
 
   return (
     <Layout role="superadmin" pageTitle="Storage & Quotas">
@@ -57,17 +59,19 @@ export default function StorageQuotas() {
             <AlertTriangle size={15} className="text-amber" />
             <span className="text-xs text-amber font-medium uppercase tracking-wider">Near Quota</span>
           </div>
-          <div className="font-display font-bold text-2xl text-amber">2</div>
+          <div className="font-display font-bold text-2xl text-amber">{nearQuotaClients.length}</div>
           <div className="text-xs text-txt2 mt-1">clients above 85% usage</div>
-          <div className="text-xs text-txt3 mt-1">Metro Properties · Prestige Infra</div>
+          {nearQuotaClients.length > 0 && (
+            <div className="text-xs text-txt3 mt-1">{nearQuotaClients.map(c => c.name).join(' · ')}</div>
+          )}
         </div>
         <div className="card p-5">
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp size={15} className="text-accent2" />
-            <span className="text-xs text-txt2 font-medium uppercase tracking-wider">Growth Rate</span>
+            <span className="text-xs text-txt2 font-medium uppercase tracking-wider">Avg Usage</span>
           </div>
-          <div className="font-display font-bold text-2xl text-accent2">+8%</div>
-          <div className="text-xs text-txt2 mt-1">storage growth this month</div>
+          <div className="font-display font-bold text-2xl text-accent2">{avgUsagePct}%</div>
+          <div className="text-xs text-txt2 mt-1">average storage utilization</div>
         </div>
       </div>
 

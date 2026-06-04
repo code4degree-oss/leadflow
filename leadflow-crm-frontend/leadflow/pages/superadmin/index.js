@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 import Layout from '../../components/Layout'
-import { StatCard, MiniAreaChart, MiniBarChart, DonutChart, SectionHeader, StatusBadge, ProgressBar } from '../../components/UI'
-import { Building2, Database, CreditCard, Users, TrendingUp, AlertTriangle, Download, ShieldCheck, Plus, MoreHorizontal, Eye, Ban, Trash2, RefreshCw, Bell } from 'lucide-react'
-import { fetchWithAuth } from '../../utils/api'
+import { StatCard, MiniBarChart, DonutChart, SectionHeader, StatusBadge, ProgressBar } from '../../components/UI'
+import { Building2, Database, CreditCard, Users, TrendingUp, AlertTriangle, Download, ShieldCheck, Plus, Eye, Ban, RefreshCw, Bell, CheckCircle2, XCircle } from 'lucide-react'
+import { fetchWithAuth, API_BASE } from '../../utils/api'
 import clsx from 'clsx'
+import toast from 'react-hot-toast'
 
 export default function SuperAdminDashboard() {
+  const router = useRouter()
   const [clients, setClients] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -27,11 +30,65 @@ export default function SuperAdminDashboard() {
     }
   }
 
-  const fetchDashboard = () => {
-    fetchClients();
+  // Compute real adoption chart data from client created_at dates
+  const getAdoptionData = () => {
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+    const counts = {}
+    monthNames.forEach(m => counts[m] = 0)
+    
+    clients.forEach(c => {
+      if (c.created_at) {
+        const d = new Date(c.created_at)
+        const monthIdx = d.getMonth()
+        counts[monthNames[monthIdx]] = (counts[monthNames[monthIdx]] || 0) + 1
+      }
+    })
+    
+    return monthNames.map(m => ({ name: m, v: counts[m] }))
   }
+
+  const handleToggleActive = async (client) => {
+    const action = client.is_active ? 'suspend' : 'reactivate'
+    if (!confirm(`Are you sure you want to ${action} "${client.name}"?`)) return
+    try {
+      await fetchWithAuth(`/superadmin/clients/clients/${client.id}/`, {
+        method: 'PATCH',
+        body: JSON.stringify({ is_active: !client.is_active })
+      })
+      toast.success(`${client.name} has been ${client.is_active ? 'suspended' : 'reactivated'}.`)
+      fetchClients()
+    } catch (err) {
+      toast.error('Failed: ' + err.message)
+    }
+  }
+
+  const handleExport = async (client) => {
+    try {
+      const url = `${API_BASE}/superadmin/clients/clients/${client.id}/export-data/?type=full`
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+      })
+      if (!response.ok) throw new Error('Export failed')
+      const blob = await response.blob()
+      const downloadUrl = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = downloadUrl
+      const safeName = client.name.replace(/[^a-zA-Z0-9 _-]/g, '').replace(/ /g, '_').toLowerCase()
+      a.download = `${safeName}_full_export.csv`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(downloadUrl)
+      toast.success(`Exported data for ${client.name}`)
+    } catch (err) {
+      toast.error('Export failed: ' + err.message)
+    }
+  }
+
   const totalStorage = clients.reduce((acc, c) => acc + (c.storage_quota_mb || 0), 0)
   const totalEmployees = clients.reduce((acc, c) => acc + (c.user_count || 0), 0)
+  const activeClients = clients.filter(c => c.is_active)
+  const expiringSoon = clients.filter(c => c.subscription_status === 'expiring_soon')
+  const expired = clients.filter(c => c.subscription_status === 'expired')
 
   return (
     <Layout role="superadmin" pageTitle="Platform Overview"
@@ -43,41 +100,52 @@ export default function SuperAdminDashboard() {
       }>
 
       {/* Stats row */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-        <StatCard label="Total Clients" value={clients.length} sub={`${clients.filter(c => c.is_active).length} active`} color="accent" icon={Building2} />
-        <StatCard label="Allocated Storage" value={`${(totalStorage / 1024).toFixed(1)} GB`} sub="platform quota" color="purple" icon={Database} />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <StatCard label="Total Clients" value={clients.length} sub={`${activeClients.length} active`} color="accent" icon={Building2} />
         <StatCard label="Total Users" value={totalEmployees} sub="across all tenants" color="amber" icon={Users} />
+        <StatCard label="Allocated Storage" value={`${(totalStorage / 1024).toFixed(1)} GB`} sub="platform quota" color="purple" icon={Database} />
+        {expiringSoon.length > 0 || expired.length > 0 ? (
+          <StatCard label="Attention Needed" value={expiringSoon.length + expired.length} sub={`${expiringSoon.length} expiring · ${expired.length} expired`} color="danger" icon={AlertTriangle} />
+        ) : (
+          <StatCard label="Subscription Health" value="All Good" sub="no expirations pending" color="accent2" icon={CheckCircle2} />
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        {/* Growth chart (Placeholder for now) */}
+        {/* Adoption chart — real data from client created_at */}
         <div className="card p-5 lg:col-span-2 shadow-xl border-border/40">
-          <SectionHeader title="Platform Adoption" sub="New client onboarding trend" />
+          <SectionHeader title="Client Onboarding" sub="New organizations registered by month" />
           <div className="py-2">
             <MiniBarChart
-              data={['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map((m,i) => ({ name: m, v: 5 + Math.floor(Math.sin(i)*3 + i*0.8) }))}
+              data={getAdoptionData()}
               color="#4F8EF7" height={120}
             />
           </div>
         </div>
-        {/* Plan distribution */}
+        {/* Tenant distribution — real data */}
         <div className="card p-5 shadow-xl border-border/40">
           <SectionHeader title="Tenant Distribution" />
           <div className="flex justify-center py-2">
              <DonutChart data={[
-               { name: 'Active', value: clients.filter(c => c.is_active).length },
+               { name: 'Active', value: activeClients.length },
                { name: 'Suspended', value: clients.filter(c => !c.is_active).length },
              ]} height={120} />
           </div>
           <div className="space-y-2 mt-4 font-bold uppercase tracking-widest text-[9px] text-txt3">
              <div className="flex justify-between items-center bg-bg2/50 p-2 rounded-lg">
                 <span>Active tenants</span>
-                <span className="text-success">{clients.filter(c => c.is_active).length}</span>
+                <span className="text-success">{activeClients.length}</span>
              </div>
              <div className="flex justify-between items-center bg-bg2/50 p-2 rounded-lg text-danger">
                 <span>Suspended</span>
                 <span>{clients.filter(c => !c.is_active).length}</span>
              </div>
+             {expiringSoon.length > 0 && (
+               <div className="flex justify-between items-center bg-amber-500/10 p-2 rounded-lg text-amber-500">
+                  <span>Expiring Soon</span>
+                  <span>{expiringSoon.length}</span>
+               </div>
+             )}
           </div>
         </div>
       </div>
@@ -89,7 +157,7 @@ export default function SuperAdminDashboard() {
             <h2 className="text-sm font-bold text-txt">Infrastructure Management</h2>
             <p className="text-[10px] text-txt3 font-bold uppercase tracking-widest mt-0.5">Global Client Instances</p>
           </div>
-          <button className="btn-ghost text-xs"><Download size={13}/>Platform Census</button>
+          <button onClick={() => router.push('/superadmin/clients/new')} className="btn-primary text-xs"><Plus size={13}/>Add Organization</button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
@@ -106,7 +174,7 @@ export default function SuperAdminDashboard() {
               ) : clients.length === 0 ? (
                  <tr><td colSpan="7" className="py-20 text-center text-txt3 uppercase tracking-tighter text-xs">No client accounts found</td></tr>
               ) : clients.map((c) => (
-                <tr key={c.id} className="table-row group">
+                <tr key={c.id} className="table-row group hover:bg-bg2/40 transition-colors">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
                        <div className="w-9 h-9 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold shadow-inner border border-primary/20 group-hover:bg-primary group-hover:text-white transition-all">
@@ -126,16 +194,15 @@ export default function SuperAdminDashboard() {
                   <td className="px-5 py-4">
                     <div className="flex flex-col justify-center gap-1.5">
                       <span className="text-[10px] font-mono text-txt3 font-bold">{c.storage_quota_mb} MB</span>
-                      <ProgressBar value={1} max={1} color="#4F8EF7" height={4} />
+                      <ProgressBar value={c.storage_used_mb || 0} max={c.storage_quota_mb || 1} color="#4F8EF7" height={4} />
                     </div>
                   </td>
                   <td className="px-5 py-4 text-[10px] font-mono text-txt3">{new Date(c.created_at).toLocaleDateString()}</td>
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                      <button className="p-2 hover:bg-bg3 rounded-xl text-txt3 hover:text-primary transition-all"><Eye size={14}/></button>
-                      <button className="p-2 hover:bg-bg3 rounded-xl text-txt3 hover:text-amber transition-all"><ShieldCheck size={14}/></button>
-                      <button className="p-2 hover:bg-danger/5 rounded-xl text-txt3 hover:text-danger transition-all"><Ban size={14}/></button>
-                      <button className="p-2 hover:bg-bg3 rounded-xl text-txt3 hover:text-primary transition-all"><Download size={14}/></button>
+                      <button onClick={() => router.push(`/superadmin/clients/view/${c.id}`)} className="p-2 hover:bg-bg3 rounded-xl text-txt3 hover:text-primary transition-all" title="View Details"><Eye size={14}/></button>
+                      <button onClick={() => handleToggleActive(c)} className={clsx("p-2 rounded-xl transition-all", c.is_active ? "hover:bg-danger/5 text-txt3 hover:text-danger" : "hover:bg-success/5 text-txt3 hover:text-success")} title={c.is_active ? 'Suspend' : 'Reactivate'}>{c.is_active ? <Ban size={14}/> : <CheckCircle2 size={14}/>}</button>
+                      <button onClick={() => handleExport(c)} className="p-2 hover:bg-bg3 rounded-xl text-txt3 hover:text-primary transition-all" title="Export Data"><Download size={14}/></button>
                     </div>
                   </td>
                 </tr>

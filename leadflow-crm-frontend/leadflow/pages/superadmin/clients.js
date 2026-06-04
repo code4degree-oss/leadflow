@@ -5,6 +5,7 @@ import { StatusBadge, ProgressBar, Modal } from '../../components/UI'
 import { Plus, Trash2, Download, KeyRound, Edit, Search, RefreshCw, AlertCircle, ToggleLeft, ToggleRight, CheckCircle2, Copy, CalendarCheck } from 'lucide-react'
 import clsx from 'clsx'
 import { fetchWithAuth } from '../../utils/api'
+import toast from 'react-hot-toast'
 
 export default function SuperAdminClients() {
   const router = useRouter()
@@ -38,8 +39,10 @@ export default function SuperAdminClients() {
     if (!confirm('Are you sure you want to delete this tenant? This is destructive!')) return
     try {
       await fetchWithAuth(`/superadmin/clients/clients/${id}/`, { method: 'DELETE' })
+      toast.success('Organization deleted successfully.')
       fetchClients()
     } catch (err) {
+      toast.error(err.message)
       setErrorModal({ isOpen: true, message: err.message })
     }
   }
@@ -48,8 +51,10 @@ export default function SuperAdminClients() {
     if (!confirm('Reset admin password? The admin will need to change it on next login.')) return
     try {
       const resp = await fetchWithAuth(`/superadmin/clients/clients/${id}/reset-password/`, { method: 'POST' })
+      toast.success('Password reset successful!')
       setResetModal({ isOpen: true, email: resp.email, password: resp.new_password })
     } catch (err) {
+      toast.error(err.message)
       setErrorModal({ isOpen: true, message: err.message })
     }
   }
@@ -68,8 +73,10 @@ export default function SuperAdminClients() {
         method: 'PATCH',
         body: JSON.stringify({ is_active: !client.is_active })
       })
+      toast.success(`${client.name} has been ${client.is_active ? 'suspended' : 'reactivated'}.`)
       fetchClients()
     } catch (err) {
+      toast.error(err.message)
       setErrorModal({ isOpen: true, message: err.message })
     }
   }
@@ -81,9 +88,11 @@ export default function SuperAdminClients() {
         method: 'POST',
         body: JSON.stringify({ valid_until: renewModal.newDate })
       })
+      toast.success(`Subscription renewed until ${renewModal.newDate}!`)
       setRenewModal({ isOpen: false, clientId: null, clientName: '', newDate: '' })
       fetchClients()
     } catch (err) {
+      toast.error(err.message)
       setErrorModal({ isOpen: true, message: err.message })
     }
   }
