@@ -20,8 +20,6 @@ export default function AddLeadModal({ isOpen, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  if (!isOpen) return null
-
   useEffect(() => {
     if (isOpen) {
       fetchWithAuth('/accounts/employees/')
@@ -32,6 +30,8 @@ export default function AddLeadModal({ isOpen, onClose, onSuccess }) {
         .catch(err => console.error('Failed to load employees:', err))
     }
   }, [isOpen])
+
+  if (!isOpen) return null
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
