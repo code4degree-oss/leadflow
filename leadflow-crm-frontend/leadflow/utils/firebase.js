@@ -43,7 +43,11 @@ export const requestForToken = async () => {
       return null;
     }
   } catch (err) {
-    console.log('An error occurred while retrieving token. ', err);
+    if (err.message && err.message.includes('permission-blocked')) {
+      console.log('Push notifications are blocked by the browser. Ignoring.');
+    } else {
+      console.warn('Could not retrieve push token:', err.message);
+    }
     return null;
   }
 };
