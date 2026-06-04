@@ -18,7 +18,7 @@ class UserViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
     """
     serializer_class = UserSerializer
     permission_classes = [IsClientAdmin]
-    queryset = User.objects.all()
+    queryset = User.objects.filter(is_deleted=False)
 
     def create(self, request, *args, **kwargs):
         client = request.user.client
