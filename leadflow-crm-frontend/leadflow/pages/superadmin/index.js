@@ -100,9 +100,9 @@ export default function SuperAdminDashboard() {
       }>
 
       {/* Stats row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
         <StatCard label="Total Clients" value={clients.length} sub={`${activeClients.length} active`} color="accent" icon={Building2} />
-        <StatCard label="Total Users" value={totalEmployees} sub="across all tenants" color="amber" icon={Users} />
+        <StatCard label="Total Users" value={totalEmployees} sub="Platform-wide" color="amber" icon={Users} />
         <StatCard label="Allocated Storage" value={`${(totalStorage / 1024).toFixed(1)} GB`} sub="platform quota" color="purple" icon={Database} />
         {expiringSoon.length > 0 || expired.length > 0 ? (
           <StatCard label="Attention Needed" value={expiringSoon.length + expired.length} sub={`${expiringSoon.length} expiring · ${expired.length} expired`} color="danger" icon={AlertTriangle} />
@@ -111,7 +111,7 @@ export default function SuperAdminDashboard() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         {/* Adoption chart — real data from client created_at */}
         <div className="card p-5 lg:col-span-2 shadow-xl border-border/40">
           <SectionHeader title="Client Onboarding" sub="New organizations registered by month" />
@@ -151,8 +151,8 @@ export default function SuperAdminDashboard() {
       </div>
 
       {/* Client List */}
-      <div className="card overflow-hidden shadow-2xl border-primary/5">
-        <div className="p-5 border-b border-border bg-bg2/30 flex items-center justify-between">
+      <div className="card overflow-hidden shadow-lg border border-border/60">
+        <div className="p-6 border-b border-border bg-bg2/20 flex items-center justify-between">
           <div>
             <h2 className="text-sm font-bold text-txt">Infrastructure Management</h2>
             <p className="text-[10px] text-txt3 font-bold uppercase tracking-widest mt-0.5">Global Client Instances</p>
@@ -176,8 +176,8 @@ export default function SuperAdminDashboard() {
               ) : clients.map((c) => (
                 <tr key={c.id} className="table-row group hover:bg-bg2/40 transition-colors">
                   <td className="px-5 py-4">
-                    <div className="flex items-center gap-3">
-                       <div className="w-9 h-9 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold shadow-inner border border-primary/20 group-hover:bg-primary group-hover:text-white transition-all">
+                    <div className="flex items-center gap-4">
+                       <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold shadow-sm border border-primary/20 group-hover:bg-primary group-hover:text-white transition-all">
                          {c.name[0]}
                        </div>
                        <span className="font-bold text-sm text-txt group-hover:text-primary transition-colors">{c.name}</span>
@@ -199,7 +199,7 @@ export default function SuperAdminDashboard() {
                   </td>
                   <td className="px-5 py-4 text-[10px] font-mono text-txt3">{new Date(c.created_at).toLocaleDateString()}</td>
                   <td className="px-5 py-4">
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                    <div className="flex items-center gap-1 opacity-40 group-hover:opacity-100 transition-all">
                       <button onClick={() => router.push(`/superadmin/clients/view/${c.id}`)} className="p-2 hover:bg-bg3 rounded-xl text-txt3 hover:text-primary transition-all" title="View Details"><Eye size={14}/></button>
                       <button onClick={() => handleToggleActive(c)} className={clsx("p-2 rounded-xl transition-all", c.is_active ? "hover:bg-danger/5 text-txt3 hover:text-danger" : "hover:bg-success/5 text-txt3 hover:text-success")} title={c.is_active ? 'Suspend' : 'Reactivate'}>{c.is_active ? <Ban size={14}/> : <CheckCircle2 size={14}/>}</button>
                       <button onClick={() => handleExport(c)} className="p-2 hover:bg-bg3 rounded-xl text-txt3 hover:text-primary transition-all" title="Export Data"><Download size={14}/></button>
