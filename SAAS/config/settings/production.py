@@ -13,6 +13,10 @@ CORS_ALLOW_CREDENTIALS = True
 # Security Settings (Configurable via ENV, defaults to True for production)
 USE_SSL = env.bool('USE_SSL', default=True)
 
+# Tell Django to trust the X-Forwarded-Proto header from Nginx
+# This prevents infinite redirect loops when using Uvicorn behind a proxy
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 SECURE_SSL_REDIRECT = USE_SSL
 SESSION_COOKIE_SECURE = USE_SSL
 CSRF_COOKIE_SECURE = USE_SSL
