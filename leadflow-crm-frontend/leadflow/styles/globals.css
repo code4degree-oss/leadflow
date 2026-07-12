@@ -97,3 +97,48 @@ body {
 /* progress bar */
 .progress-track { @apply bg-border2 rounded-full overflow-hidden; }
 .progress-fill { @apply h-full rounded-full transition-all duration-500 bg-gradient-to-r from-accent to-accent2; }
+
+/* ═══ Professional UI Utilities ═══ */
+
+/* Staggered fade-in for grid children */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.stagger-grid > * {
+  animation: fadeInUp 0.4s ease forwards;
+  opacity: 0;
+}
+.stagger-grid > *:nth-child(1) { animation-delay: 0s; }
+.stagger-grid > *:nth-child(2) { animation-delay: 0.06s; }
+.stagger-grid > *:nth-child(3) { animation-delay: 0.12s; }
+.stagger-grid > *:nth-child(4) { animation-delay: 0.18s; }
+
+/* Status dot indicator */
+.status-dot {
+  @apply w-2 h-2 rounded-full shrink-0;
+}
+.status-dot.active { @apply bg-[#10B981]; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15); }
+.status-dot.inactive { @apply bg-danger; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15); }
+.status-dot.warning { @apply bg-amber; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15); }
+
+/* Premium table row */
+.premium-row {
+  @apply border-b border-border/60 transition-all duration-200;
+}
+.premium-row:hover {
+  @apply bg-accent/[0.02];
+  box-shadow: inset 3px 0 0 0 var(--accent);
+}
+
+/* Accent-bordered card */
+.accent-card {
+  @apply bg-card rounded-2xl border border-border/60 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-200;
+}
+.accent-card:hover {
+  @apply shadow-[0_4px_16px_rgba(0,0,0,0.06)] border-border;
+}
+
+/* No-scrollbar utility */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
