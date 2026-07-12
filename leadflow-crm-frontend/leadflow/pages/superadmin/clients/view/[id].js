@@ -17,6 +17,12 @@ export default function ClientMasterPanel() {
   const [storageModal, setStorageModal] = useState(false)
   const [newStorageQuota, setNewStorageQuota] = useState('')
   const [updatingStorage, setUpdatingStorage] = useState(false)
+  
+  // Subscription Manage State
+  const [subModal, setSubModal] = useState(false)
+  const [subForm, setSubForm] = useState({ plan: 'basic', valid_until: '', max_users: 5 })
+  const [updatingSub, setUpdatingSub] = useState(false)
+
   const [errorModal, setErrorModal] = useState({ isOpen: false, message: '' })
   const [copied, setCopied] = useState(false)
   
@@ -35,6 +41,7 @@ export default function ClientMasterPanel() {
       const data = await fetchWithAuth(`/superadmin/clients/clients/${id}/details/`)
       setClient(data)
       setNewStorageQuota(data.storage_quota_mb.toString())
+      setSubForm({ plan: data.plan || 'basic', valid_until: data.valid_until || '', max_users: data.max_users || 5 })
       setError(null)
     } catch (err) {
       setError(err.message)
@@ -81,6 +88,27 @@ export default function ClientMasterPanel() {
       setErrorModal({ isOpen: true, message: err.message })
     } finally {
       setUpdatingStorage(false)
+    }
+  }
+
+  const handleUpdateSubscription = async (e) => {
+    e.preventDefault()
+    setUpdatingSub(true)
+    try {
+      await fetchWithAuth(`/superadmin/clients/clients/${id}/`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          plan: subForm.plan,
+          valid_until: subForm.valid_until,
+          max_users: parseInt(subForm.max_users)
+        })
+      })
+      setSubModal(false)
+      fetchClientDetails()
+    } catch (err) {
+      setErrorModal({ isOpen: true, message: err.message })
+    } finally {
+      setUpdatingSub(false)
     }
   }
 
@@ -234,8 +262,12 @@ export default function ClientMasterPanel() {
              </div>
            </div>
 
-           <div className="card p-5">
-             <h3 className="text-[10px] font-bold uppercase tracking-widest text-txt3 mb-4">Subscription Plan</h3>
+           <div className="card p-5 group relative overflow-hidden">
+             <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-full -z-10 group-hover:scale-110 transition-transform"></div>
+             <div className="flex justify-between items-center mb-4">
+               <h3 className="text-[10px] font-bold uppercase tracking-widest text-txt3">Subscription Plan</h3>
+               <button onClick={() => setSubModal(true)} className="text-[10px] text-primary hover:underline font-bold uppercase z-10">Manage</button>
+             </div>
              <div className="flex items-end gap-2 mb-1">
                  <span className="text-2xl font-bold font-display text-txt capitalize">{client.plan}</span>
                  <span className="text-xs text-txt3 mb-1 font-bold uppercase tracking-wider bg-bg2 px-2 py-0.5 rounded">Tier</span>
@@ -317,6 +349,54 @@ export default function ClientMasterPanel() {
                 <HardDrive size={14}/> Current usage is {client.storage_used_mb || 0} MB
             </div>
         </div>
+      </Modal>
+
+      {/* Manage Subscription Modal */}
+      <Modal isOpen={subModal} onClose={() => setSubModal(false)} title="Manage Subscription"
+        footer={
+          <div className="flex gap-2">
+            <button type="button" onClick={() => setSubModal(false)} className="btn-ghost px-6 py-2 rounded-xl">Cancel</button>
+            <button type="button" onClick={handleUpdateSubscription} disabled={updatingSub} className="btn-primary px-6 py-2">
+              {updatingSub ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        }
+      >
+        <form id="subForm" onSubmit={handleUpdateSubscription} className="space-y-4">
+          <div>
+            <label className="text-xs font-bold text-txt mb-1 block">Plan Tier</label>
+            <select
+              value={subForm.plan}
+              onChange={(e) => setSubForm({...subForm, plan: e.target.value})}
+              className="input w-full bg-card"
+            >
+              <option value="basic">Basic</option>
+              <option value="pro">Pro</option>
+              <option value="enterprise">Enterprise</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-bold text-txt mb-1 block">Expiration Date</label>
+            <input
+              type="date"
+              value={subForm.valid_until}
+              onChange={(e) => setSubForm({...subForm, valid_until: e.target.value})}
+              className="input w-full bg-card"
+              required
+            />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-txt mb-1 block">Maximum Allowed Users</label>
+            <input
+              type="number"
+              value={subForm.max_users}
+              onChange={(e) => setSubForm({...subForm, max_users: e.target.value})}
+              className="input w-full bg-card"
+              min="1"
+              required
+            />
+          </div>
+        </form>
       </Modal>
 
       {/* Feature Flags Modal */}
