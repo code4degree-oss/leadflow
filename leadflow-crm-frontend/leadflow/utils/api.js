@@ -86,18 +86,22 @@ export async function fetchWithAuth(url, options = {}) {
     return new Promise(() => {}) 
   }
 
-  // Handle subscription expired — redirect to block page
+  // Handle subscription expired or account suspended — redirect to block page
   if (response.status === 403) {
     try {
       const cloned = response.clone()
       const errData = await cloned.json()
-      if (errData.code === 'subscription_expired' || (errData.detail && errData.detail.toLowerCase().includes('subscription has expired'))) {
-        localStorage.setItem('subscription_status', 'expired')
+      if (
+        errData.code === 'subscription_expired' || 
+        errData.code === 'account_suspended' ||
+        (errData.detail && errData.detail.toLowerCase().includes('subscription has expired'))
+      ) {
+        localStorage.setItem('subscription_status', errData.code === 'account_suspended' ? 'suspended' : 'expired')
         window.location.href = '/subscription-expired'
-        throw new Error('Subscription expired')
+        throw new Error('Access suspended')
       }
     } catch (parseErr) {
-      if (parseErr.message === 'Subscription expired') throw parseErr
+      if (parseErr.message === 'Access suspended') throw parseErr
       // If JSON parse fails, fall through to generic error handling
     }
   }

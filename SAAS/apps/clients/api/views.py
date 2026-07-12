@@ -38,6 +38,14 @@ class ClientViewSet(viewsets.ModelViewSet):
             client_id = response.data.get('id')
             client = ClientAccount.objects.get(id=client_id)
             
+            # Set default 14-day trial if valid_until wasn't provided
+            if not client.valid_until:
+                from django.utils import timezone
+                from datetime import timedelta
+                client.subscription_start = timezone.now().date()
+                client.valid_until = client.subscription_start + timedelta(days=client.trial_days)
+                client.save(update_fields=['subscription_start', 'valid_until', 'updated_at'])
+            
             # Create the CLIENT_ADMIN user
             from apps.accounts.models import User, RoleChoices
             import string, random

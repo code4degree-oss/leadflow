@@ -49,8 +49,21 @@ class IsAccountActive(permissions.BasePermission):
 
         # --- Subscription / trial expiry check (no grace period) ---
         client = getattr(user, 'client', None)
-        if client and client.valid_until:
-            if timezone.now().date() > client.valid_until:
+        if client:
+            if not client.is_active:
+                from rest_framework.exceptions import PermissionDenied
+                raise PermissionDenied(
+                    detail="Your organization's account has been suspended. Please contact support.",
+                    code="account_suspended",
+                )
+            
+            if not client.valid_until:
+                from rest_framework.exceptions import PermissionDenied
+                raise PermissionDenied(
+                    detail="Your subscription plan is missing or invalid. Please contact your administrator.",
+                    code="subscription_expired",
+                )
+            elif timezone.now().date() > client.valid_until:
                 from rest_framework.exceptions import PermissionDenied
                 raise PermissionDenied(
                     detail="Your subscription has expired. Please contact your administrator to renew.",
