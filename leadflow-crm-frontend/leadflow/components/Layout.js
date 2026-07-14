@@ -36,26 +36,33 @@ const navConfig = {
     label: 'Client Admin',
     color: '#4F8EF7',
     items: [
+      // ── Overview ──
+      { section: 'Overview' },
       { icon: LayoutDashboard, label: 'Dashboard',        href: '/admin' },
-      { icon: Upload,          label: 'Lead Upload',      href: '/admin/upload' },
-      { icon: Users,           label: 'Lead Management',  href: '/admin/leads' },
-      { icon: Flame,           label: 'Hot Leads',        href: '/admin/hot' },
-      { icon: Users,           label: 'Employees',        href: '/admin/employees' },
-      { icon: Briefcase,       label: 'Projects',         href: '/admin/projects' },
+
+      // ── Leads ──
+      { section: 'Leads' },
+      { icon: Users,           label: 'All Leads',        href: '/admin/leads' },
+      { icon: Upload,          label: 'Upload Leads',     href: '/admin/upload' },
       { icon: MapPin,          label: 'Site Visits',      href: '/admin/visits' },
+
+      // ── Team ──
+      { section: 'Team' },
+      { icon: Users,           label: 'Employees',        href: '/admin/employees' },
       { icon: BarChart2,       label: 'Performance',      href: '/admin/performance' },
-      { icon: Activity,        label: 'Login Activity',   href: '/admin/audit' },
-      { icon: Settings,        label: 'Settings',         href: '/admin/settings' },
+
+      // ── Settings ──
+      { section: 'Settings' },
+      { icon: Briefcase,       label: 'Projects',         href: '/admin/projects' },
+      { icon: Activity,        label: 'Audit Log',        href: '/admin/audit' },
+      { icon: Settings,        label: 'Configuration',    href: '/admin/settings' },
     ]
   },
   telecaller: {
     label: 'Telecaller',
     color: '#00D4AA',
     items: [
-      { icon: LayoutDashboard, label: 'My Dashboard',     href: '/telecaller' },
-      { icon: Phone,           label: 'My Leads',         href: '/telecaller/leads' },
-      { icon: Flame,           label: 'Hot Leads',        href: '/telecaller/hot' },
-      { icon: Calendar,        label: 'Reminders',        href: '/telecaller/reminders' },
+      { icon: LayoutDashboard, label: 'My Workspace',     href: '/telecaller' },
       { icon: Briefcase,       label: 'Projects',         href: '/telecaller/projects' },
       { icon: BarChart2,       label: 'My Performance',   href: '/telecaller/performance' },
     ]
@@ -73,16 +80,15 @@ const navConfig = {
     label: 'Manager',
     color: '#F43F5E',
     items: [
-      { icon: LayoutDashboard, label: 'My Dashboard',     href: '/telecaller' },
-      { icon: Phone,           label: 'My Leads',         href: '/telecaller/leads' },
-      { icon: Flame,           label: 'Hot Leads',        href: '/telecaller/hot' },
-      { icon: Calendar,        label: 'Reminders',        href: '/telecaller/reminders' },
+      { icon: LayoutDashboard, label: 'My Workspace',     href: '/telecaller' },
       { icon: Briefcase,       label: 'Projects',         href: '/telecaller/projects' },
       { icon: BarChart2,       label: 'My Performance',   href: '/telecaller/performance' },
+      { section: 'Team' },
       { icon: Users,           label: 'Team Performance', href: '/admin/performance' },
     ]
   }
 }
+
 
 export default function Layout({ children, role = 'admin', pageTitle = '', actions }) {
   const router = useRouter()
@@ -232,7 +238,16 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
         </div>
 
         <nav className="flex-1 py-3 overflow-y-auto">
-          {config.items.map((item) => {
+          {config.items.map((item, idx) => {
+            // Section header — visual grouping for admin sidebar
+            if (item.section) {
+              return (
+                <div key={`section-${item.section}`} className={clsx('px-5 pt-4 pb-1', idx > 0 && 'mt-1')}>
+                  <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-txt3/60">{item.section}</span>
+                </div>
+              )
+            }
+
             const active = router.pathname === item.href
             return (
               <Link key={item.href} href={item.href}>

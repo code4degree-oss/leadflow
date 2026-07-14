@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 import Layout from '../../components/Layout'
 import { Trash2, Download, Loader2, FileSpreadsheet, AlertTriangle, Users, Layers, Trophy } from 'lucide-react'
 import clsx from 'clsx'
@@ -7,6 +8,8 @@ import { fetchWithAuth } from '../../utils/api'
 import { LeadsTable, PipelineBoard, BatchTracking, LostQueue, WonLeads, BulkAssign, LeadDetailDrawer, ReassignModal } from '../../components/admin/leads'
 
 export default function AdminLeads() {
+  const router = useRouter()
+
   // ─── Core Data ───
   const [leads, setLeads] = useState([])
   const [lostLeads, setLostLeads] = useState([])
@@ -48,6 +51,13 @@ export default function AdminLeads() {
     fetchEmployees() 
     fetchBatchProgress()
   }, [])
+
+  // Handle ?filter=hot query param (redirected from old /admin/hot page)
+  useEffect(() => {
+    if (router.query.filter === 'hot') {
+      setIsHotFilter(true)
+    }
+  }, [router.query.filter])
 
   useEffect(() => {
     if (activeTab === 'all') fetchLeads()
