@@ -348,7 +348,7 @@ export default function Layout({ children, role = 'admin', pageTitle = '', actio
 
       {/* Bottom Navigation (Mobile) */}
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-40 flex items-center h-16 px-1 md:hidden pb-safe overflow-x-auto no-scrollbar scroll-smooth">
-        {config.items.map((item) => {
+        {config.items.filter(item => !item.section).map((item) => {
           const active = router.pathname === item.href
           return (
             <Link key={item.href} href={item.href} className="flex-none min-w-[72px] flex flex-col items-center justify-center h-full text-txt3 hover:text-txt transition-colors">
