@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Search, X, Command, ArrowRight, Loader2 } from 'lucide-react'
 import clsx from 'clsx'
-import { fetchWithAuth } from '../../utils/api'
+import { fetchWithAuth } from '../utils/api'
 
 /**
  * Quick Search (Ctrl+K) — Command palette-style search across all leads.
