@@ -33,35 +33,35 @@ class WhatsAppLeadExtractor:
     # Field patterns — tolerant of typos and spacing variations
     FIELD_PATTERNS = {
         'name': re.compile(
-            r'(?:clint|client|cline|clinet)\s*(?:name)?\s*[-–:]\s*(.+)',
+            r'\*?\s*(?:clint|client|cline|clinet|name)\s*(?:name)?\s*\*?[-–:.]?\s*(.*)',
             re.IGNORECASE
         ),
         'phone': re.compile(
-            r'\*?\s*(?:no|number|mob|mobile|ph|contact)\s*[-–:]\s*(\+?\d[\d\s-]{7,})',
+            r'\*?\s*(?:no|number|mob|mobile|ph|contact|phone)(?:\s*(?:no\.?|number))?\s*\*?[-–:.]?\s*(\+?\d[\d\s-]{7,})',
             re.IGNORECASE
         ),
         'bhk': re.compile(
-            r'(?:bhk|b\.?h\.?k)\s*[-–:]\s*(.+)',
+            r'\*?\s*(?:bhk|b\.?h\.?k)\s*\*?[-–:.]?\s*(.*)',
             re.IGNORECASE
         ),
         'location': re.compile(
-            r'(?:location|loc|area|city|address)\s*[-–:,]\s*(.+)',
+            r'\*?\s*(?:location|loc|area|city|address)\s*\*?[-–:,.]?\s*(.*)',
             re.IGNORECASE
         ),
         'budget': re.compile(
-            r'(?:budject|budget|budgt|buget|bgt)\s*[-–:]\s*(.+)',
+            r'\*?\s*(?:budject|budget|budgt|buget|bgt)\s*\*?[-–:.]?\s*(.*)',
             re.IGNORECASE
         ),
         'source': re.compile(
-            r'(SLG\s+through\s+project|99acres|magicbricks|housing|justdial|facebook|google)',
+            r'\*?\s*(?:source|from)\s*\*?[-–:.]?\s*(.*)|(?:\*?\s*(SLG\s+through\s+project|99acres|magicbricks|housing|justdial|facebook|google)\s*\*?)',
             re.IGNORECASE
         ),
         'cp': re.compile(
-            r'(?:other\s+)?(?:cp|channel\s*partner)\s*(?:thru|through)?\s*[-–:]\s*(.+)',
+            r'\*?\s*(?:other\s+)?(?:cp|channel\s*partner)\s*(?:thru|through)?\s*\*?[-–:.]?\s*(.*)',
             re.IGNORECASE
         ),
         'suggested': re.compile(
-            r'(?:suggested|suggestion|remark|remarks|notes?|comment)\s*[-–:]\s*(.+)',
+            r'\*?\s*(?:suggested|suggestion|remark|remarks|notes?|comment)(?:\s*project\s*name)?\s*\*?[-–:.]?\s*(.*)',
             re.IGNORECASE
         ),
     }
@@ -85,7 +85,7 @@ class WhatsAppLeadExtractor:
         # Strategy 2: If only one block, try splitting on "Clint name" / "Client name" boundaries
         if len(blocks) <= 1:
             blocks = re.split(
-                r'(?=(?:clint|client)\s*(?:name)?\s*[-–:])',
+                r'(?=\*?\s*(?:clint|client|cline|clinet|name)\s*(?:name)?\s*\*?[-–:.])',
                 raw_text,
                 flags=re.IGNORECASE
             )
@@ -95,11 +95,10 @@ class WhatsAppLeadExtractor:
             block = block.strip()
             if not block:
                 continue
-            # Only process blocks that look like a lead (have name or phone)
-            if re.search(r'(?:clint|client|name|\*\s*no)', block, re.IGNORECASE):
-                lead = cls.extract_single(block)
-                if lead.get('phone'):  # Must have phone to be valid
-                    leads.append(lead)
+            # Try to extract the lead directly
+            lead = cls.extract_single(block)
+            if lead.get('phone'):  # Must have phone to be valid
+                leads.append(lead)
 
         return leads
 
@@ -121,6 +120,8 @@ class WhatsAppLeadExtractor:
         }
 
         lines = text.strip().split('\n')
+        unmatched_lines = []
+        extracted_keys = set()
 
         for line in lines:
             line = line.strip()
@@ -128,14 +129,18 @@ class WhatsAppLeadExtractor:
                 continue
 
             # --- Name ---
-            match = cls.FIELD_PATTERNS['name'].match(line)
-            if match:
-                name_str = match.group(1).strip().rstrip('-').strip()
-                if name_str:
-                    parts = name_str.split(None, 1)
-                    result['first_name'] = parts[0].title()
-                    result['last_name'] = parts[1].title() if len(parts) > 1 else ''
-                continue
+            if 'name' not in extracted_keys:
+                match = cls.FIELD_PATTERNS['name'].match(line)
+                if match:
+                    name_str = match.group(1).strip().rstrip('-').strip()
+                    if name_str:
+                        parts = name_str.split(None, 1)
+                        result['first_name'] = parts[0].title()
+                        result['last_name'] = parts[1].title() if len(parts) > 1 else ''
+                    else:
+                        result['first_name'] = 'Unknown'
+                    extracted_keys.add('name')
+                    continue
 
             # --- Phone ---
             match = cls.FIELD_PATTERNS['phone'].match(line)
@@ -178,7 +183,10 @@ class WhatsAppLeadExtractor:
             # --- Source ---
             match = cls.FIELD_PATTERNS['source'].match(line)
             if match:
-                result['source_detail'] = match.group(1).strip()
+                # Group 1 is the generic value, Group 2 is the exact match if it was just the string
+                src = (match.group(1) or match.group(2) or '').strip().rstrip('-').strip()
+                if src:
+                    result['source_detail'] = src
                 continue
 
             # --- Channel Partner ---
@@ -195,8 +203,26 @@ class WhatsAppLeadExtractor:
                 suggested = match.group(1).strip()
                 if suggested:
                     result['suggested_project'] = suggested
-                    result['notes'] = suggested
+                    if result['notes']:
+                        result['notes'] += f"\nSuggested: {suggested}"
+                    else:
+                        result['notes'] = suggested
                 continue
+
+            # If no key matches, save it as an unmatched note
+            unmatched_lines.append(line)
+
+        # Append any remaining unparsed text into notes
+        if unmatched_lines:
+            notes_addon = "\n".join(unmatched_lines)
+            if result['notes']:
+                result['notes'] += f"\n\nAdditional Details:\n{notes_addon}"
+            else:
+                result['notes'] = notes_addon
+
+        # Failsafe: if we still don't have a first name, default to Unknown
+        if not result['first_name'] and result['phone']:
+            result['first_name'] = 'Unknown'
 
         return result
 
