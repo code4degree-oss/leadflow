@@ -144,3 +144,160 @@ body {
 /* No-scrollbar utility */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ═══ Design Tokens ═══ */
+:root {
+  /* Spacing tokens (consistent spacing scale) */
+  --spacing-page-top: 40px;
+  --spacing-page-gap: 24px;
+  --spacing-block-inline: 20px;
+  --spacing-card-padding: 20px;
+
+  /* Status colors as CSS variables */
+  --status-new: #250099;
+  --status-called: #6D28D9;
+  --status-not-answered: #F59E0B;
+  --status-interested: #ef0379;
+  --status-high-prospect: #D946EF;
+  --status-follow-up: #F97316;
+  --status-site-visit: #0EA5E9;
+  --status-visited: #06B6D4;
+  --status-negotiation: #8B5CF6;
+  --status-won: #10B981;
+  --status-lost: #EF4444;
+  --status-invalid: #6B7280;
+  
+  /* Transition tokens */
+  --transition-fast: 150ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow: 300ms ease;
+}
+
+/* ═══ Skeleton Loading ═══ */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--bg3) 25%, var(--border) 50%, var(--bg3) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+.skeleton-text { height: 14px; border-radius: 4px; }
+.skeleton-avatar { width: 32px; height: 32px; border-radius: 50%; }
+.skeleton-badge { width: 64px; height: 20px; border-radius: 9999px; }
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ═══ Sheet Overlay ═══ */
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes slideOutRight {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+.sheet-overlay {
+  @apply fixed inset-0 z-[60] flex justify-end;
+  background: rgba(0,0,0,0.3);
+  backdrop-filter: blur(2px);
+}
+.sheet-panel {
+  @apply bg-card h-full overflow-y-auto border-l border-border shadow-2xl;
+  width: min(520px, 90vw);
+  animation: slideInRight 0.25s ease forwards;
+}
+.sheet-panel.closing {
+  animation: slideOutRight 0.2s ease forwards;
+}
+
+/* ═══ Inline Status Dropdown ═══ */
+.status-select {
+  @apply appearance-none border-none bg-transparent text-xs font-bold cursor-pointer px-2 py-0.5 rounded-full transition-all;
+}
+.status-select:hover { @apply ring-2 ring-accent/20; }
+.status-select:focus { @apply outline-none ring-2 ring-accent/30; }
+
+/* ═══ Quick Search Modal ═══ */
+@keyframes searchFadeIn {
+  from { opacity: 0; transform: translateY(-12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.quick-search-modal {
+  @apply fixed inset-0 z-[70] flex items-start justify-center pt-[15vh];
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+}
+.quick-search-panel {
+  @apply bg-card rounded-2xl border border-border shadow-2xl w-full max-w-lg overflow-hidden;
+  animation: searchFadeIn 0.2s ease forwards;
+}
+.quick-search-input {
+  @apply w-full bg-transparent text-lg text-txt px-5 py-4 focus:outline-none placeholder:text-txt3/60;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ═══ Bulk Action Bar ═══ */
+@keyframes bulkBarSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.bulk-action-bar {
+  @apply fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-50;
+  @apply bg-txt text-white rounded-2xl px-5 py-3 shadow-2xl flex items-center gap-4;
+  animation: bulkBarSlideUp 0.25s ease forwards;
+}
+
+/* ═══ Enhanced Table ═══ */
+.sortable-th {
+  @apply text-xs font-bold text-txt3 uppercase tracking-wider px-4 py-3 text-left whitespace-nowrap cursor-pointer select-none;
+  transition: color var(--transition-fast);
+}
+.sortable-th:hover { @apply text-txt; }
+.sortable-th .sort-arrow {
+  @apply ml-1 text-accent opacity-0 transition-opacity;
+}
+.sortable-th:hover .sort-arrow,
+.sortable-th.active .sort-arrow {
+  @apply opacity-100;
+}
+
+/* ═══ Micro-animations ═══ */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-count-up {
+  animation: countUp 0.4s ease forwards;
+}
+
+/* Smooth page transition */
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.page-transition {
+  animation: pageIn 0.3s ease forwards;
+}
+
+/* Hover card lift effect */
+.hover-lift {
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+/* ═══ Secondary button style ═══ */
+@layer components {
+  .btn-secondary { @apply bg-card text-txt2 border border-border px-4 py-2 rounded-lg font-medium text-sm hover:bg-bg3 hover:text-txt transition-all duration-200 flex items-center gap-2; }
+}
+

@@ -9,7 +9,11 @@ class LeadStatus(models.TextChoices):
     CALLED = "CALLED", _("Called")
     NOT_ANSWERED = "NOT_ANSWERED", _("Not Answered")
     INTERESTED = "INTERESTED", _("Interested")
-    SITE_VISIT = "SITE_VISIT", _("Site Visit")
+    HIGH_PROSPECT = "HIGH_PROSPECT", _("High Prospect")
+    FOLLOW_UP = "FOLLOW_UP", _("Follow-up")
+    SITE_VISIT = "SITE_VISIT", _("Site Visit Scheduled")
+    VISITED = "VISITED", _("Site Visit Done")
+    NEGOTIATION = "NEGOTIATION", _("Negotiation")
     WON = "WON", _("Won")
     LOST = "LOST", _("Lost")
     INVALID_NUMBER = "INVALID_NUMBER", _("Invalid Number")
@@ -24,6 +28,8 @@ class LeadSource(models.TextChoices):
     FACEBOOK = "FACEBOOK", _("Facebook Ads")
     GOOGLE = "GOOGLE", _("Google Ads")
     WEBSITE = "WEBSITE", _("Website")
+    WHATSAPP = "WHATSAPP", _("WhatsApp")
+    REFERRAL = "REFERRAL", _("Referral")
     MANUAL = "MANUAL", _("Manual Upload")
     OTHER = "OTHER", _("Other")
 
@@ -167,6 +173,17 @@ class Lead(BaseModel):
 
     # Hot lead flag — marks potential buyer, independent of status
     is_hot = models.BooleanField(default=False, db_index=True, help_text="Potential buyer flag")
+
+    # Call overlap prevention
+    last_called_at = models.DateTimeField(null=True, blank=True, help_text="When the last call was made to this lead")
+    last_called_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="last_called_leads",
+        help_text="Who made the last call to this lead"
+    )
 
     # Field agent assignment (for site visits)
     field_agent = models.ForeignKey(

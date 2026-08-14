@@ -16,8 +16,12 @@ from .lead_mixins.analytics import LeadAnalyticsMixin
 from .lead_mixins.bulk import LeadBulkMixin
 from .lead_mixins.timeline import LeadTimelineMixin
 from .lead_mixins.misc import LeadMiscMixin
+from .lead_mixins.whatsapp import WhatsAppExtractionMixin
+from .lead_mixins.team import TeamLeadMixin
 
 class LeadViewSet(
+    WhatsAppExtractionMixin,
+    TeamLeadMixin,
     LeadDistributionMixin,
     LeadCallsMixin,
     LeadStatusMixin,

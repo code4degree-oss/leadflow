@@ -11,7 +11,7 @@ import {
   Bell, Search, ChevronDown, LogOut, Building2,
   Phone, MapPin, ShieldCheck, Database, CreditCard,
   Briefcase, Calendar, Activity, FileText, Flame, Globe,
-  Menu, X, Ban, Mail, Megaphone, CheckCircle2
+  Menu, X, Ban, Mail, Megaphone, CheckCircle2, MessageSquare
 } from 'lucide-react'
 import clsx from 'clsx'
 import useWebSocket from '../hooks/useWebSocket'
@@ -44,10 +44,12 @@ const navConfig = {
       { section: 'Leads' },
       { icon: Users,           label: 'All Leads',        href: '/admin/leads' },
       { icon: Upload,          label: 'Upload Leads',     href: '/admin/upload' },
+      { icon: MessageSquare,   label: 'WhatsApp Import',  href: '/admin/whatsapp' },
       { icon: MapPin,          label: 'Site Visits',      href: '/admin/visits' },
 
       // ── Team ──
       { section: 'Team' },
+      { icon: Users,           label: 'Team Dashboard',   href: '/admin/team' },
       { icon: Users,           label: 'Employees',        href: '/admin/employees' },
       { icon: BarChart2,       label: 'Performance',      href: '/admin/performance' },
 
@@ -84,6 +86,7 @@ const navConfig = {
       { icon: Briefcase,       label: 'Projects',         href: '/telecaller/projects' },
       { icon: BarChart2,       label: 'My Performance',   href: '/telecaller/performance' },
       { section: 'Team' },
+      { icon: Users,           label: 'Team Dashboard',   href: '/admin/team' },
       { icon: Users,           label: 'Team Performance', href: '/admin/performance' },
     ]
   }

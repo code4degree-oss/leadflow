@@ -3,6 +3,7 @@ import Layout from '../../components/Layout'
 import { Upload, FileText, CheckCircle, AlertTriangle, XCircle, Users, RefreshCw, Trash2, ArrowRight } from 'lucide-react'
 import clsx from 'clsx'
 import { fetchWithAuth } from '../../utils/api'
+import Link from 'next/link'
 
 export default function LeadUpload() {
   const [stage, setStage] = useState('upload')
@@ -75,6 +76,16 @@ export default function LeadUpload() {
   return (
     <Layout role="admin" pageTitle="Lead Upload">
       <div className="max-w-3xl mx-auto">
+
+        {/* Import Mode Tabs */}
+        <div className="flex items-center gap-2 mb-6">
+          <div className="btn-primary py-2 px-4 text-xs shadow-lg shadow-primary/20">
+            <Upload size={13}/> CSV / Excel
+          </div>
+          <Link href="/admin/whatsapp" className="btn-secondary py-2 px-4 text-xs hover:border-accent/40">
+            <span className="text-base leading-none">💬</span> WhatsApp Paste
+          </Link>
+        </div>
 
         {/* Steps */}
         <div className="flex items-center gap-0 mb-8">
