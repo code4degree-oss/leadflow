@@ -60,10 +60,10 @@ export default function AdminDashboard() {
 
       {/* Stats Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Total Leads" value={stats?.total_leads || 0} sub="across all sources" color="accent" icon={Users} trend={0} />
-        <StatCard label="Success Rate" value={`${stats?.conversion_rate || 0}%`} sub="leads to won" color="green" icon={TrendingUp} trend={0} />
-        <StatCard label="Hot Leads" value={recentLeads.filter(l => l.is_hot).length} sub="ready to close" color="orange" icon={Flame} trend={0} />
-        <StatCard label="Active Queue" value={stats?.status_counts?.IN_PROGRESS || 0} sub="currently calling" color="purple" icon={Phone} trend={0} />
+        <StatCard label="Total Leads" value={loading ? '—' : (stats?.total_leads || 0)} sub="across all sources" color="accent" icon={Users} trend={0} />
+        <StatCard label="Success Rate" value={loading ? '—' : `${stats?.conversion_rate || 0}%`} sub="leads to won" color="green" icon={TrendingUp} trend={0} />
+        <StatCard label="Hot Leads" value={loading ? '—' : recentLeads.filter(l => l.is_hot).length} sub="ready to close" color="orange" icon={Flame} trend={0} />
+        <StatCard label="Active Queue" value={loading ? '—' : (stats?.status_counts?.IN_PROGRESS || 0)} sub="currently calling" color="purple" icon={Phone} trend={0} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
@@ -96,7 +96,18 @@ export default function AdminDashboard() {
           
           <div className="mt-4 space-y-3">
             {loading && !stats ? (
-              <div className="py-20 text-center"><RefreshCw className="animate-spin text-primary mx-auto" size={24}/></div>
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex items-center justify-between p-3 bg-bg2/50 rounded-xl border border-border/50">
+                  <div className="flex items-center gap-4">
+                    <div className="skeleton skeleton-avatar" />
+                    <div className="space-y-1.5">
+                      <div className="skeleton skeleton-text w-32" />
+                      <div className="skeleton skeleton-text w-48" style={{ height: 10 }} />
+                    </div>
+                  </div>
+                  <div className="skeleton skeleton-text w-10" />
+                </div>
+              ))
             ) : recentLeads.length === 0 ? (
               <div className="py-10 text-center text-txt3 uppercase tracking-widest text-[10px] font-bold">No recent activity detected</div>
             ) : (
@@ -104,14 +115,14 @@ export default function AdminDashboard() {
                 <div key={lead.id} className="flex items-center justify-between p-3 bg-bg2/50 rounded-xl border border-border/50 hover:border-primary/20 transition-all group">
                   <div className="flex items-center gap-4">
                     <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-[10px] font-bold font-display">
-                      {lead.first_name[0]}{lead.last_name[0]}
+                      {lead.first_name?.[0] || '?'}{lead.last_name?.[0] || ''}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                          <span className="text-sm font-bold text-txt group-hover:text-primary transition-colors">{lead.first_name} {lead.last_name}</span>
-                         <StatusBadge status={lead.status} />
+                         <StatusBadge status={lead.status?.toLowerCase() || 'new'} />
                       </div>
-                      <div className="text-[10px] text-txt3 font-mono">Assigned to: {lead.assigned_to_email || 'Unassigned'} • From {lead.source}</div>
+                      <div className="text-[10px] text-txt3 font-mono">Assigned to: {lead.assigned_to_email || 'Unassigned'} • From {lead.source || 'Unknown'}</div>
                     </div>
                   </div>
                   <div className="text-right flex flex-col items-end gap-1">

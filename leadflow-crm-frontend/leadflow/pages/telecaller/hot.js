@@ -109,7 +109,7 @@ export default function HotLeads() {
               </div>
               <div className="text-xs font-mono text-txt3 mb-2">{lead.phone}</div>
               <div className="flex items-center justify-between mt-1">
-                <StatusBadge status={lead.status.toLowerCase()} />
+                <StatusBadge status={lead.status?.toLowerCase() || 'new'} />
                 {lead.project_name && <span className="text-xs text-txt2 truncate max-w-[100px]">{lead.project_name}</span>}
               </div>
               

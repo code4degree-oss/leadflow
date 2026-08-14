@@ -43,8 +43,8 @@ export default function LeadDetailDrawer({ lead, timeline, followUps, loading, o
               </div>
               <p className="text-xs text-txt3 font-mono mt-1">{lead.phone} {lead.email && `• ${lead.email}`}</p>
               <div className="flex items-center gap-2 mt-2 flex-wrap">
-                <StatusBadge status={lead.status.toLowerCase()} />
-                <span className="px-2 py-0.5 bg-bg3 border border-border rounded text-[9px] uppercase tracking-wider">{lead.source}</span>
+                <StatusBadge status={lead.status?.toLowerCase() || 'new'} />
+                <span className="px-2 py-0.5 bg-bg3 border border-border rounded text-[9px] uppercase tracking-wider">{lead.source || 'Unknown'}</span>
                 <span className="text-[10px] font-bold text-accent bg-accent/10 px-2 py-0.5 rounded">👤 {lead.assigned_user_name || 'Unassigned'}</span>
               </div>
             </div>

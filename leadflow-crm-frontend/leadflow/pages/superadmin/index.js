@@ -111,7 +111,7 @@ export default function SuperAdminDashboard() {
       {/* ═══ KPI Cards ═══ */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 stagger-grid">
         {/* Total Clients */}
-        <div className="accent-card p-5 group">
+        <div className="accent-card p-5 group hover-lift">
           <div className="flex items-center justify-between mb-4">
             <div className="w-10 h-10 rounded-xl bg-accent/8 flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-white transition-all duration-300">
               <Building2 size={18} />
@@ -125,7 +125,7 @@ export default function SuperAdminDashboard() {
         </div>
 
         {/* Platform Users */}
-        <div className="accent-card p-5 group">
+        <div className="accent-card p-5 group hover-lift">
           <div className="flex items-center justify-between mb-4">
             <div className="w-10 h-10 rounded-xl bg-purple/8 flex items-center justify-center text-purple group-hover:bg-purple group-hover:text-white transition-all duration-300">
               <Users size={18} />
@@ -139,7 +139,7 @@ export default function SuperAdminDashboard() {
         </div>
 
         {/* Storage */}
-        <div className="accent-card p-5 group">
+        <div className="accent-card p-5 group hover-lift">
           <div className="flex items-center justify-between mb-4">
             <div className="w-10 h-10 rounded-xl bg-amber/8 flex items-center justify-center text-amber group-hover:bg-amber group-hover:text-white transition-all duration-300">
               <Server size={18} />
@@ -272,10 +272,25 @@ export default function SuperAdminDashboard() {
             </thead>
             <tbody>
               {loading && clients.length === 0 ? (
-                <tr><td colSpan="7" className="py-24 text-center">
-                  <RefreshCw size={20} className="animate-spin mx-auto text-accent mb-3" />
-                  <p className="text-xs text-txt3">Loading platform data...</p>
-                </td></tr>
+                Array.from({ length: 4 }).map((_, i) => (
+                  <tr key={i} className="border-b border-border">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3.5">
+                        <div className="skeleton skeleton-avatar" />
+                        <div className="space-y-1.5">
+                          <div className="skeleton skeleton-text w-28" />
+                          <div className="skeleton skeleton-text w-16" style={{ height: 10 }} />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4"><div className="skeleton skeleton-badge" /></td>
+                    <td className="px-6 py-4"><div className="skeleton skeleton-badge w-16" /></td>
+                    <td className="px-6 py-4"><div className="skeleton skeleton-text w-20" /></td>
+                    <td className="px-6 py-4"><div className="skeleton skeleton-text w-16" /></td>
+                    <td className="px-6 py-4"><div className="skeleton skeleton-badge" /></td>
+                    <td className="px-6 py-4"></td>
+                  </tr>
+                ))
               ) : clients.length === 0 ? (
                 <tr><td colSpan="7" className="py-24 text-center">
                   <Building2 size={28} className="mx-auto text-txt3/40 mb-3" />
