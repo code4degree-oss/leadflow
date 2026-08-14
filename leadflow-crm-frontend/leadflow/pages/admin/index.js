@@ -5,8 +5,11 @@ import { Phone, Users, TrendingUp, Upload, AlertTriangle, Flame, Clock, Target, 
 import { fetchWithAuth } from '../../utils/api'
 import clsx from 'clsx'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
+import QuickSearch from '../../components/QuickSearch'
 
 export default function AdminDashboard() {
+  const router = useRouter()
   const [stats, setStats] = useState(null)
   const [recentLeads, setRecentLeads] = useState([])
   const [loading, setLoading] = useState(true)
@@ -219,6 +222,7 @@ export default function AdminDashboard() {
            </div>
         </div>
       </div>
+      <QuickSearch onSelectLead={(lead) => router.push(`/admin/leads?detail=${lead.id}`)} />
     </Layout>
   )
 }

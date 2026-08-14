@@ -6,6 +6,7 @@ import clsx from 'clsx'
 import { fetchWithAuth } from '../../utils/api'
 
 import { LeadsTable, PipelineBoard, BatchTracking, LostQueue, WonLeads, BulkAssign, LeadDetailDrawer, ReassignModal } from '../../components/admin/leads'
+import QuickSearch from '../../components/QuickSearch'
 
 export default function AdminLeads() {
   const router = useRouter()
@@ -340,6 +341,8 @@ export default function AdminLeads() {
         lead={reassignLead} employees={employees} loading={loading}
         onConfirm={handleAdminReassign} onClose={() => setReassignLead(null)}
       />
+
+      <QuickSearch onSelectLead={openDetailDrawer} />
     </Layout>
   )
 }

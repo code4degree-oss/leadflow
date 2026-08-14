@@ -31,8 +31,8 @@ export default function LeadDetailDrawer({ lead, timeline, followUps, loading, o
   const getColor = (type) => TIMELINE_COLORS[type] || 'text-txt3 bg-bg3'
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-end animate-in fade-in" onClick={onClose}>
-      <div className="bg-card w-full max-w-lg h-full shadow-2xl animate-in slide-in-from-right flex flex-col border-l border-border" onClick={e => e.stopPropagation()}>
+    <div className="sheet-overlay" onClick={onClose}>
+      <div className="sheet-panel flex flex-col" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="px-6 py-5 border-b border-border bg-bg2/50">
           <div className="flex justify-between items-start">
