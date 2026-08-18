@@ -9,6 +9,7 @@ class ClientAccountSerializer(serializers.ModelSerializer):
     admin_phone = serializers.CharField(write_only=True, required=False, allow_blank=True, default='')
     
     storage_used_mb = serializers.SerializerMethodField()
+    lead_count = serializers.SerializerMethodField()
     subscription_status = serializers.CharField(read_only=True)
     days_remaining = serializers.IntegerField(read_only=True)
     
@@ -17,10 +18,10 @@ class ClientAccountSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'is_active', 'geofencing_enabled',
             'max_users', 'storage_quota_mb', 'plan', 'trial_days',
-            'subscription_start', 'valid_until',
+            'subscription_start', 'valid_until', 'grace_period_days',
             'created_at', 'user_count', 'admin_email',
             'admin_first_name', 'admin_last_name', 'admin_phone', 'storage_used_mb',
-            'subscription_status', 'days_remaining'
+            'subscription_status', 'days_remaining', 'lead_count'
         ]
         read_only_fields = ['id', 'created_at']
 
@@ -40,6 +41,10 @@ class ClientAccountSerializer(serializers.ModelSerializer):
         if total_bytes > 0:
             return round(total_bytes / (1024 * 1024), 2)
         return 0.1 # Minimum usage to show up on charts
+
+    def get_lead_count(self, obj):
+        from apps.leads.models import Lead
+        return Lead.objects.filter(client=obj, is_archived=False).count()
 
     def create(self, validated_data):
         # Remove write-only admin fields before saving to DB

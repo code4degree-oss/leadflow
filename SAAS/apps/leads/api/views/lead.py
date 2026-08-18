@@ -74,6 +74,13 @@ class LeadViewSet(
         if batch_id:
             qs = qs.filter(batch_id=batch_id)
         
+        # Filter leads with next_call_at <= end of today (powers "Due Today" tab)
+        next_call_before = self.request.query_params.get('next_call_before')
+        if next_call_before == 'today':
+            import datetime
+            end_of_today = timezone.now().replace(hour=23, minute=59, second=59, microsecond=999999)
+            qs = qs.filter(next_call_at__lte=end_of_today, next_call_at__isnull=False)
+        
         return qs
 
     def perform_create(self, serializer):

@@ -209,6 +209,78 @@ class ClientViewSet(viewsets.ModelViewSet):
             "client": serializer.data
         })
 
+    @action(detail=True, methods=['get'], url_path='lead-stats')
+    def lead_stats(self, request, pk=None):
+        """
+        Aggregated lead metrics for a specific client.
+        Powers the Overview tab in the super admin client detail page.
+        """
+        from django.db.models import Count, Q
+        from django.utils import timezone
+        from datetime import timedelta
+        from apps.leads.models import Lead, LeadStatus, ActivityTimeline, ActivityType
+        from apps.accounts.models import User, RoleChoices
+
+        client = self.get_object()
+        now = timezone.now()
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        week_ago = today_start - timedelta(days=7)
+
+        leads = Lead.objects.filter(client=client, is_archived=False)
+        total = leads.count()
+        won = leads.filter(status=LeadStatus.WON).count()
+        lost = leads.filter(status=LeadStatus.LOST).count()
+        active = leads.exclude(status__in=[LeadStatus.WON, LeadStatus.LOST, LeadStatus.INVALID_NUMBER]).count()
+
+        # Status breakdown
+        status_breakdown = list(
+            leads.values('status').annotate(count=Count('id')).order_by('-count')
+        )
+
+        # Calls today & this week
+        calls_today = ActivityTimeline.objects.filter(
+            client=client,
+            activity_type=ActivityType.CALL_LOGGED,
+            created_at__gte=today_start,
+        ).count()
+
+        calls_week = ActivityTimeline.objects.filter(
+            client=client,
+            activity_type=ActivityType.CALL_LOGGED,
+            created_at__gte=week_ago,
+        ).count()
+
+        # Top performers (by won leads)
+        top_performers = list(
+            leads.filter(status=LeadStatus.WON)
+            .values('assigned_to__first_name', 'assigned_to__last_name', 'assigned_to__email')
+            .annotate(won_count=Count('id'))
+            .order_by('-won_count')[:5]
+        )
+
+        # Recent activity
+        recent_activity = list(
+            ActivityTimeline.objects.filter(client=client)
+            .select_related('lead', 'performed_by')
+            .order_by('-created_at')[:10]
+            .values('id', 'activity_type', 'title', 'created_at',
+                    'performed_by__first_name', 'performed_by__last_name',
+                    'lead__first_name', 'lead__last_name')
+        )
+
+        return Response({
+            'total_leads': total,
+            'won_leads': won,
+            'lost_leads': lost,
+            'active_leads': active,
+            'conversion_rate': round((won / total * 100), 1) if total > 0 else 0,
+            'status_breakdown': status_breakdown,
+            'calls_today': calls_today,
+            'calls_this_week': calls_week,
+            'top_performers': top_performers,
+            'recent_activity': recent_activity,
+        })
+
 
 class BroadcastNotificationView(APIView):
     """

@@ -28,6 +28,7 @@ class ClientAccount(models.Model):
     trial_days = models.IntegerField(default=14, help_text="Number of trial days")
     subscription_start = models.DateField(null=True, blank=True, help_text="Subscription/trial start date")
     valid_until = models.DateField(null=True, blank=True, help_text="Subscription valid until date")
+    grace_period_days = models.IntegerField(default=7, help_text="Number of days after expiry before full lockout")
 
     created_at = models.DateTimeField(default=timezone.now, editable=False)
     updated_at = models.DateTimeField(auto_now=True)

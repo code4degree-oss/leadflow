@@ -112,7 +112,7 @@ export default function TelecallerLeads() {
         {/* Filters */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="flex flex-wrap gap-2">
-            {['all', 'new', 'called', 'not_answered', 'interested', 'site_visit', 'lost'].map(s => (
+            {['all', 'new', 'called', 'not_answered', 'interested', 'site_visit', 'visited', 'lost'].map(s => (
               <button key={s} onClick={() => setStatusFilter(s)}
                 className={clsx(
                   'px-4 py-2 rounded-xl text-xs font-bold transition-all capitalize border shadow-sm',

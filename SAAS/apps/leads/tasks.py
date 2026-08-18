@@ -116,6 +116,21 @@ def check_lead_aging():
     logger.info(f"[LEAD_AGING] Flagged {total_flagged} stale leads across all clients.")
     return f"Flagged {total_flagged} stale leads across all clients."
 
+def cancel_pending_reminders(lead):
+    """
+    Cancel all pending FollowUpReminders for a lead.
+    Called when a lead reaches a terminal state (WON, LOST, INVALID_NUMBER).
+    """
+    from apps.leads.models import FollowUpReminder
+    updated = FollowUpReminder.objects.filter(
+        lead=lead,
+        is_completed=False
+    ).update(is_completed=True)
+    if updated:
+        logger.info(f"[REMINDER_CLEANUP] Cancelled {updated} pending reminders for lead {lead.id}")
+    return updated
+
+
 @shared_task(name="apps.leads.tasks.reminder_engine")
 def reminder_engine():
     """
@@ -163,14 +178,18 @@ def reminder_engine():
                     )
                     total_triggered += 1
                     
-                    reminder.is_completed = True
-                    reminder.save(update_fields=['is_completed'])
+                    # Mark push as sent but do NOT complete the reminder — it stays
+                    # active until the user actually acts on it (logs a call, etc.)
+                    if not reminder.is_push_sent:
+                        reminder.is_push_sent = True
+                        reminder.save(update_fields=['is_push_sent'])
         
         # Also check next_call_at on leads directly
         due_calls = Lead.objects.filter(
             client=client,
             next_call_at__lte=now,
-            status__in=[LeadStatus.NEW, LeadStatus.CALLED, LeadStatus.INTERESTED],
+            status__in=[LeadStatus.NEW, LeadStatus.CALLED, LeadStatus.INTERESTED,
+                        LeadStatus.NOT_ANSWERED, LeadStatus.SITE_VISIT, LeadStatus.VISITED],
             assigned_to__isnull=False
         ).select_related('assigned_to')
         

@@ -55,12 +55,12 @@ class SiteVisitViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
 
         if outcome == 'WON':
             lead.status = LeadStatus.WON
-        elif outcome == 'LOST' or outcome == 'NOT_INTERESTED':
-            lead.status = LeadStatus.SITE_VISIT
         elif outcome == 'INTERESTED':
             lead.status = LeadStatus.INTERESTED
+        elif outcome == 'LOST' or outcome == 'NOT_INTERESTED':
+            lead.status = LeadStatus.VISITED
         else:
-            lead.status = LeadStatus.SITE_VISIT
+            lead.status = LeadStatus.VISITED
 
         lead.save()
 

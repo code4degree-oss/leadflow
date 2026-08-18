@@ -135,6 +135,7 @@ export function StatusBadge({ status }) {
     not_answered:   'badge-amber',
     invalid_number: 'badge-red',
     site_visit:     'badge-amber',
+    visited:        'badge-green',
     won:            'badge-green',
     lost:           'badge-gray',
     hot:            'badge-pink',

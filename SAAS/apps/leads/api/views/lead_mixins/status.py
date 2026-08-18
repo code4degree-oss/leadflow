@@ -51,6 +51,8 @@ class LeadStatusMixin:
         lead.status = LeadStatus.LOST
         lead.next_call_at = None
         lead.save()
+        from apps.leads.tasks import cancel_pending_reminders
+        cancel_pending_reminders(lead)
 
         ActivityTimeline.objects.create(
             client=lead.client, lead=lead, performed_by=request.user,

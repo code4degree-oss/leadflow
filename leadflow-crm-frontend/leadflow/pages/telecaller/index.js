@@ -352,7 +352,7 @@ export default function TelecallerWorkspace() {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {['all', 'called', 'interested', 'not_answered', 'site_visit', 'won', 'lost'].map(s => (
+              {['all', 'called', 'interested', 'not_answered', 'site_visit', 'visited', 'won', 'lost'].map(s => (
                 <button key={s} onClick={() => setHistoryFilter(s)}
                   className={clsx(
                     'px-4 py-2 rounded-xl text-xs font-bold transition-all capitalize border shadow-sm',

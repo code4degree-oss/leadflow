@@ -1,15 +1,16 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Bell, Phone, X, Clock, AlertTriangle } from 'lucide-react'
+import { Bell, Phone, X, Clock, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import clsx from 'clsx'
 import { fetchWithAuth } from '../utils/api'
 
 /**
  * ReminderPopup — Global component that polls for upcoming reminders
- * and shows a floating popup 10 minutes before a scheduled reminder.
- * Only active for TELECALLER role.
+ * and shows a floating popup before a scheduled reminder.
+ * Active for TELECALLER and FIELD_AGENT roles.
  */
 export default function ReminderPopup() {
   const [popups, setPopups] = useState([])
+  const [completingIds, setCompletingIds] = useState(new Set())
   const [hiddenReminders, setHiddenReminders] = useState(() => {
     try {
       const data = JSON.parse(localStorage.getItem('hidden_reminders') || '{}')
@@ -31,12 +32,13 @@ export default function ReminderPopup() {
     try {
       const role = localStorage.getItem('user_role')
       const token = localStorage.getItem('access_token')
-      if (role !== 'TELECALLER' || !token) return
+      if (!token || !['TELECALLER', 'FIELD_AGENT'].includes(role)) return
 
       const data = await fetchWithAuth('/reminders/upcoming/')
       const reminders = data.results || data || []
       const now = new Date()
-      const fiveMinutes = 5 * 60 * 1000
+      const tenMinutes = 10 * 60 * 1000
+      const thirtyMinutes = 30 * 60 * 1000
 
       const upcoming = reminders.filter(r => {
         const scheduledTime = new Date(r.scheduled_at)
@@ -44,8 +46,8 @@ export default function ReminderPopup() {
         const hiddenTime = hiddenReminders[r.id]
         const isHidden = hiddenTime && (now.getTime() < hiddenTime)
         
-        // Show popup if ≤ 5 min away and not past by more than 5 min
-        return timeUntil <= fiveMinutes && timeUntil > -5 * 60 * 1000 && !isHidden
+        // Show popup if ≤ 10 min away and not past by more than 30 min
+        return timeUntil <= tenMinutes && timeUntil > -thirtyMinutes && !isHidden
       })
 
       setPopups(upcoming)
@@ -106,8 +108,8 @@ export default function ReminderPopup() {
     };
     window.addEventListener('ws_message', handleWsMessage);
 
-    // Fallback poll every 5 minutes instead of 1 minute to save resources
-    const interval = setInterval(checkReminders, 5 * 60 * 1000)
+    // Poll every 2 minutes for more responsive reminders
+    const interval = setInterval(checkReminders, 2 * 60 * 1000)
     return () => {
       clearInterval(interval)
       window.removeEventListener('ws_message', handleWsMessage)
@@ -125,9 +127,32 @@ export default function ReminderPopup() {
   const handleDismiss = (id) => handleHide(id, 24 * 60 * 60 * 1000) // hide for 24h
   const handleSnooze = (id, mins) => handleHide(id, mins * 60 * 1000)
 
+  const handleMarkDone = async (id) => {
+    setCompletingIds(prev => new Set([...prev, id]))
+    try {
+      await fetchWithAuth(`/reminders/${id}/`, {
+        method: 'PATCH',
+        body: JSON.stringify({ is_completed: true })
+      })
+      setPopups(prev => prev.filter(p => p.id !== id))
+    } catch (err) {
+      console.warn('Failed to mark reminder done:', err)
+    } finally {
+      setCompletingIds(prev => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+    }
+  }
+
   const handleCall = (lead_id) => {
-    // Navigate to telecaller leads page
-    window.location.href = '/telecaller/leads'
+    const role = localStorage.getItem('user_role')
+    if (role === 'FIELD_AGENT') {
+      window.location.href = '/fieldagent/leads'
+    } else {
+      window.location.href = '/telecaller/leads'
+    }
   }
 
   if (popups.length === 0) return null
@@ -140,6 +165,7 @@ export default function ReminderPopup() {
         const now = new Date()
         const minsUntil = Math.round((scheduledTime - now) / 60000)
         const isPast = minsUntil <= 0
+        const isCompleting = completingIds.has(reminder.id)
         
         return (
           <div
@@ -192,8 +218,11 @@ export default function ReminderPopup() {
               <div className="text-sm font-bold text-txt mb-0.5">
                 {reminder.lead_name || 'Scheduled Follow-up'}
               </div>
+              {reminder.lead_phone && (
+                <div className="text-xs text-txt3 font-mono">{reminder.lead_phone}</div>
+              )}
               {reminder.note && (
-                <div className="text-xs text-txt2 line-clamp-2">{reminder.note}</div>
+                <div className="text-xs text-txt2 line-clamp-2 mt-1">{reminder.note}</div>
               )}
               <div className="text-[10px] text-txt3 font-mono mt-1.5">
                 <Clock size={10} className="inline mr-1" />
@@ -212,6 +241,13 @@ export default function ReminderPopup() {
                   className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-accent text-white rounded-xl text-xs font-bold hover:bg-accent/90 transition-colors shadow-lg shadow-accent/20"
                 >
                   <Phone size={12} /> Open Leads
+                </button>
+                <button
+                  onClick={() => handleMarkDone(reminder.id)}
+                  disabled={isCompleting}
+                  className="flex items-center justify-center gap-1.5 py-2 px-3 bg-[#10B981] text-white rounded-xl text-xs font-bold hover:bg-[#059669] transition-colors shadow-lg shadow-[#10B981]/20 disabled:opacity-50"
+                >
+                  <CheckCircle2 size={12} /> {isCompleting ? '...' : 'Done'}
                 </button>
                 <button
                   onClick={() => handleDismiss(reminder.id)}

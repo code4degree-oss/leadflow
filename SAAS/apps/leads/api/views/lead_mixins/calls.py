@@ -145,6 +145,8 @@ class LeadCallsMixin:
             lead.last_interaction_at = timezone.now()
             lead.next_call_at = None
             lead.save()
+            from apps.leads.tasks import cancel_pending_reminders
+            cancel_pending_reminders(lead)
             ActivityTimeline.objects.create(
                 client=lead.client, lead=lead, performed_by=request.user,
                 activity_type=ActivityType.CALL_LOGGED,
@@ -187,6 +189,8 @@ class LeadCallsMixin:
             lead.lost_count = 4
             lead.next_call_at = None
             lead.save()
+            from apps.leads.tasks import cancel_pending_reminders
+            cancel_pending_reminders(lead)
             ActivityTimeline.objects.create(
                 client=lead.client, lead=lead, performed_by=request.user,
                 activity_type=ActivityType.CALL_LOGGED,

@@ -17,7 +17,7 @@ class LeadAnalyticsMixin:
         batch_counts = qs.values('batch_id', 'batch__name', 'batch__created_at', 'source').annotate(
             total=Count('id'),
             new_leads=Count('id', filter=Q(status__in=[LeadStatus.NEW, 'IMPORTED'])),
-            in_progress=Count('id', filter=Q(status__in=[LeadStatus.CALLED, 'CALLBACK', LeadStatus.INTERESTED, LeadStatus.SITE_VISIT, LeadStatus.NOT_ANSWERED])),
+            in_progress=Count('id', filter=Q(status__in=[LeadStatus.CALLED, 'CALLBACK', LeadStatus.INTERESTED, LeadStatus.SITE_VISIT, LeadStatus.VISITED, LeadStatus.NOT_ANSWERED])),
             covered=Count('id', filter=~Q(status__in=[LeadStatus.NEW, 'IMPORTED'])),
             won=Count('id', filter=Q(status=LeadStatus.WON)),
             lost=Count('id', filter=Q(status=LeadStatus.LOST)),
@@ -70,7 +70,7 @@ class LeadAnalyticsMixin:
 
         status_counts = queryset.values('status').annotate(count=Count('id'))
         stats_map = {item['status']: item['count'] for item in status_counts}
-        lead_statuses = ['NEW', 'CALLED', 'NOT_ANSWERED', 'INTERESTED', 'SITE_VISIT', 'WON', 'LOST', 'INVALID_NUMBER']
+        lead_statuses = ['NEW', 'CALLED', 'NOT_ANSWERED', 'INTERESTED', 'SITE_VISIT', 'VISITED', 'WON', 'LOST', 'INVALID_NUMBER']
         formatted_stats = {s: stats_map.get(s, 0) for s in lead_statuses}
         total_leads = sum(formatted_stats.values())
         

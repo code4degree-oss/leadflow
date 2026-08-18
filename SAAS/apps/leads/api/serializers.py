@@ -78,7 +78,7 @@ class LeadSerializer(serializers.ModelSerializer):
             old_status = self.instance.status
             new_status = attrs['status']
             
-            if old_status == LeadStatus.NEW and new_status in [LeadStatus.WON, LeadStatus.SITE_VISIT]:
+            if old_status == LeadStatus.NEW and new_status in [LeadStatus.WON, LeadStatus.SITE_VISIT, LeadStatus.VISITED]:
                 raise serializers.ValidationError({"status": "A new lead must be called before a site visit or win."})
                 
         return attrs
@@ -154,11 +154,13 @@ class SiteVisitSerializer(serializers.ModelSerializer):
 
 class FollowUpReminderSerializer(serializers.ModelSerializer):
     lead_name = serializers.SerializerMethodField(read_only=True)
+    created_by_name = serializers.SerializerMethodField(read_only=True)
+    lead_phone = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = FollowUpReminder
         fields = [
-            'id', 'lead', 'lead_name', 'created_by',
+            'id', 'lead', 'lead_name', 'lead_phone', 'created_by', 'created_by_name',
             'scheduled_at', 'note', 'is_completed', 'email_sent',
             'created_at', 'updated_at'
         ]
@@ -166,6 +168,14 @@ class FollowUpReminderSerializer(serializers.ModelSerializer):
 
     def get_lead_name(self, obj):
         return f"{obj.lead.first_name} {obj.lead.last_name}".strip()
+
+    def get_created_by_name(self, obj):
+        if obj.created_by:
+            return f"{obj.created_by.first_name} {obj.created_by.last_name}".strip() or obj.created_by.email
+        return 'System'
+
+    def get_lead_phone(self, obj):
+        return obj.lead.phone
 
 
 class CallLogSerializer(serializers.Serializer):

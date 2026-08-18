@@ -6,6 +6,7 @@ const PIPELINE_COLUMNS = [
   { status: 'CALLED', label: 'Contacted', color: 'border-blue-500/30 bg-blue-500/5 text-blue-500' },
   { status: 'INTERESTED', label: 'Interested', color: 'border-purple/30 bg-purple/5 text-purple' },
   { status: 'SITE_VISIT', label: 'Site Visit', color: 'border-accent2/30 bg-accent2/5 text-accent2' },
+  { status: 'VISITED', label: 'Visited', color: 'border-[#06B6D4]/30 bg-[#06B6D4]/5 text-[#06B6D4]' },
   { status: 'WON', label: 'Won', color: 'border-[#10B981]/30 bg-[#10B981]/5 text-[#10B981]' },
 ]
 
