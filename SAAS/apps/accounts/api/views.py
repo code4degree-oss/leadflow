@@ -95,6 +95,31 @@ class UserViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
         user.save()
         return Response({"detail": f"Password for {user.email} has been successfully reset."})
 
+    @action(detail=True, methods=['get'], url_path='calendar-stats')
+    def calendar_stats(self, request, pk=None):
+        """
+        Returns a time-series of leads completed (WON) by this user, grouped by day.
+        """
+        from apps.leads.models import Lead
+        from django.db.models import Count
+        from django.db.models.functions import TruncDate
+        
+        user = self.get_object()
+        
+        stats = Lead.objects.filter(
+            assigned_to=user, 
+            status='WON'
+        ).annotate(
+            date=TruncDate('updated_at')
+        ).values('date').annotate(count=Count('id')).order_by('date')
+        
+        results = [
+            {"date": stat['date'].strftime('%Y-%m-%d'), "count": stat['count']} 
+            for stat in stats if stat['date']
+        ]
+        
+        return Response(results)
+
 class ClientLocationViewSet(TenantQuerySetMixin, viewsets.ModelViewSet):
     """
     API endpoint for Client Admins to manage their authorized Geolocation bounds.

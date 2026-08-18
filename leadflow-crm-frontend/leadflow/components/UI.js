@@ -4,46 +4,56 @@ import clsx from 'clsx'
 
 export function StatCard({ label, value, sub, trend, color = 'accent', icon: Icon, sparkData }) {
   const colorMap = {
-    accent: 'text-accent bg-accent/5',
-    pink: 'text-accent2 bg-accent2/5',
-    purple: 'text-purple bg-purple/5',
-    amber: 'text-amber bg-amber/5',
-    green: 'text-[#10B981] bg-[#10B981]/5',
-    orange: 'text-hot bg-hot/5',
+    accent: 'accent',
+    pink: 'accent2',
+    purple: 'purple',
+    amber: 'amber',
+    green: '[#10B981]',
+    orange: 'hot',
   }
-  const sparkColorMap = {
-    accent: 'var(--accent)',
-    pink: '#ef0379',
-    purple: '#6D28D9',
-    amber: '#F59E0B',
-    green: '#10B981',
-    orange: '#F97316',
-  }
+  const resolvedColor = colorMap[color] || colorMap.accent
+
   const trendEl = trend > 0
-    ? <span className="flex items-center gap-0.5 text-accent2 text-xs font-bold"><TrendingUp size={11}/>{trend}%</span>
+    ? <span className="flex items-center gap-0.5 text-[#10B981] text-[10px] font-bold"><TrendingUp size={11}/>{trend}%</span>
     : trend < 0
-    ? <span className="flex items-center gap-0.5 text-danger text-xs font-bold"><TrendingDown size={11}/>{Math.abs(trend)}%</span>
-    : <span className="flex items-center gap-0.5 text-txt3 text-xs font-bold"><Minus size={11}/>0%</span>
+    ? <span className="flex items-center gap-0.5 text-danger text-[10px] font-bold"><TrendingDown size={11}/>{Math.abs(trend)}%</span>
+    : <span className="flex items-center gap-0.5 text-txt3 text-[10px] font-bold"><Minus size={11}/>0%</span>
 
   return (
-    <div className="stat-card group hover-lift relative overflow-hidden">
-      <div className="flex items-start justify-between">
-        {Icon && (
-          <div className={clsx('w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110', colorMap[color] || colorMap.accent)}>
-            <Icon size={18} />
-          </div>
-        )}
-        {trend !== undefined && trendEl}
+    <div className="accent-card p-5 group hover-lift relative overflow-hidden h-full flex flex-col justify-between">
+      <div className={clsx(
+        "absolute -top-8 -right-8 w-24 h-24 rounded-full opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-500",
+        `bg-${resolvedColor}`
+      )} />
+      
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          {Icon && (
+            <div className={clsx(
+              `w-10 h-10 rounded-xl bg-${resolvedColor}/8 flex items-center justify-center text-${resolvedColor}`,
+              `group-hover:bg-${resolvedColor} group-hover:text-white transition-all duration-300`
+            )}>
+              <Icon size={18} />
+            </div>
+          )}
+          {trend !== undefined && trendEl}
+        </div>
+        
+        <div className="font-display font-extrabold text-3xl text-txt leading-none tracking-tight animate-count-up">
+          {value}
+        </div>
+        <div className="text-xs text-txt3 mt-1.5 font-medium">{label}</div>
       </div>
-      <div className="mt-4">
-        <div className="font-display font-bold text-3xl text-txt leading-none animate-count-up">{value}</div>
-        <div className="text-sm font-medium text-txt2 mt-1.5">{label}</div>
-        {sub && <div className="text-[10px] uppercase font-bold tracking-wider text-txt3 mt-1">{sub}</div>}
-      </div>
-      {/* Sparkline */}
+      
+      {sub && (
+        <div className={clsx("text-[10px] uppercase font-bold tracking-widest mt-4 pt-3 border-t border-border/40", `text-${resolvedColor}`)}>
+          {sub}
+        </div>
+      )}
+      
       {sparkData && sparkData.length > 0 && (
         <div className="absolute bottom-0 left-0 right-0 opacity-40 group-hover:opacity-60 transition-opacity">
-          <MiniAreaChart data={sparkData} color={sparkColorMap[color] || 'var(--accent)'} height={40} />
+          <MiniAreaChart data={sparkData} color={`var(--${colorMap[color] || 'accent'})`} height={40} />
         </div>
       )}
     </div>

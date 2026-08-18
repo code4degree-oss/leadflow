@@ -68,146 +68,132 @@ export default function Employees() {
     >
 
       {/* Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         {[
-          { label:'Total Staff', value: employees.length, color:'text-txt' },
-          { label:'Active Now', value: employees.filter(e => e.is_active).length, color:'text-success' },
-          { label:'Managers', value: employees.filter(e => e.role === 'MANAGER').length, color:'text-purple' },
-          { label:'Telecallers', value: employees.filter(e => e.role === 'TELECALLER').length, color:'text-accent' },
-          { label:'Field Agents', value: employees.filter(e => e.role === 'FIELD_AGENT').length, color:'text-amber' },
+          { label:'Total Staff', value: employees.length, color:'accent', icon: Users },
+          { label:'Active Now', value: employees.filter(e => e.is_active).length, color:'green', icon: CheckCircle2 },
+          { label:'Managers', value: employees.filter(e => e.role === 'MANAGER').length, color:'purple', icon: Shield },
+          { label:'Telecallers', value: employees.filter(e => e.role === 'TELECALLER').length, color:'pink', icon: Phone },
+          { label:'Field Agents', value: employees.filter(e => e.role === 'FIELD_AGENT').length, color:'amber', icon: MapPin },
         ].map(s => (
-          <div key={s.label} className="card p-4 hover:border-primary/20 transition-colors group">
-            <div className={clsx('font-display font-bold text-2xl group-hover:scale-105 transition-transform origin-left', s.color)}>{s.value}</div>
-            <div className="text-[10px] font-bold uppercase tracking-wider text-txt3 mt-1">{s.label}</div>
+          <div key={s.label}>
+             <StatCard label={s.label} value={s.value} color={s.color} icon={s.icon} />
           </div>
         ))}
       </div>
 
-      {/* Table Section */}
-      <div className="card overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-border flex items-center justify-between bg-bg2/30">
-          <h2 className="text-sm font-bold text-txt">Team Roster</h2>
-          <div className="flex gap-2">
-             <button onClick={fetchEmployees} className="p-1.5 text-txt3 hover:text-primary transition-colors">
-               <RefreshCw size={14} className={clsx(loading && "animate-spin")} />
-             </button>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-bg2/50 border-b border-border">
-                <th className="px-4 py-3 text-[10px] font-bold text-txt3 uppercase tracking-widest">Employee</th>
-                <th className="px-4 py-3 text-[10px] font-bold text-txt3 uppercase tracking-widest">Role</th>
-                <th className="px-4 py-3 text-[10px] font-bold text-txt3 uppercase tracking-widest text-center">Geo-Bypass</th>
-                <th className="px-4 py-3 text-[10px] font-bold text-txt3 uppercase tracking-widest text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {loading ? (
-                <tr>
-                  <td colSpan="3" className="py-20 text-center">
-                    <RefreshCw className="animate-spin text-primary mx-auto mb-2" size={24} />
-                    <p className="text-xs text-txt3">Loading team data...</p>
-                  </td>
-                </tr>
-              ) : error ? (
-                <tr>
-                  <td colSpan="3" className="py-20 text-center">
-                    <AlertCircle className="text-danger mx-auto mb-2" size={24} />
-                    <p className="text-xs font-bold text-txt2">Failed to load employees</p>
-                    <p className="text-[10px] text-txt3">{error}</p>
-                  </td>
-                </tr>
-              ) : employees.length === 0 ? (
-                <tr>
-                  <td colSpan="3" className="py-20 text-center">
-                    <UserIcon className="text-txt3 mx-auto mb-2 opacity-20" size={32} />
-                    <p className="text-xs text-txt3">No employees found. Add your first team member!</p>
-                  </td>
-                </tr>
-              ) : (
-                employees.map(e => (
-                  <tr key={e.id} className={clsx("hover:bg-bg2/30 transition-colors group", !e.is_active && "opacity-80")}>
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className={clsx(
-                          "w-9 h-9 rounded-full border flex items-center justify-center text-xs font-bold shadow-inner flex-shrink-0",
-                          e.is_active ? "bg-primary/10 border-primary/20 text-primary" : "bg-danger/10 border-danger/20 text-danger"
-                        )}>
-                          {e.first_name[0]}{e.last_name[0]}
-                        </div>
-                        <div className="flex flex-col">
-                          <span className={clsx("text-sm font-bold leading-tight", !e.is_active && "text-danger")}>{e.first_name} {e.last_name}</span>
-                          <span className="text-[10px] text-txt3 font-mono">{e.email}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-2">
-                        <span className={clsx('badge px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tighter flex-shrink-0', roleColors[e.role.toLowerCase()] || 'badge-gray')}>
-                          {e.role}
-                        </span>
-                        {!e.is_active && (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tighter bg-danger/10 text-danger border border-danger/20 flex-shrink-0">
-                            Suspended
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 text-center">
-                        {e.role === 'CLIENT_ADMIN' ? (
-                            <span className="text-[10px] text-accent2 font-bold uppercase tracking-widest bg-accent2/10 px-2 py-0.5 rounded" title="Admins are always exempt from geofencing">N/A</span>
-                        ) : (
-                            <button 
-                                onClick={() => handleToggleExempt(e)}
-                                className={clsx(
-                                    "relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none",
-                                    e.geofencing_exempt ? "bg-accent2" : "bg-border2"
-                                )}
-                                title={e.geofencing_exempt ? "Geofencing Bypassed" : "Bound by Geofencing"}
-                            >
-                                <span 
-                                    className={clsx(
-                                        "inline-block h-3 w-3 transform rounded-full bg-white transition-transform",
-                                        e.geofencing_exempt ? "translate-x-5" : "translate-x-1"
-                                    )} 
-                                />
-                            </button>
-                        )}
-                    </td>
-                    <td className="px-4 py-4">
-                      {e.role === 'CLIENT_ADMIN' ? (
-                        <div className="flex items-center justify-center">
-                          <span className="text-[10px] text-accent2 font-bold uppercase tracking-widest bg-accent2/10 px-2 py-0.5 rounded" title="Actions locked for organization admins">N/A</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center gap-1 transition-opacity">
-                          <button onClick={() => router.push(`/admin/employees/${e.id}`)} className="p-2 hover:bg-bg3 rounded-lg text-txt3 hover:text-accent transition-all" title="View Profile">
-                            <Eye size={14}/>
-                          </button>
-                          <button className="p-2 hover:bg-bg3 rounded-lg text-txt3 hover:text-primary transition-all" title="Edit Profile">
-                            <Edit size={14}/>
-                          </button>
-                          <button 
-                            onClick={() => handleToggleActive(e)}
-                            className={clsx("p-2 rounded-lg transition-all", e.is_active ? "text-txt3 hover:bg-danger/10 hover:text-danger" : "text-[#10B981] bg-[#10B981]/10 hover:bg-[#10B981]/20 hover:text-[#059669]")} 
-                            title={e.is_active ? "Suspend Employee" : "Activate Employee"}
-                          >
-                            {e.is_active ? <Ban size={14}/> : <CheckCircle2 size={14}/>}
-                          </button>
-
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+      {/* Grid Section */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-sm font-bold text-txt">Team Roster</h2>
+        <button onClick={fetchEmployees} className="p-2 hover:bg-bg2 rounded-xl transition-all text-txt3 hover:text-txt" title="Refresh">
+          <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
+        </button>
       </div>
+
+      {loading ? (
+        <div className="py-20 text-center">
+          <RefreshCw className="animate-spin text-accent mx-auto mb-3" size={24} />
+          <p className="text-xs font-bold uppercase tracking-widest text-txt3">Loading team data...</p>
+        </div>
+      ) : error ? (
+        <div className="py-20 text-center">
+          <AlertCircle className="text-danger mx-auto mb-2" size={24} />
+          <p className="text-xs font-bold text-txt2">Failed to load employees</p>
+          <p className="text-[10px] text-txt3">{error}</p>
+        </div>
+      ) : employees.length === 0 ? (
+        <div className="py-20 text-center accent-card border-dashed border-2">
+          <UserIcon className="text-txt3 mx-auto mb-3 opacity-20" size={32} />
+          <p className="text-sm font-bold text-txt3">No employees found. Add your first team member!</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {employees.map(e => (
+            <div key={e.id} className={clsx(
+              "accent-card p-5 hover-lift group relative overflow-hidden flex flex-col",
+              !e.is_active && "opacity-75 grayscale-[30%]"
+            )}>
+              {/* Glow */}
+              <div className={clsx(
+                "absolute -top-10 -right-10 w-28 h-28 rounded-full opacity-0 group-hover:opacity-[0.05] transition-opacity duration-500",
+                e.is_active ? "bg-accent" : "bg-danger"
+              )} />
+              
+              {/* Header */}
+              <div className="flex items-start justify-between mb-4 relative z-10">
+                <div className={clsx(
+                  "w-11 h-11 rounded-xl flex items-center justify-center text-sm font-bold border transition-all duration-300",
+                  e.is_active 
+                    ? "bg-accent/8 border-accent/10 text-accent group-hover:bg-accent group-hover:text-white"
+                    : "bg-danger/8 border-danger/10 text-danger"
+                )}>
+                  {e.first_name[0]}{e.last_name[0]}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className={clsx("w-2 h-2 rounded-full", e.is_active ? "bg-[#10B981]" : "bg-danger")} />
+                  <span className={clsx("text-[9px] font-bold uppercase tracking-wider", e.is_active ? "text-[#10B981]" : "text-danger")}>
+                    {e.is_active ? 'Active' : 'Suspended'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Info */}
+              <div className="mb-4 flex-1 relative z-10">
+                <div className="text-sm font-bold text-txt mb-0.5 group-hover:text-accent transition-colors">
+                  {e.first_name} {e.last_name}
+                </div>
+                <div className="text-[10px] text-txt3 font-mono truncate" title={e.email}>{e.email}</div>
+                <div className="mt-2.5">
+                   <span className={clsx('badge px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest', roleColors[e.role.toLowerCase()] || 'badge-gray')}>
+                     {e.role.replace('_', ' ')}
+                   </span>
+                </div>
+              </div>
+
+              {/* Geo & Actions */}
+              <div className="pt-3 border-t border-border/40 flex items-center justify-between relative z-10">
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] text-txt3 font-bold uppercase tracking-wider flex items-center gap-1">
+                    <MapPin size={10} /> Geo-Bypass
+                  </span>
+                  {e.role === 'CLIENT_ADMIN' ? (
+                    <span className="text-[9px] text-accent2 font-bold uppercase bg-accent2/10 px-1.5 py-0.5 rounded">N/A</span>
+                  ) : (
+                    <button 
+                        onClick={() => handleToggleExempt(e)}
+                        className={clsx(
+                            "relative inline-flex h-4 w-7 items-center rounded-full transition-colors",
+                            e.geofencing_exempt ? "bg-accent2" : "bg-border2"
+                        )}
+                        title={e.geofencing_exempt ? "Bypassed" : "Bound by Geofencing"}
+                    >
+                        <span className={clsx(
+                            "inline-block h-2 w-2 transform rounded-full bg-white transition-transform",
+                            e.geofencing_exempt ? "translate-x-4" : "translate-x-1"
+                        )} />
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-0.5">
+                  <button onClick={() => router.push(`/admin/employees/${e.id}`)} className="p-1.5 rounded-lg text-txt3 hover:bg-accent/10 hover:text-accent transition-all" title="View Profile">
+                    <Eye size={13}/>
+                  </button>
+                  {e.role !== 'CLIENT_ADMIN' && (
+                    <button 
+                      onClick={() => handleToggleActive(e)}
+                      className={clsx("p-1.5 rounded-lg transition-all", e.is_active ? "text-txt3 hover:bg-danger/10 hover:text-danger" : "text-[#10B981] bg-[#10B981]/10 hover:bg-[#10B981]/20 hover:text-[#059669]")} 
+                      title={e.is_active ? "Suspend" : "Activate"}
+                    >
+                      {e.is_active ? <Ban size={13}/> : <CheckCircle2 size={13}/>}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
 
     </Layout>

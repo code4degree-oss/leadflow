@@ -68,7 +68,7 @@ export default function AdminDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Lead funnel */}
-        <div className="card p-5 shadow-xl border-border/50">
+        <div className="accent-card p-6 border-border/50">
           <SectionHeader title="Lead Distribution" sub="Current status breakdown" />
           <div className="flex justify-center py-2">
              <DonutChart data={funnelData} height={140} />
@@ -87,7 +87,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Global Recent Activity */}
-        <div className="card p-5 lg:col-span-2 shadow-xl border-border/50">
+        <div className="accent-card p-6 lg:col-span-2 border-border/50">
           <SectionHeader title="Recent Activity Feed" sub="Latest updates from your team">
             <button onClick={fetchStats} className="p-1.5 text-txt3 hover:text-primary transition-all">
               <RefreshCw size={14} className={clsx(loading && "animate-spin")} />
@@ -143,93 +143,31 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Phase 11: Advanced Analytics Rows */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Source Performance */}
-        <div className="card p-5 shadow-xl border-border/50">
-          <SectionHeader title="Source Performance" sub="Conversion rate by lead channel" />
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead className="text-txt3 uppercase tracking-widest font-bold border-b border-border">
-                <tr>
-                  <th className="text-left pb-2">Source</th>
-                  <th className="text-right pb-2">Count</th>
-                  <th className="text-right pb-2">Conv. %</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/50">
-                {stats?.source_performance?.map((s) => (
-                  <tr key={s.source} className="hover:bg-bg2/30 transition-colors">
-                    <td className="py-3 font-semibold text-txt capitalize">{s.source.toLowerCase()}</td>
-                    <td className="py-3 text-right font-mono text-txt3">{s.count}</td>
-                    <td className="py-3 text-right">
-                      <div className="flex items-center justify-end gap-2 text-txt font-bold">
-                        {s.conversion_rate}%
-                        <div className="w-12 h-1 bg-bg3 rounded-full overflow-hidden hidden md:block">
-                           <div className="h-full bg-primary" style={{width: `${s.conversion_rate}%`}} />
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Team Leaderboard */}
-        <div className="card p-5 shadow-xl border-border/50">
-          <SectionHeader title="Team Leaderboard" sub="Performance across the sales team" />
-          <div className="mt-4 space-y-4">
-            {stats?.team_performance?.length === 0 ? (
-               <div className="py-10 text-center text-txt3 text-xs opacity-50 uppercase tracking-widest font-bold">No representative data yet</div>
-            ) : (
-              stats?.team_performance?.sort((a,b) => b.won - a.won).map((member, i) => (
-                <div key={member.user} className="flex items-center justify-between group">
-                  <div className="flex items-center gap-3">
-                    <div className={clsx(
-                      "w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold border shadow-sm transition-all",
-                      i === 0 ? "bg-amber/10 border-amber/30 text-amber scale-110" : "bg-bg3 border-border text-txt3"
-                    )}>
-                      {i + 1}
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold text-txt group-hover:text-primary transition-colors">{member.user}</div>
-                      <div className="text-[10px] text-txt3 font-mono">{member.total} Leads • {member.won} Won</div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs font-bold text-txt">{member.conversion}%</div>
-                    <div className="text-[9px] text-txt3 uppercase tracking-tighter font-bold">Conversion</div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
       </div>
 
       {/* Quick Insights Alerts */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="card p-4 bg-amber/5 border-amber/20 flex gap-4 items-start shadow-lg shadow-amber/5">
-          <div className="p-3 bg-amber/10 rounded-2xl text-amber">
-            <AlertTriangle size={24} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+        <div className="accent-card p-5 border-amber/20 flex gap-4 items-start shadow-sm shadow-amber/5 relative overflow-hidden group">
+          <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-amber opacity-5 group-hover:opacity-10 transition-opacity" />
+          <div className="p-3 bg-amber/10 rounded-2xl text-amber shrink-0 relative z-10">
+            <AlertTriangle size={20} />
           </div>
-          <div>
+          <div className="relative z-10">
             <h4 className="text-sm font-bold text-txt mb-1">Deduplication Pending</h4>
-            <p className="text-xs text-txt3 leading-relaxed mb-3">3 leads were flagged as potential duplicates from the latest offline batch. Review before assignment.</p>
-            <Link href="/admin/leads?tab=duplicate" className="btn-ghost py-1.5 px-3 text-[10px] border-amber/20 hover:bg-amber/10 text-amber font-bold uppercase">Resolve Now</Link>
+            <p className="text-xs text-txt3 leading-relaxed mb-3 pr-4">3 leads were flagged as potential duplicates from the latest offline batch. Review before assignment.</p>
+            <Link href="/admin/leads?tab=duplicate" className="btn-ghost py-1.5 px-3 text-[10px] border-amber/20 hover:bg-amber/10 text-amber font-bold uppercase tracking-wider rounded-lg">Resolve Now</Link>
           </div>
         </div>
 
-        <div className="card p-4 bg-red/5 border-red/20 flex gap-4 items-start shadow-lg shadow-red/5">
-           <div className="p-3 bg-red/10 rounded-2xl text-danger">
-              <Clock size={24} />
+        <div className="accent-card p-5 border-red/20 flex gap-4 items-start shadow-sm shadow-red/5 relative overflow-hidden group">
+           <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-danger opacity-5 group-hover:opacity-10 transition-opacity" />
+           <div className="p-3 bg-danger/10 rounded-2xl text-danger shrink-0 relative z-10">
+              <Clock size={20} />
            </div>
-           <div>
+           <div className="relative z-10">
              <h4 className="text-sm font-bold text-txt mb-1">Aged Leads Alert</h4>
-             <p className="text-xs text-txt3 leading-relaxed mb-3">7 leads have been in "Called" status for over 48 hours without progress. Manual intervention recommended.</p>
-             <Link href="/admin/leads?tab=aged" className="btn-ghost py-1.5 px-3 text-[10px] border-red/20 hover:bg-red/10 text-danger font-bold uppercase">Reassign Queue</Link>
+             <p className="text-xs text-txt3 leading-relaxed mb-3 pr-4">7 leads have been in "Called" status for over 48 hours without progress. Manual intervention recommended.</p>
+             <Link href="/admin/leads?tab=aged" className="btn-ghost py-1.5 px-3 text-[10px] border-danger/20 hover:bg-danger/10 text-danger font-bold uppercase tracking-wider rounded-lg">Reassign Queue</Link>
            </div>
         </div>
       </div>

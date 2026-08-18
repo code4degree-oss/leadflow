@@ -16,6 +16,7 @@ export default function EmployeeDetails() {
   const [activeTab, setActiveTab] = useState('profile')
   const [employee, setEmployee] = useState(null)
   const [performance, setPerformance] = useState(null)
+  const [calendarStats, setCalendarStats] = useState([])
   const [loading, setLoading] = useState(true)
   const [resettingPwd, setResettingPwd] = useState(false)
   const [newPassword, setNewPassword] = useState(null)
@@ -37,6 +38,12 @@ export default function EmployeeDetails() {
       const perfRes = await fetchWithAuth('/leads/performance-report/')
       const userPerf = perfRes?.team_performance?.find(p => p.id === id) || null
       setPerformance(userPerf)
+
+      // Fetch calendar stats (leads completed)
+      try {
+        const calRes = await fetchWithAuth(`/accounts/employees/${id}/calendar-stats/`)
+        setCalendarStats(calRes)
+      } catch(e) { console.error('Failed to load calendar stats', e) }
 
     } catch (err) {
       console.error(err)
@@ -236,10 +243,45 @@ export default function EmployeeDetails() {
                       </div>
                     </div>
 
-                    <div className="bg-bg2/50 border border-border rounded-xl p-8 text-center flex flex-col items-center justify-center min-h-[250px]">
-                      <Activity size={48} className="text-txt3/30 mb-4" />
-                      <p className="text-sm font-bold text-txt3">Detailed charts are in development.</p>
-                      <p className="text-xs text-txt3 max-w-sm mt-2">Historical charting mechanisms will plug in here to visualize {employee.first_name}'s daily growth.</p>
+                    <div className="bg-bg2/50 border border-border rounded-xl p-8">
+                      <div className="flex items-center justify-between mb-6">
+                        <div>
+                          <h3 className="text-sm font-bold text-txt">Completion Calendar</h3>
+                          <p className="text-[10px] text-txt3 uppercase tracking-wider font-bold mt-1">Leads won over the last 90 days</p>
+                        </div>
+                        <div className="text-[10px] font-bold text-txt3 flex items-center gap-2 bg-bg3 px-3 py-1.5 rounded-lg border border-border">
+                          Less
+                          <div className="flex gap-1">
+                            <div className="w-3 h-3 rounded-sm bg-accent opacity-10"></div>
+                            <div className="w-3 h-3 rounded-sm bg-accent opacity-40"></div>
+                            <div className="w-3 h-3 rounded-sm bg-accent opacity-70"></div>
+                            <div className="w-3 h-3 rounded-sm bg-accent opacity-100"></div>
+                          </div>
+                          More
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-1.5">
+                        {Array.from({length: 90}).map((_, i) => {
+                          const d = new Date()
+                          d.setDate(d.getDate() - (89 - i))
+                          const dateStr = d.toISOString().split('T')[0]
+                          const found = calendarStats?.find(x => x.date === dateStr)
+                          const count = found ? found.count : 0
+                          const opacity = count === 0 ? 0.05 : Math.min(1, 0.2 + (count * 0.15))
+                          return (
+                            <div 
+                              key={dateStr} 
+                              title={`${dateStr}: ${count} leads won`} 
+                              className={clsx(
+                                "w-3 h-3 md:w-4 md:h-4 rounded-sm transition-all hover:scale-125 hover:z-10 relative cursor-crosshair",
+                                count > 0 ? "bg-accent shadow-sm" : "bg-txt3"
+                              )} 
+                              style={{ opacity }} 
+                            />
+                          )
+                        })}
+                      </div>
                     </div>
                  </div>
                ) : (
