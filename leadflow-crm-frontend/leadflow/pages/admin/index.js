@@ -143,7 +143,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      </div>
 
       {/* Quick Insights Alerts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
