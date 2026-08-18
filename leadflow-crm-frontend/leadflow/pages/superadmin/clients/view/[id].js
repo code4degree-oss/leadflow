@@ -522,9 +522,9 @@ export default function ClientMasterPanel() {
                       </td>
                       <td className="px-6 py-3.5">
                         <div className="flex items-center gap-1.5">
-                          <div className={clsx("w-2 h-2 rounded-full", user.is_active ? "bg-[#10B981]" : "bg-danger")} />
-                          <span className={clsx("text-xs font-medium", user.is_active ? "text-[#10B981]" : "text-danger")}>
-                            {user.is_active ? 'Active' : 'Inactive'}
+                          <div className={clsx("w-2 h-2 rounded-full", user.is_deleted ? "bg-txt3" : user.is_active ? "bg-[#10B981]" : "bg-danger")} />
+                          <span className={clsx("text-xs font-medium", user.is_deleted ? "text-txt3" : user.is_active ? "text-[#10B981]" : "text-danger")}>
+                            {user.is_deleted ? 'Deleted' : user.is_active ? 'Active' : 'Inactive'}
                           </span>
                         </div>
                       </td>
