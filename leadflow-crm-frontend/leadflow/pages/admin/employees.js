@@ -21,7 +21,7 @@ export default function Employees() {
   const fetchEmployees = async () => {
     setLoading(true)
     try {
-      const data = await fetchWithAuth('/accounts/employees/')
+      const data = await fetchWithAuth('/accounts/employees/?page_size=500')
       setEmployees(data.results || data)
       setError(null)
     } catch (err) {
@@ -68,10 +68,11 @@ export default function Employees() {
     >
 
       {/* Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
         {[
           { label:'Total Staff', value: employees.length, color:'text-txt' },
           { label:'Active Now', value: employees.filter(e => e.is_active).length, color:'text-success' },
+          { label:'Managers', value: employees.filter(e => e.role === 'MANAGER').length, color:'text-purple' },
           { label:'Telecallers', value: employees.filter(e => e.role === 'TELECALLER').length, color:'text-accent' },
           { label:'Field Agents', value: employees.filter(e => e.role === 'FIELD_AGENT').length, color:'text-amber' },
         ].map(s => (

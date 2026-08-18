@@ -78,6 +78,33 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
             client = user.client
 
+            # --- Subscription & Account Status Check ---
+            # Block login entirely when subscription is expired beyond grace period
+            # or when the account is suspended. Super Admins (no client) are exempt.
+            if client:
+                if not client.is_active:
+                    return Response(
+                        {"detail": "Your organization's account has been suspended. Please contact support."},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+
+                from datetime import timedelta
+                today = timezone.now().date()
+                if client.valid_until:
+                    grace = client.grace_period_days or 7
+                    days_past_expiry = (today - client.valid_until).days
+                    if days_past_expiry > grace:
+                        return Response(
+                            {"detail": "Your organization's subscription has expired. Please contact your administrator to renew."},
+                            status=status.HTTP_403_FORBIDDEN
+                        )
+                elif not client.valid_until:
+                    # No subscription date set at all — block login
+                    return Response(
+                        {"detail": "Your organization's subscription is not configured. Please contact your administrator."},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+
             # --- Record Login History for ALL users ---
             # Django's user_logged_in signal does NOT fire with JWT auth,
             # so we must create LoginHistory directly here.

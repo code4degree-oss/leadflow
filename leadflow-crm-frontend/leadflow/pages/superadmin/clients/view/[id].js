@@ -419,37 +419,7 @@ export default function ClientMasterPanel() {
             </div>
           </div>
 
-          {/* Recent Activity */}
-          {leadStats?.recent_activity?.length > 0 && (
-            <div className="accent-card p-6">
-              <h3 className="text-sm font-bold text-txt flex items-center gap-2 mb-4">
-                <Activity size={14} className="text-amber" /> Recent Activity
-              </h3>
-              <div className="space-y-3">
-                {leadStats.recent_activity.map((act, i) => (
-                  <div key={i} className="flex items-start gap-3 p-3 bg-bg2/40 rounded-xl border border-border/30 hover:border-accent/20 transition-colors">
-                    <div className="w-8 h-8 rounded-full bg-accent/8 flex items-center justify-center text-accent shrink-0 mt-0.5">
-                      <Activity size={12} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-txt truncate">{act.title}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[10px] font-bold text-txt2 bg-bg3 px-1.5 py-0.5 rounded">
-                          {act.performed_by__first_name} {act.performed_by__last_name}
-                        </span>
-                        <span className="text-[10px] text-txt3">
-                          → {act.lead__first_name} {act.lead__last_name}
-                        </span>
-                        <span className="text-[10px] text-txt3 font-mono ml-auto">
-                          {new Date(act.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+
 
           {/* Top Performers */}
           {leadStats?.top_performers?.length > 0 && (

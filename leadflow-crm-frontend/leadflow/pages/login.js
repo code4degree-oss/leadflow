@@ -109,8 +109,12 @@ export default function LoginPage() {
           throw new Error('Invalid email or password. Please check your credentials and try again.')
         }
         // Suspended accounts
-        if (lowerMsg.includes('suspended') || lowerMsg.includes('subscription has expired')) {
-          throw new Error('🚫 Your account has been suspended. Please contact your organization administrator.')
+        if (lowerMsg.includes('suspended')) {
+          throw new Error('🚫 Your organization\'s account has been suspended. Please contact support.')
+        }
+        // Subscription expired
+        if (lowerMsg.includes('subscription has expired') || lowerMsg.includes('subscription is not configured')) {
+          throw new Error('🚫 ' + msg)
         }
         // Geofencing blocks (403 from view layer, 400 from serializer layer)
         if (response.status === 403 || lowerMsg.includes('location') || lowerMsg.includes('geofence') || lowerMsg.includes('outside')) {
