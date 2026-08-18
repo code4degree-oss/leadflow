@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Layout from '../../components/Layout'
-import { SectionHeader, StatusBadge, ProgressBar, Modal } from '../../components/UI'
-import { Plus, Edit, Ban, Trash2, MapPin, Target, Eye, Phone, Shield, RefreshCw, AlertCircle, User as UserIcon, CheckCircle2, Copy } from 'lucide-react'
+import { SectionHeader, StatusBadge, ProgressBar, Modal, StatCard } from '../../components/UI'
+import { Plus, Edit, Ban, Trash2, MapPin, Target, Eye, Phone, Shield, RefreshCw, AlertCircle, User as UserIcon, CheckCircle2, Copy, Users } from 'lucide-react'
 import clsx from 'clsx'
 import { fetchWithAuth } from '../../utils/api'
 
