@@ -32,17 +32,6 @@ export default function Employees() {
   }
 
 
-
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this employee?')) return
-    try {
-      await fetchWithAuth(`/accounts/employees/${id}/`, { method: 'DELETE' })
-      fetchEmployees()
-    } catch (err) {
-      alert(err.message)
-    }
-  }
-
   const handleToggleExempt = async (e) => {
       try {
           await fetchWithAuth(`/accounts/employees/${e.id}/`, {
@@ -207,13 +196,7 @@ export default function Employees() {
                           >
                             {e.is_active ? <Ban size={14}/> : <CheckCircle2 size={14}/>}
                           </button>
-                          <button 
-                            onClick={() => handleDelete(e.id)}
-                            className="p-2 hover:bg-danger/10 rounded-lg text-txt3 hover:text-danger transition-all" 
-                            title="Delete Employee"
-                          >
-                            <Trash2 size={14}/>
-                          </button>
+
                         </div>
                       )}
                     </td>

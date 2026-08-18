@@ -39,7 +39,43 @@ export default function AdminSiteVisits() {
       if (projectFilter) endpoint += (endpoint.includes('?') ? '&' : '?') + `project_id=${projectFilter}`
       
       const data = await fetchWithAuth(endpoint)
-      setVisits(data.results || data || [])
+      let allVisits = data.results || data || []
+
+      // If 'completed' or 'all', also pull leads manually marked as VISITED
+      if (tab === 'completed' || tab === 'all') {
+        let leadsEndpoint = `/leads/?status=VISITED`
+        if (projectFilter) leadsEndpoint += `&project_id=${projectFilter}`
+        
+        try {
+          const leadsData = await fetchWithAuth(leadsEndpoint)
+          const visitedLeads = leadsData.results || leadsData || []
+          
+          // Filter out leads that already have a logged SiteVisit record
+          const existingLeadIds = new Set(allVisits.map(v => v.lead))
+          const unloggedVisits = visitedLeads
+            .filter(l => !existingLeadIds.has(l.id))
+            .map(l => ({
+              id: 'lead-' + l.id,
+              lead: l.id,
+              lead_name: `${l.first_name} ${l.last_name}`,
+              lead_phone: l.phone,
+              project_name: l.project_name,
+              status: 'COMPLETED',
+              outcome: 'Directly Marked',
+              agent_name: 'Unassigned',
+              telecaller_name: l.assigned_user_name,
+              completed_at: l.updated_at,
+              scheduled_at: l.updated_at,
+              notes: 'Lead was directly marked as visited on the pipeline board.',
+            }))
+            
+          allVisits = [...allVisits, ...unloggedVisits]
+        } catch (e) {
+          console.error("Failed to fetch unlogged visited leads", e)
+        }
+      }
+
+      setVisits(allVisits)
       setError(null)
     } catch (err) {
       setError(err.message)
