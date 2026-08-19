@@ -65,7 +65,11 @@ export default function FieldAgentLeads() {
       setLoading(true)
       let url = `/leads/?page=${page}&page_size=${pageSize}`
       if (search) url += `&search=${search}`
-      if (statusFilter !== 'all') url += `&status=${statusFilter.toUpperCase()}`
+      if (statusFilter === 'visited') {
+        url += `&visited=true`
+      } else if (statusFilter !== 'all') {
+        url += `&status=${statusFilter.toUpperCase()}`
+      }
       const data = await fetchWithAuth(url)
       
       // Filter out leads that are only assigned as field_agent but not assigned_to
@@ -266,7 +270,14 @@ export default function FieldAgentLeads() {
                         </div>
                       </div>
                     </td>
-                    <td className="td"><StatusBadge status={lead.status?.toLowerCase()} /></td>
+                    <td className="td">
+                      <StatusBadge status={lead.status?.toLowerCase()} />
+                      {lead.visited_date && (
+                        <div className="text-[10px] text-txt3 mt-1 flex items-center gap-1 font-medium bg-accent/5 inline-flex px-1.5 py-0.5 rounded text-accent">
+                          <CheckCircle2 size={10} /> {new Date(lead.visited_date).toLocaleDateString('en-IN')}
+                        </div>
+                      )}
+                    </td>
                     <td className="td"><span className="text-xs text-txt2">{lead.project_name || '—'}</span></td>
                     <td className="td"><span className="text-xs font-mono text-txt2">{lead.budget ? `₹${Number(lead.budget).toLocaleString('en-IN')}` : '—'}</span></td>
                     <td className="td text-right">
@@ -355,6 +366,7 @@ export default function FieldAgentLeads() {
                       {[
                         { key: 'INTERESTED', label: 'Interested', icon: Flame, activeClass: 'bg-accent2/10 border-accent2 text-accent2 shadow-md shadow-accent2/10' },
                         { key: 'CALLBACK', label: 'Follow-up', icon: Clock, activeClass: 'bg-accent/10 border-accent text-accent shadow-md shadow-accent/10' },
+                        { key: 'SITE_VISIT', label: 'Site Visit', icon: MapPin, activeClass: 'bg-accent2/10 border-accent2 text-accent2 shadow-md shadow-accent2/10' },
                         { key: 'NOT_ANSWERED', label: 'No Answer', icon: PhoneOff, activeClass: 'bg-amber/10 border-amber text-amber shadow-md shadow-amber/10' },
                         { key: 'WON', label: '🎉 Won', icon: Trophy, activeClass: 'bg-[#10B981]/10 border-[#10B981] text-[#10B981] shadow-md shadow-[#10B981]/10' },
                         { key: 'INVALID_NUMBER', label: 'Dead No.', icon: PhoneOff, activeClass: 'bg-danger/10 border-danger text-danger shadow-md shadow-danger/10' },
@@ -375,7 +387,7 @@ export default function FieldAgentLeads() {
                     <div className={clsx("p-4 rounded-xl border transition-all",
                       outcome === 'NOT_ANSWERED' ? "bg-amber/5 border-amber/20" : !nextCallAt ? "bg-danger/5 border-danger/30" : "bg-accent/5 border-accent/20")}>
                       <DateTimePicker
-                        label={outcome === 'CALLBACK' ? 'Follow-up Date & Time' : 'Next Call Date & Time'}
+                        label={outcome === 'CALLBACK' ? 'Follow-up Date & Time' : 'Next Action Date & Time'}
                         required={true} value={nextCallAt} onChange={setNextCallAt}
                         readOnly={outcome === 'NOT_ANSWERED'} accentColor={outcome === 'NOT_ANSWERED' ? 'amber' : 'accent'}
                       />
@@ -417,6 +429,16 @@ export default function FieldAgentLeads() {
                       </select>
                     </div>
                   </div>
+
+                  {/* Field Agent Assignment */}
+                  {(outcome === 'INTERESTED' || outcome === 'WON' || outcome === 'SITE_VISIT' || selectedLead.status === 'INTERESTED' || selectedLead.status === 'SITE_VISIT') && (
+                    <div className="animate-in fade-in slide-in-from-top-2 pt-2">
+                      <label className="text-[10px] text-txt3 mb-1 block flex items-center gap-1"><UserCheck size={10} /> Field Agent Assignment</label>
+                      <div className="px-3 py-2.5 rounded-lg border border-accent2/20 bg-accent2/5 text-accent2 text-xs font-bold flex items-center gap-2">
+                        <CheckCircle2 size={14} /> Automatically assigning to You
+                      </div>
+                    </div>
+                  )}
 
                   <div>
                     <label className="text-[10px] font-bold text-txt3 uppercase tracking-wider mb-2 block flex items-center gap-2">

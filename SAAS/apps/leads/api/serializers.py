@@ -9,6 +9,7 @@ class LeadSerializer(serializers.ModelSerializer):
     masked_email = serializers.SerializerMethodField()
     project_name = serializers.CharField(source='project.name', read_only=True, default=None)
     field_agent_name = serializers.SerializerMethodField()
+    visited_date = serializers.SerializerMethodField()
 
     class Meta:
         model = Lead
@@ -39,9 +40,10 @@ class LeadSerializer(serializers.ModelSerializer):
             'project',
             'project_name',
             'created_at',
-            'updated_at'
+            'updated_at',
+            'visited_date'
         ]
-        read_only_fields = ['client', 'created_at', 'updated_at', 'last_interaction_at', 'lost_count']
+        read_only_fields = ['client', 'created_at', 'updated_at', 'last_interaction_at', 'lost_count', 'visited_date']
 
     def get_assigned_user_name(self, obj):
         if obj.assigned_to:
@@ -82,6 +84,12 @@ class LeadSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({"status": "A new lead must be called before a site visit or win."})
                 
         return attrs
+
+    def get_visited_date(self, obj):
+        visit = obj.visits.filter(status='COMPLETED').order_by('-completed_at').first()
+        if visit:
+            return visit.completed_at
+        return None
 
 
 class LeadBatchSerializer(serializers.ModelSerializer):
@@ -184,7 +192,7 @@ class CallLogSerializer(serializers.Serializer):
     budget = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
     interested_flat = serializers.CharField(required=False, allow_blank=True, default='')
     area = serializers.CharField(required=False, allow_blank=True, default='')
-    outcome = serializers.ChoiceField(choices=['INTERESTED', 'CALLBACK', 'LOST', 'CALLED', 'NOT_ANSWERED', 'WON', 'INVALID_NUMBER'], required=True)
+    outcome = serializers.ChoiceField(choices=['INTERESTED', 'CALLBACK', 'LOST', 'CALLED', 'NOT_ANSWERED', 'WON', 'INVALID_NUMBER', 'SITE_VISIT'], required=True)
     next_call_at = serializers.DateTimeField(required=False, allow_null=True)
     follow_up_at = serializers.DateTimeField(required=False, allow_null=True)
     follow_up_note = serializers.CharField(required=False, allow_blank=True, default='')

@@ -65,6 +65,10 @@ class LeadViewSet(
         if exclude_new == 'true':
             qs = qs.exclude(status__in=[LeadStatus.NEW, 'IMPORTED'])
 
+        visited = self.request.query_params.get('visited')
+        if visited == 'true':
+            qs = qs.filter(Q(status='VISITED') | Q(visits__status='COMPLETED')).distinct()
+
         exclude_closed = self.request.query_params.get('exclude_closed')
         if exclude_closed == 'true':
             qs = qs.exclude(status__in=[LeadStatus.WON, LeadStatus.LOST, LeadStatus.INVALID_NUMBER])

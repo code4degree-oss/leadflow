@@ -49,6 +49,7 @@ function getTimelineColor(type) { return TIMELINE_COLORS[type] || 'text-txt3 bg-
 const OUTCOME_OPTIONS = [
   { key: 'INTERESTED', label: 'Interested', icon: Flame, activeClass: 'bg-accent2/10 border-accent2 text-accent2 shadow-md shadow-accent2/10' },
   { key: 'CALLBACK', label: 'Follow-up', icon: Clock, activeClass: 'bg-accent/10 border-accent text-accent shadow-md shadow-accent/10' },
+  { key: 'SITE_VISIT', label: 'Site Visit', icon: MapPin, activeClass: 'bg-accent2/10 border-accent2 text-accent2 shadow-md shadow-accent2/10' },
   { key: 'NOT_ANSWERED', label: 'No Answer', icon: PhoneOff, activeClass: 'bg-amber/10 border-amber text-amber shadow-md shadow-amber/10' },
   { key: 'WON', label: '🎉 Won', icon: Trophy, activeClass: 'bg-[#10B981]/10 border-[#10B981] text-[#10B981] shadow-md shadow-[#10B981]/10' },
   { key: 'INVALID_NUMBER', label: 'Dead No.', icon: PhoneOff, activeClass: 'bg-danger/10 border-danger text-danger shadow-md shadow-danger/10' },
@@ -354,7 +355,7 @@ export default function LeadDrawer({
                   </div>
 
                   {/* Field Agent Assignment */}
-                  {(outcome === 'INTERESTED' || outcome === 'WON' || lead.status === 'INTERESTED' || lead.status === 'SITE_VISIT') && (
+                  {(outcome === 'INTERESTED' || outcome === 'WON' || outcome === 'SITE_VISIT' || lead.status === 'INTERESTED' || lead.status === 'SITE_VISIT') && (
                     <div className="animate-in fade-in slide-in-from-top-2">
                       <label className="text-[10px] text-txt3 mb-1 block flex items-center gap-1"><UserCheck size={10} /> Assign Field Agent</label>
                       <select value={selectedFieldAgent} onChange={e => setSelectedFieldAgent(e.target.value)}

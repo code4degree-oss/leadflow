@@ -33,6 +33,11 @@ class LeadCallsMixin:
                 pass
 
         field_agent_id = data.get('field_agent_id')
+        
+        # Field agents can only assign themselves to a site visit or interest
+        if request.user.role == RoleChoices.FIELD_AGENT:
+            field_agent_id = request.user.id
+
         if field_agent_id:
             try:
                 agent = User.objects.get(id=field_agent_id, client=lead.client, role=RoleChoices.FIELD_AGENT, is_active=True)
@@ -178,6 +183,28 @@ class LeadCallsMixin:
                 send_push_notification_task.delay(notif.id)
 
             return Response({"detail": "🎉 Lead marked as WON!", "status": lead.status})
+
+        elif outcome == 'SITE_VISIT':
+            old_status = lead.status
+            lead.status = LeadStatus.SITE_VISIT
+            lead.save()
+            ActivityTimeline.objects.create(
+                client=lead.client, lead=lead, performed_by=request.user,
+                activity_type=ActivityType.SITE_VISIT_SCHEDULED,
+                title=f"Call logged \u2014 Site Visit scheduled for {lead.next_call_at.strftime('%d %b, %I:%M %p') if lead.next_call_at else 'N/A'}",
+                metadata={'outcome': outcome, 'old_status': old_status, 'new_status': lead.status, 'field_agent_id': str(field_agent_id) if field_agent_id else None}
+            )
+            # Create a SiteVisit record
+            if lead.next_call_at:
+                from apps.leads.models import SiteVisit
+                SiteVisit.objects.create(
+                    client=lead.client,
+                    lead=lead,
+                    agent=lead.field_agent,
+                    scheduled_at=lead.next_call_at,
+                    status='SCHEDULED'
+                )
+            return Response({"detail": "Site visit scheduled.", "status": lead.status})
 
         elif outcome == 'LOST':
             lead.next_call_at = None
