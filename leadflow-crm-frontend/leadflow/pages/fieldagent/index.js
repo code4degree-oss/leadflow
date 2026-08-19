@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import Layout from '../../components/Layout'
 import { StatCard, StatusBadge } from '../../components/UI'
-import { Search, Flame, Clock, X, PhoneCall, Check, FileText, Calendar, RotateCcw, PhoneOff, DollarSign, MapPin, Home, ChevronRight, History, Bell, CheckCircle, CheckCircle2, Circle, Loader2, UserCheck, Building2, ChevronLeft, ChevronRight as ChevronRightIcon, Trophy, XCircle, RefreshCw, Phone, User, Eye } from 'lucide-react'
+import { Search, Flame, Clock, X, PhoneCall, Check, FileText, Calendar, RotateCcw, PhoneOff, DollarSign, MapPin, Home, ChevronRight, History, Bell, CheckCircle, CheckCircle2, Circle, Loader2, UserCheck, Building2, ChevronLeft, ChevronRight as ChevronRightIcon, Trophy, XCircle, RefreshCw, Phone, User, Eye, CalendarPlus } from 'lucide-react'
 import clsx from 'clsx'
 import { fetchWithAuth } from '../../utils/api'
 
@@ -13,9 +13,12 @@ export default function FieldAgentDashboard() {
 
   // Visit Action State
   const [selectedVisitLead, setSelectedVisitLead] = useState(null)
+  const [actionTab, setActionTab] = useState('REPORT') // 'REPORT' or 'SCHEDULE'
   const [visitOutcome, setVisitOutcome] = useState(null)
   const [visitNotes, setVisitNotes] = useState('')
   const [visitSubmitting, setVisitSubmitting] = useState(false)
+  const [scheduleDate, setScheduleDate] = useState('')
+  const [scheduleSubmitting, setScheduleSubmitting] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -67,6 +70,32 @@ export default function FieldAgentDashboard() {
       alert('Failed to log visit: ' + err.message)
     } finally {
       setVisitSubmitting(false)
+    }
+  }
+
+  const handleScheduleVisit = async (e) => {
+    e.preventDefault()
+    if (!scheduleDate || !selectedVisitLead) return
+    setScheduleSubmitting(true)
+    try {
+      const payload = {
+        outcome: 'SITE_VISIT',
+        notes: visitNotes || 'Site visit scheduled from dashboard',
+        next_call_at: new Date(scheduleDate).toISOString(),
+        field_agent_id: selectedVisitLead.field_agent || null
+      }
+      await fetchWithAuth(`/leads/${selectedVisitLead.id}/log-call/`, {
+        method: 'POST', body: JSON.stringify(payload)
+      })
+      alert('Site visit scheduled successfully!')
+      setScheduleDate('')
+      setVisitNotes('')
+      setSelectedVisitLead(null)
+      fetchData()
+    } catch (err) {
+      alert('Failed to schedule visit: ' + err.message)
+    } finally {
+      setScheduleSubmitting(false)
     }
   }
 
@@ -164,34 +193,72 @@ export default function FieldAgentDashboard() {
                 )}
               </div>
 
-              <form onSubmit={handleSubmitVisit} className="space-y-4 pt-2 border-t border-border">
-                <div className="text-[10px] font-bold text-txt3 uppercase tracking-widest mb-2 px-1">Log Site Visit Report</div>
-                <div className="grid grid-cols-3 gap-3">
-                  {[
-                    { val:'interested', label:'Interested', color:'border-success/40 bg-success/5 text-success hover:bg-success/10', icon: CheckCircle },
-                    { val:'won', label:'Closed (WON)', color:'border-primary/40 bg-primary/5 text-primary hover:bg-primary/10', icon: Trophy },
-                    { val:'not_interested', label:'Not Interested', color:'border-danger/40 bg-danger/5 text-danger hover:bg-danger/10', icon: XCircle },
-                  ].map(o => (
-                    <button key={o.val} type="button" onClick={() => setVisitOutcome(o.val)}
-                      className={clsx(
-                        'flex flex-col items-center justify-center py-4 rounded-2xl border text-[10px] font-bold uppercase tracking-tight transition-all',
-                        visitOutcome === o.val ? o.color + ' ring-1 ring-offset-2 ring-current' : 'border-border bg-bg3 text-txt3 hover:border-border2'
-                      )}>
-                      <o.icon size={16} className="mb-2"/>{o.label}
-                    </button>
-                  ))}
-                </div>
-                <div className="space-y-1.5 mt-4">
-                  <label className="text-[10px] font-bold uppercase tracking-tighter text-txt3 ml-1">Observation Notes</label>
-                  <textarea required value={visitNotes} onChange={e => setVisitNotes(e.target.value)}
-                    placeholder="Describe the visit outcome, client interest level, and any concerns…"
-                    className="input w-full min-h-[100px] bg-bg3 border-border/50 focus:border-primary resize-none text-sm p-4 rounded-2xl"/>
-                </div>
-                <button type="submit" disabled={!visitOutcome || visitSubmitting}
-                  className="btn-primary w-full justify-center py-3.5 shadow-lg shadow-primary/20 mt-4">
-                  {visitSubmitting ? <RefreshCw className="animate-spin" size={16}/> : <><MapPin size={16} /> Submit Visit Report</>}
+                )}
+              </div>
+
+              {/* Action Tabs */}
+              <div className="flex border-b border-border mb-4">
+                <button onClick={() => setActionTab('REPORT')}
+                  className={clsx("flex-1 py-3 text-[11px] font-bold uppercase tracking-widest border-b-2 transition-all flex justify-center items-center gap-2",
+                    actionTab === 'REPORT' ? "border-primary text-primary bg-primary/5" : "border-transparent text-txt3 hover:bg-bg2")}>
+                  <CheckCircle size={14} /> Submit Report
                 </button>
-              </form>
+                <button onClick={() => setActionTab('SCHEDULE')}
+                  className={clsx("flex-1 py-3 text-[11px] font-bold uppercase tracking-widest border-b-2 transition-all flex justify-center items-center gap-2",
+                    actionTab === 'SCHEDULE' ? "border-accent text-accent bg-accent/5" : "border-transparent text-txt3 hover:bg-bg2")}>
+                  <CalendarPlus size={14} /> Schedule Visit
+                </button>
+              </div>
+
+              {actionTab === 'REPORT' ? (
+                <form onSubmit={handleSubmitVisit} className="space-y-4">
+                  <div className="text-[10px] font-bold text-txt3 uppercase tracking-widest mb-2 px-1">Log Site Visit Report</div>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { val:'interested', label:'Interested', color:'border-success/40 bg-success/5 text-success hover:bg-success/10', icon: CheckCircle },
+                      { val:'won', label:'Closed (WON)', color:'border-primary/40 bg-primary/5 text-primary hover:bg-primary/10', icon: Trophy },
+                      { val:'not_interested', label:'Not Interested', color:'border-danger/40 bg-danger/5 text-danger hover:bg-danger/10', icon: XCircle },
+                    ].map(o => (
+                      <button key={o.val} type="button" onClick={() => setVisitOutcome(o.val)}
+                        className={clsx(
+                          'flex flex-col items-center justify-center py-4 rounded-2xl border text-[10px] font-bold uppercase tracking-tight transition-all',
+                          visitOutcome === o.val ? o.color + ' ring-1 ring-offset-2 ring-current' : 'border-border bg-bg3 text-txt3 hover:border-border2'
+                        )}>
+                        <o.icon size={16} className="mb-2"/>{o.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="space-y-1.5 mt-4">
+                    <label className="text-[10px] font-bold uppercase tracking-tighter text-txt3 ml-1">Observation Notes</label>
+                    <textarea required value={visitNotes} onChange={e => setVisitNotes(e.target.value)}
+                      placeholder="Describe the visit outcome, client interest level, and any concerns…"
+                      className="input w-full min-h-[100px] bg-bg3 border-border/50 focus:border-primary resize-none text-sm p-4 rounded-2xl"/>
+                  </div>
+                  <button type="submit" disabled={!visitOutcome || visitSubmitting}
+                    className="btn-primary w-full justify-center py-3.5 shadow-lg shadow-primary/20 mt-4">
+                    {visitSubmitting ? <RefreshCw className="animate-spin" size={16}/> : <><MapPin size={16} /> Submit Visit Report</>}
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleScheduleVisit} className="space-y-4">
+                  <div className="text-[10px] font-bold text-txt3 uppercase tracking-widest mb-2 px-1">Schedule a Site Visit</div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-tighter text-txt3 ml-1">Date & Time</label>
+                    <input type="datetime-local" required value={scheduleDate} onChange={e => setScheduleDate(e.target.value)}
+                      className="input w-full bg-bg3 border-border/50 focus:border-accent text-sm p-4 rounded-2xl" />
+                  </div>
+                  <div className="space-y-1.5 mt-4">
+                    <label className="text-[10px] font-bold uppercase tracking-tighter text-txt3 ml-1">Pre-Visit Notes (Optional)</label>
+                    <textarea value={visitNotes} onChange={e => setVisitNotes(e.target.value)}
+                      placeholder="Any notes to remember for this visit..."
+                      className="input w-full min-h-[100px] bg-bg3 border-border/50 focus:border-accent resize-none text-sm p-4 rounded-2xl"/>
+                  </div>
+                  <button type="submit" disabled={!scheduleDate || scheduleSubmitting}
+                    className="btn-primary w-full justify-center py-3.5 bg-accent hover:bg-accent/90 shadow-lg shadow-accent/20 mt-4 border-none text-white">
+                    {scheduleSubmitting ? <RefreshCw className="animate-spin" size={16}/> : <><CalendarPlus size={16} /> Schedule Visit</>}
+                  </button>
+                </form>
+              )}
             </div>
           ) : (
             <div className="card p-16 flex flex-col items-center justify-center text-center h-[600px] border-dashed border-2 border-border/50 bg-bg2/10 rounded-[32px]">
