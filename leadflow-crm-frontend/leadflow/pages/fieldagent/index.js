@@ -192,10 +192,6 @@ export default function FieldAgentDashboard() {
                   </div>
                 )}
               </div>
-
-                )}
-              </div>
-
               {/* Action Tabs */}
               <div className="flex border-b border-border mb-4">
                 <button onClick={() => setActionTab('REPORT')}
